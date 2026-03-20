@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import List, Dict
 
 # 从原始项目中导入
-from neuralclear_demo import (
+from neuralclear import (
     DAGLedger, AgentRegistry, AgentInfo, AgentDID, ComputeCredit,
     ActionHash, Transaction, TEEProof, TaskResult, NodeType
 )
