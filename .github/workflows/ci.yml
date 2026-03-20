@@ -1,21 +1,44 @@
 name: NeuralClear CI
-on: [push]
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
 jobs:
   python-test:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Python Demo
-        run: python neuralclear/neuralclear.py
-      - name: Network Simulation
-        run: python simulation.py
-  rust-build:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Run Python Demo
+      run: |
+        cd neuralclear_new/neuralclear
+        python3 neuralclear_demo.py
+    
+    - name: Run Network Simulation
+      run: |
+        cd neuralclear_new/neuralclear
+        python3 simulation.py
+
+  rust-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-rust@v2
-      - name: Rust Build
-        run: cargo check
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: actions/setup-rust@v2
+      with:
+        rust-stable: true
+    
+    - name: Check Rust Code
+      run: |
+        cd neuralclear_new/neuralclear
+        cargo check --all
