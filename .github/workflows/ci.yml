@@ -1,38 +1,29 @@
 name: NeuralClear CI
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
+on: [push]
 jobs:
   python-test:
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    
-    - name: Run Python Demo
-      run: python3 neuralclear/neuralclear.py
-    
-    - name: Run Network Simulation  
-      run: python3 simulation.py
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python dependencies
+        run: pip install --upgrade pip
+      - name: Python Demo
+        run: python neuralclear/neuralclear.py
+      - name: Network Simulation
+        run: python simulation.py
 
-  rust-check:
+  rust-build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install Rust
-      uses: actions/setup-rust@v2
-      with:
-        rust-stable: true
-    
-    - name: Check Rust Code
-      run: cargo check --all
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source "$HOME/.cargo/env"
+      - name: Check Rust
+        run: |
+          source "$HOME/.cargo/env"
+          cargo --version
