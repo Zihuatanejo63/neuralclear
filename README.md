@@ -53,6 +53,48 @@ The draft HTTP surface is in [OPENAPI.yaml](OPENAPI.yaml). A provider can expose
 
 See [examples/well-known/agent.json](examples/well-known/agent.json) for a concrete manifest.
 
+## Local Sandbox
+
+Install the optional HTTP dependencies:
+
+```bash
+python3 -m pip install -e ".[http]"
+```
+
+Run the reference server:
+
+```bash
+uvicorn server.app:app --port 8000
+```
+
+Use the CLI from another terminal:
+
+```bash
+python3 -m client.cli agents list
+python3 -m client.cli agents search summarize.pdf
+python3 -m client.cli agent register examples/well-known/agent.json
+python3 -m client.cli quote request agent.pdf_summarizer summarize.pdf
+python3 -m client.cli task submit quote_xxx --text "Summarize this PDF text."
+python3 -m client.cli receipts list
+python3 -m client.cli balances
+```
+
+The sandbox dashboard is available at:
+
+```text
+http://127.0.0.1:8000/dashboard/agents
+http://127.0.0.1:8000/dashboard/transactions
+http://127.0.0.1:8000/dashboard/receipts
+http://127.0.0.1:8000/dashboard/disputes
+http://127.0.0.1:8000/dashboard/balances
+```
+
+For local persistence across restarts, set:
+
+```bash
+NEURALCLEAR_DB=./neuralclear-sandbox.db uvicorn server.app:app --port 8000
+```
+
 ## Protocol Objects
 
 `ResourceUnit` measures resources such as tokens, GPU seconds, bandwidth, or storage.
@@ -100,9 +142,9 @@ NeuralClear is intended to compose with these protocols, not replace them.
 
 ## Current Status
 
-Current stage: V0.1 protocol prototype.
+Current stage: V0.2 reference implementation complete.
 
-Next milestone: HTTP reference implementation.
+Next milestone: V0.3 sandbox registry and dashboard.
 
 Prototype only. Not production ready.
 
