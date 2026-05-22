@@ -99,6 +99,10 @@ NeuralClear is intended to compose with these protocols, not replace them.
 
 ## Current Status
 
+Current stage: V0.1 protocol prototype.
+
+Next milestone: HTTP reference implementation.
+
 Prototype only. Not production ready.
 
 This repository does not implement real custody, real payment execution, real TEE attestation, real ZK verification, identity recovery, compliance, finality guarantees, or adversarial dispute resolution. Treat it as a protocol sketch with executable tests.
