@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS agents (
   agent_id TEXT PRIMARY KEY,
@@ -40,10 +41,8 @@ CREATE TABLE IF NOT EXISTS metadata (
 
 
 def connect(path: str | Path) -> sqlite3.Connection:
-    database_path = Path(path)
-    if database_path.parent:
-        database_path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(database_path, check_same_thread=False)
+    connection = sqlite3.connect(path, check_same_thread=False)
     connection.row_factory = sqlite3.Row
     connection.executescript(SCHEMA)
+    connection.commit()
     return connection
