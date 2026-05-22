@@ -1,8 +1,8 @@
 # NeuralClear
 
-NeuralClear is a prototype clearing protocol for AI agent-to-agent service transactions.
+NeuralClear is an open clearing and trust protocol prototype for AI agent-to-agent service transactions.
 
-It explores how autonomous agents can quote work, receive delegated spending authority, deliver results, verify proofs, and settle credits without pretending that a demo ledger is production finance.
+It standardizes how agents quote, authorize, execute, verify, settle, and dispute service transactions. NeuralClear does not issue money, custody funds, or replace payment rails; it defines the transaction semantics around agent services.
 
 ## Why NeuralClear
 
@@ -15,7 +15,7 @@ Agent ecosystems need more than message passing. A buyer agent needs to know:
 - how balances move after settlement
 - how disputes, refunds, slashing, and expiration are represented
 
-NeuralClear is a small Python protocol prototype for those clearing semantics.
+NeuralClear is a small Python protocol prototype for those clearing semantics. Actual payment can be handled by adapters such as internal credits, Stripe, stablecoins, x402-style HTTP payment, or other rails.
 
 ## Core Flow
 
@@ -41,6 +41,16 @@ python3 -m unittest discover
 ```
 
 The demo prints a `TaskResult` and ledger snapshot. Tests cover payment direction, insufficient credit, zero-sum clearing, registration, discovery, mandate limits, quote expiration, and dispute state transitions.
+
+## HTTP Draft
+
+The draft HTTP surface is in [OPENAPI.yaml](OPENAPI.yaml). A provider can expose a manifest at:
+
+```text
+/.well-known/neuralclear/agent.json
+```
+
+See [examples/well-known/agent.json](examples/well-known/agent.json) for a concrete manifest.
 
 ## Protocol Objects
 
@@ -80,13 +90,21 @@ Supported proof level names:
 
 ## Relationship To A2A, MCP, AP2, And x402
 
-- A2A is a useful transport and interaction pattern for agent-to-agent task exchange. NeuralClear focuses on quote, authorization, settlement, and dispute semantics around those exchanges.
-- MCP exposes tools and resources to agents. NeuralClear can price and settle calls made through MCP-style capabilities.
-- AP2-style payment authorization motivates the `SpendingMandate` model: an owner can delegate bounded purchasing power to an agent without giving unlimited authority.
-- x402-style payment-gated HTTP can be one settlement or access layer underneath a NeuralClear quote. NeuralClear keeps a broader lifecycle for task results, proofs, disputes, and clearing.
+- A2A lets agents communicate and coordinate. NeuralClear adds quote, mandate, settlement, proof, receipt, dispute, and reputation semantics around commercial service transactions.
+- MCP connects models and agents to tools, data, and workflows. NeuralClear can clear commercial usage around MCP-style tool calls.
+- AP2-style authorization motivates `SpendingMandate`: an owner can grant bounded spending authority without giving an agent unlimited payment power.
+- x402-style payment-gated HTTP can execute machine-native payment. NeuralClear can decide when payment is due and produce the receipt, proof, and dispute record around it.
+
+NeuralClear is intended to compose with these protocols, not replace them.
 
 ## Current Status
 
 Prototype only. Not production ready.
 
-This repository does not implement real custody, real TEE attestation, real ZK verification, identity recovery, compliance, finality guarantees, or adversarial dispute resolution. Treat it as a protocol sketch with executable tests.
+This repository does not implement real custody, real payment execution, real TEE attestation, real ZK verification, identity recovery, compliance, finality guarantees, or adversarial dispute resolution. Treat it as a protocol sketch with executable tests.
+
+Suggested GitHub About text:
+
+```text
+Prototype clearing, authorization, proof, and dispute layer for AI agent-to-agent service transactions.
+```
