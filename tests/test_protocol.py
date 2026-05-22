@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta, timezone
+import json
+from pathlib import Path
 import unittest
 
 from neuralclear import (
@@ -17,6 +19,9 @@ from neuralclear import (
     TransactionState,
 )
 from neuralclear.core import ProtocolError
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def make_agent(agent_id="agent.researcher", price=25) -> AgentInfo:
@@ -185,3 +190,28 @@ class ProtocolTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ProtocolError, "invalid transition"):
             ledger.refund(tx)
+
+    def test_spec_file_exists(self):
+        spec = ROOT / "SPEC.md"
+
+        self.assertTrue(spec.exists())
+        content = spec.read_text(encoding="utf-8")
+        self.assertIn("Protocol Objects", content)
+        self.assertIn("Transaction Direction", content)
+        self.assertIn("Non-Goals", content)
+
+    def test_examples_can_be_loaded(self):
+        example_paths = [
+            ROOT / "examples" / "agent_manifest.json",
+            ROOT / "examples" / "quote.json",
+            ROOT / "examples" / "spending_mandate.json",
+            ROOT / "examples" / "task_result.json",
+            ROOT / "examples" / "transaction.json",
+            ROOT / "examples" / "well-known" / "agent.json",
+            ROOT / "schemas" / "agent_manifest.schema.json",
+        ]
+
+        for path in example_paths:
+            with self.subTest(path=path):
+                self.assertTrue(path.exists())
+                json.loads(path.read_text(encoding="utf-8"))
