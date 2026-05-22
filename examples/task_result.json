@@ -1,0 +1,21 @@
+{
+  "transaction_id": "tx_demo",
+  "output": {
+    "summary": "NeuralClear separates metering from settlement."
+  },
+  "resource_usage": [
+    {
+      "amount": 7800,
+      "unit": "tokens"
+    }
+  ],
+  "settlement_amount": {
+    "amount": 25,
+    "currency": "CC"
+  },
+  "proof": {
+    "proof_level": "NONE",
+    "statement": "mock proof for local demo only",
+    "signature": "mock-signature"
+  }
+}

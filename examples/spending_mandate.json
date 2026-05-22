@@ -1,0 +1,19 @@
+{
+  "owner": "user.alice",
+  "agent": "agent.alice.delegate",
+  "allowed_capabilities": ["summarize.paper", "translate.text"],
+  "max_per_task": {
+    "amount": 30,
+    "currency": "CC"
+  },
+  "max_daily": {
+    "amount": 100,
+    "currency": "CC"
+  },
+  "valid_until": 1790000000,
+  "requires_human_approval_above": {
+    "amount": 50,
+    "currency": "CC"
+  },
+  "signature": "ed25519:demo-signature"
+}

@@ -1,0 +1,25 @@
+{
+  "agent_id": "agent.researcher",
+  "name": "Research Agent",
+  "endpoint": "https://research.example.com/a2a",
+  "public_key": "did:key:zExamplePublicKey",
+  "capabilities": ["summarize.paper", "extract.citations"],
+  "pricing": [
+    {
+      "capability": "summarize.paper",
+      "resource_unit": {
+        "amount": 8000,
+        "unit": "tokens"
+      },
+      "settlement_credit": {
+        "amount": 25,
+        "currency": "CC"
+      }
+    }
+  ],
+  "reputation": {
+    "score": 0.92,
+    "completed_tasks": 128,
+    "dispute_rate": 0.01
+  }
+}

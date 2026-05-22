@@ -1,0 +1,16 @@
+{
+  "transaction_id": "tx_demo",
+  "quote_id": "quote_demo",
+  "sender": "user.alice",
+  "receiver": "agent.researcher",
+  "amount": {
+    "amount": 25,
+    "currency": "CC"
+  },
+  "fee": {
+    "amount": 1,
+    "currency": "CC"
+  },
+  "capability": "summarize.paper",
+  "state": "QUOTE_ACCEPTED"
+}

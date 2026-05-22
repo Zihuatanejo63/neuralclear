@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuralclear.org/schemas/agent_manifest.schema.json",
+  "title": "NeuralClear Agent Manifest",
+  "type": "object",
+  "required": ["agent_id", "name", "endpoint", "public_key", "capabilities", "pricing", "reputation"],
+  "properties": {
+    "agent_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "endpoint": {
+      "type": "string",
+      "format": "uri"
+    },
+    "public_key": {
+      "type": "string"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "pricing": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["capability", "resource_unit", "settlement_credit"],
+        "properties": {
+          "capability": {
+            "type": "string"
+          },
+          "resource_unit": {
+            "type": "object",
+            "required": ["amount", "unit"],
+            "properties": {
+              "amount": {
+                "type": "number",
+                "minimum": 0
+              },
+              "unit": {
+                "type": "string",
+                "enum": ["tokens", "gpu_seconds", "bandwidth_mb", "storage_mb", "request"]
+              }
+            }
+          },
+          "settlement_credit": {
+            "type": "object",
+            "required": ["amount", "currency"],
+            "properties": {
+              "amount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "currency": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "reputation": {
+      "type": "object",
+      "required": ["score"],
+      "properties": {
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "completed_tasks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dispute_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

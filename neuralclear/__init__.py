@@ -1,29 +1,35 @@
-# NeuralClear - AI Agent to AI Agent Trading Network
+"""NeuralClear protocol prototype."""
 
-from neuralclear.neuralclear import (
-    NodeType,
-    AgentDID,
-    ComputeCredit,
-    ActionHash,
-    Transaction,
+from .core import (
     AgentInfo,
-    TaskResult,
-    TEEProof,
-    DAGLedger,
     AgentRegistry,
-    NeuralClearSDK,
+    Capability,
+    Ledger,
+    MockProof,
+    ProofLevel,
+    Quote,
+    ResourceUnit,
+    SettlementCredit,
+    SpendingMandate,
+    TaskResult,
+    Transaction,
+    TransactionState,
 )
+from .sdk import NeuralClearSDK
 
 __all__ = [
-    "NodeType",
-    "AgentDID",
-    "ComputeCredit",
-    "ActionHash",
-    "Transaction",
     "AgentInfo",
-    "TaskResult",
-    "TEEProof",
-    "DAGLedger",
     "AgentRegistry",
+    "Capability",
+    "Ledger",
+    "MockProof",
     "NeuralClearSDK",
+    "ProofLevel",
+    "Quote",
+    "ResourceUnit",
+    "SettlementCredit",
+    "SpendingMandate",
+    "TaskResult",
+    "Transaction",
+    "TransactionState",
 ]

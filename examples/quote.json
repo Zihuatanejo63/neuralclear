@@ -1,0 +1,14 @@
+{
+  "quote_id": "quote_demo",
+  "provider": "agent.researcher",
+  "capability": "summarize.paper",
+  "resource_estimate": {
+    "amount": 8000,
+    "unit": "tokens"
+  },
+  "settlement_price": {
+    "amount": 25,
+    "currency": "CC"
+  },
+  "expires_at": 1790000000
+}
