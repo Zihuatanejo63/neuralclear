@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from enum import Enum
 from typing import Iterable
 from uuid import uuid4
@@ -137,6 +137,12 @@ class SpendingMandate:
         if amount.amount > self.max_per_task.amount:
             raise ProtocolError("task amount exceeds mandate max_per_task")
 
+    def assert_daily_budget(self, already_spent: SettlementCredit, next_amount: SettlementCredit) -> None:
+        if already_spent.currency != self.max_daily.currency or next_amount.currency != self.max_daily.currency:
+            raise ProtocolError("mandate currency mismatch")
+        if already_spent.amount + next_amount.amount > self.max_daily.amount:
+            raise ProtocolError("task amount exceeds mandate max_daily")
+
     def to_json(self) -> dict[str, object]:
         return {
             "owner": self.owner,
@@ -196,7 +202,7 @@ class MockProof:
     signature: str = "mock-signature"
 
     def verify(self) -> bool:
-        return self.proof_level in {ProofLevel.NONE, ProofLevel.SIGNED_RESULT, ProofLevel.REPRODUCIBLE}
+        return self.proof_level == ProofLevel.NONE and self.signature == "mock-signature"
 
     def to_json(self) -> dict[str, str]:
         return {
@@ -204,6 +210,46 @@ class MockProof:
             "statement": self.statement,
             "signature": self.signature,
         }
+
+
+@dataclass(frozen=True)
+class SignedResultProof:
+    """Reserved type for future signed-result verification."""
+
+    proof_level: ProofLevel = ProofLevel.SIGNED_RESULT
+
+    def verify(self) -> bool:
+        raise NotImplementedError("signed result proof verification is not implemented")
+
+
+@dataclass(frozen=True)
+class ReproducibleProof:
+    """Reserved type for future reproducibility verification."""
+
+    proof_level: ProofLevel = ProofLevel.REPRODUCIBLE
+
+    def verify(self) -> bool:
+        raise NotImplementedError("reproducible proof verification is not implemented")
+
+
+@dataclass(frozen=True)
+class TEEAttestationProof:
+    """Reserved type for future TEE attestation verification."""
+
+    proof_level: ProofLevel = ProofLevel.TEE_ATTESTATION
+
+    def verify(self) -> bool:
+        raise NotImplementedError("TEE attestation verification is not implemented")
+
+
+@dataclass(frozen=True)
+class ZKProof:
+    """Reserved type for future zero-knowledge proof verification."""
+
+    proof_level: ProofLevel = ProofLevel.ZK_PROOF
+
+    def verify(self) -> bool:
+        raise NotImplementedError("ZK proof verification is not implemented")
 
 
 @dataclass(frozen=True)
@@ -238,8 +284,10 @@ class Transaction:
     capability: str
     quote_id: str | None = None
     fee: SettlementCredit = field(default_factory=lambda: SettlementCredit(0))
+    authorized_agent: str | None = None
     transaction_id: str = field(default_factory=lambda: f"tx_{uuid4().hex}")
     state: TransactionState = TransactionState.QUOTE_ACCEPTED
+    settled_at: datetime | None = None
 
     def __post_init__(self) -> None:
         if self.sender == self.receiver:
@@ -260,8 +308,10 @@ class Transaction:
             "receiver": self.receiver,
             "amount": self.amount.to_json(),
             "fee": self.fee.to_json(),
+            "authorized_agent": self.authorized_agent,
             "capability": self.capability,
             "state": self.state.value,
+            "settled_at": self.settled_at.isoformat() if self.settled_at else None,
         }
 
 
@@ -308,6 +358,7 @@ class Ledger:
         self.balances[transaction.receiver] = self.balance_of(transaction.receiver) + transaction.amount.amount
         self.fee_pool += transaction.fee.amount
         transaction.state = TransactionState.SETTLED
+        transaction.settled_at = datetime.now(timezone.utc)
         self.transactions.append(transaction)
         if not self.verify_zero_sum(before):
             raise ProtocolError("ledger invariant failed")
@@ -317,6 +368,20 @@ class Ledger:
 
     def dispute(self, transaction: Transaction) -> None:
         transaction.transition(TransactionState.DISPUTED)
+
+    def get_daily_spend(self, agent: str, owner: str, day: date) -> SettlementCredit:
+        total = 0
+        for transaction in self.transactions:
+            if transaction.settled_at is None:
+                continue
+            if transaction.settled_at.date() != day:
+                continue
+            if transaction.sender != owner:
+                continue
+            if transaction.authorized_agent != agent:
+                continue
+            total += transaction.amount.amount + transaction.fee.amount
+        return SettlementCredit(total)
 
     def snapshot(self) -> dict[str, object]:
         return {"balances": dict(self.balances), "fee_pool": self.fee_pool, "total_supply": self.total_supply}
