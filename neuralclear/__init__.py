@@ -8,12 +8,16 @@ from .core import (
     MockProof,
     ProofLevel,
     Quote,
+    ReproducibleProof,
     ResourceUnit,
     SettlementCredit,
+    SignedResultProof,
     SpendingMandate,
     TaskResult,
+    TEEAttestationProof,
     Transaction,
     TransactionState,
+    ZKProof,
 )
 from .sdk import NeuralClearSDK
 
@@ -26,10 +30,14 @@ __all__ = [
     "NeuralClearSDK",
     "ProofLevel",
     "Quote",
+    "ReproducibleProof",
     "ResourceUnit",
     "SettlementCredit",
+    "SignedResultProof",
     "SpendingMandate",
     "TaskResult",
+    "TEEAttestationProof",
     "Transaction",
     "TransactionState",
+    "ZKProof",
 ]
