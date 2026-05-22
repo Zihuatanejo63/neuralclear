@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from .core import (
     AgentRegistry,
     Ledger,
@@ -36,6 +38,12 @@ class NeuralClearSDK:
             raise ProtocolError("quote provider mismatch")
         if mandate is not None:
             mandate.assert_allows(quote.capability, quote.settlement_price)
+            spent_today = self.ledger.get_daily_spend(
+                mandate.agent,
+                mandate.owner,
+                datetime.now(timezone.utc).date(),
+            )
+            mandate.assert_daily_budget(spent_today, quote.settlement_price)
 
         transaction = Transaction(
             sender=sender,
@@ -43,6 +51,7 @@ class NeuralClearSDK:
             amount=quote.settlement_price,
             capability=quote.capability,
             quote_id=quote.quote_id,
+            authorized_agent=mandate.agent if mandate else sender,
             state=TransactionState.QUOTE_ACCEPTED,
         )
         transaction.transition(TransactionState.TASK_SUBMITTED)
