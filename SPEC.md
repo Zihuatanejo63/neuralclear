@@ -45,7 +45,15 @@ A named service the provider can perform, such as `summarize.pdf`, `search.web`,
 
 ### Quote
 
-A provider commitment that binds provider, capability, resource estimate, settlement price, and expiration time. Expired quotes must not be accepted.
+A provider commitment that binds:
+
+- provider
+- capability
+- resource estimate
+- settlement price
+- expiration time
+
+Expired quotes must not be accepted.
 
 ### SpendingMandate
 
@@ -126,6 +134,23 @@ Fields:
 - `requires_human_approval_above`: threshold where manual approval is required
 - `signature`: signature over the mandate body
 
+Minimal example:
+
+```json
+{
+  "owner": "user.alice",
+  "agent": "agent.alice.delegate",
+  "allowed_capabilities": ["summarize.paper"],
+  "max_per_task": { "amount": 30, "currency": "CC" },
+  "max_daily": { "amount": 100, "currency": "CC" },
+  "valid_until": 1790000000,
+  "requires_human_approval_above": { "amount": 50, "currency": "CC" },
+  "signature": "ed25519:demo-signature"
+}
+```
+
+The prototype checks expiration, capability, currency, per-task limit, and in-memory daily spend. Real signature verification is intentionally left as future work.
+
 Validation requirements:
 
 - mandate must not be expired
@@ -134,8 +159,6 @@ Validation requirements:
 - quote amount must be less than or equal to `max_per_task`
 - current daily spend plus quote amount must be less than or equal to `max_daily`
 - production implementations must verify the mandate signature before relying on it
-
-The prototype checks expiration, capability, currency, per-task limit, and in-memory daily spend. Real signature verification is intentionally left as future work.
 
 ## 7. Lifecycle State Machine
 
