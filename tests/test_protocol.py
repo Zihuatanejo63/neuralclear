@@ -6,7 +6,9 @@ from neuralclear import (
     AgentRegistry,
     Capability,
     Ledger,
+    MockProof,
     NeuralClearSDK,
+    ProofLevel,
     Quote,
     ResourceUnit,
     SettlementCredit,
@@ -44,13 +46,13 @@ def make_sdk(alice_balance=100, provider_balance=0, price=25):
     return NeuralClearSDK(registry, ledger), ledger, agent
 
 
-def make_mandate(max_per_task=30, capabilities=None) -> SpendingMandate:
+def make_mandate(max_per_task=30, max_daily=100, capabilities=None) -> SpendingMandate:
     return SpendingMandate(
         owner="user.alice",
         agent="agent.alice.delegate",
         allowed_capabilities=capabilities or ["summarize.paper"],
         max_per_task=SettlementCredit(max_per_task),
-        max_daily=SettlementCredit(100),
+        max_daily=SettlementCredit(max_daily),
         valid_until=(datetime.now(timezone.utc) + timedelta(days=1)).timestamp(),
         requires_human_approval_above=SettlementCredit(50),
         signature="ed25519:demo",
@@ -121,6 +123,23 @@ class ProtocolTests(unittest.TestCase):
         with self.assertRaisesRegex(ProtocolError, "max_per_task"):
             sdk.call("user.alice", agent.agent_id, quote, {}, make_mandate(max_per_task=30))
 
+    def test_mandate_daily_limit(self):
+        sdk, _, agent = make_sdk(alice_balance=100, price=25)
+        mandate = make_mandate(max_per_task=30, max_daily=40)
+
+        first_quote = sdk.request_quote(agent.agent_id, "summarize.paper")
+        sdk.call("user.alice", agent.agent_id, first_quote, {}, mandate)
+
+        second_quote = sdk.request_quote(agent.agent_id, "summarize.paper")
+        with self.assertRaisesRegex(ProtocolError, "max_daily"):
+            sdk.call(
+                "user.alice",
+                agent.agent_id,
+                second_quote,
+                {},
+                mandate,
+            )
+
     def test_quote_expiration(self):
         sdk, _, agent = make_sdk()
         expired_quote = Quote(
@@ -147,3 +166,22 @@ class ProtocolTests(unittest.TestCase):
         tx.transition(TransactionState.REFUNDED)
 
         self.assertEqual(tx.state, TransactionState.REFUNDED)
+
+    def test_mock_proof_is_not_real_attestation(self):
+        self.assertTrue(MockProof().verify())
+        self.assertFalse(MockProof(proof_level=ProofLevel.SIGNED_RESULT).verify())
+        self.assertFalse(MockProof(proof_level=ProofLevel.REPRODUCIBLE).verify())
+        self.assertFalse(MockProof(proof_level=ProofLevel.TEE_ATTESTATION).verify())
+
+    def test_settled_transaction_cannot_be_refunded_without_dispute_resolution_policy(self):
+        _, ledger, agent = make_sdk()
+        tx = Transaction(
+            sender="user.alice",
+            receiver=agent.agent_id,
+            amount=SettlementCredit(25),
+            capability="summarize.paper",
+        )
+        ledger.settle(tx)
+
+        with self.assertRaisesRegex(ProtocolError, "invalid transition"):
+            ledger.refund(tx)
