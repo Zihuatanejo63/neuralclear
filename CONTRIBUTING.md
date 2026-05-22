@@ -8,6 +8,7 @@ This repository is intentionally small. Please keep changes focused on protocol 
 
 ```bash
 python3 examples/demo.py
+python3 examples/marketplace/demo_marketplace.py
 python3 -m unittest discover
 ```
 
