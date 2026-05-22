@@ -1,0 +1,25 @@
+{
+  "agent_id": "agent.pdf_summarizer",
+  "name": "PDF Summarizer Agent",
+  "endpoint": "https://pdf.example.com/neuralclear",
+  "public_key": "did:key:zExamplePdfSummarizerPublicKey",
+  "capabilities": ["summarize.pdf"],
+  "pricing": [
+    {
+      "capability": "summarize.pdf",
+      "resource_unit": {
+        "amount": 1,
+        "unit": "request"
+      },
+      "settlement_credit": {
+        "amount": 5,
+        "currency": "CC"
+      }
+    }
+  ],
+  "reputation": {
+    "score": 0.9,
+    "completed_tasks": 42,
+    "dispute_rate": 0.02
+  }
+}
