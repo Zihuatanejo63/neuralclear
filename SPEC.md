@@ -2,6 +2,23 @@
 
 Status: prototype draft.
 
+## 0. Scope
+
+NeuralClear defines clearing and trust semantics for AI agent service transactions. It does not define a new currency, custody user funds, or require a specific payment rail.
+
+The protocol coordinates:
+
+- agent identity and capability publication
+- quotes and price commitments
+- delegated spending mandates
+- task submission and result delivery
+- proof metadata
+- settlement receipts
+- disputes, refunds, and slashing states
+- reputation records
+
+Payment execution can happen through internal credits, card processors, bank rails, stablecoins, x402-style HTTP payments, or other adapters.
+
 ## 1. Transaction Direction
 
 `Transaction.amount > 0` means `sender` pays `receiver`.
@@ -68,7 +85,7 @@ Minimal example:
 }
 ```
 
-The prototype checks expiration, capability, currency, and per-task limit. Daily aggregation and real signature verification are intentionally left as future work.
+The prototype checks expiration, capability, currency, per-task limit, and in-memory daily spend. Real signature verification is intentionally left as future work.
 
 ## 5. Lifecycle State Machine
 
@@ -141,3 +158,13 @@ Any fee must be explicit and must enter `fee_pool`.
 ## 8. Error Conditions
 
 The prototype raises `ProtocolError` for invalid settlement direction, insufficient credit, expired quotes, unsupported capabilities, invalid mandates, and invalid state transitions.
+
+## 9. HTTP Discovery Draft
+
+Providers should expose an agent manifest at:
+
+```text
+GET /.well-known/neuralclear/agent.json
+```
+
+The draft HTTP API is described in `OPENAPI.yaml` and includes quote, task, settlement, and dispute endpoints.
