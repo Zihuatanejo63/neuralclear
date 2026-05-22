@@ -1,0 +1,292 @@
+openapi: 3.1.0
+info:
+  title: NeuralClear HTTP API
+  version: 0.2.0-draft
+  description: Draft API for AI agent service transaction clearing.
+servers:
+  - url: https://agent.example.com
+paths:
+  /.well-known/neuralclear/agent.json:
+    get:
+      summary: Fetch an agent manifest
+      operationId: getAgentManifest
+      responses:
+        "200":
+          description: Agent manifest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentManifest"
+  /neuralclear/quote:
+    post:
+      summary: Request a quote for a capability
+      operationId: requestQuote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuoteRequest"
+      responses:
+        "200":
+          description: Quote response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"
+  /neuralclear/tasks:
+    post:
+      summary: Submit a task after accepting a quote
+      operationId: submitTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskRequest"
+      responses:
+        "202":
+          description: Task accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskStatus"
+  /neuralclear/tasks/{task_id}:
+    get:
+      summary: Fetch task status or result
+      operationId: getTask
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Task status or result
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/TaskStatus"
+                  - $ref: "#/components/schemas/TaskResult"
+  /neuralclear/settlements:
+    post:
+      summary: Create a settlement receipt
+      operationId: createSettlement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettlementRequest"
+      responses:
+        "200":
+          description: Settlement receipt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettlementReceipt"
+  /neuralclear/disputes:
+    post:
+      summary: Open a dispute for a transaction
+      operationId: openDispute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Dispute"
+      responses:
+        "202":
+          description: Dispute opened
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dispute"
+components:
+  schemas:
+    SettlementCredit:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          type: integer
+          minimum: 0
+        currency:
+          type: string
+          example: CC
+    ResourceUnit:
+      type: object
+      required: [amount, unit]
+      properties:
+        amount:
+          type: number
+          minimum: 0
+        unit:
+          type: string
+          example: tokens
+    AgentManifest:
+      type: object
+      required: [agent_id, name, endpoint, public_key, capabilities, pricing, reputation]
+      properties:
+        agent_id:
+          type: string
+        name:
+          type: string
+        endpoint:
+          type: string
+          format: uri
+        public_key:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        pricing:
+          type: array
+          items:
+            type: object
+        reputation:
+          type: object
+    QuoteRequest:
+      type: object
+      required: [buyer, provider, capability]
+      properties:
+        buyer:
+          type: string
+        provider:
+          type: string
+        capability:
+          type: string
+        task_metadata:
+          type: object
+    Quote:
+      type: object
+      required: [quote_id, provider, capability, resource_estimate, settlement_price, expires_at]
+      properties:
+        quote_id:
+          type: string
+        provider:
+          type: string
+        capability:
+          type: string
+        resource_estimate:
+          $ref: "#/components/schemas/ResourceUnit"
+        settlement_price:
+          $ref: "#/components/schemas/SettlementCredit"
+        expires_at:
+          type: number
+    SpendingMandate:
+      type: object
+      required: [owner, agent, allowed_capabilities, max_per_task, max_daily, valid_until, requires_human_approval_above, signature]
+      properties:
+        owner:
+          type: string
+        agent:
+          type: string
+        allowed_capabilities:
+          type: array
+          items:
+            type: string
+        max_per_task:
+          $ref: "#/components/schemas/SettlementCredit"
+        max_daily:
+          $ref: "#/components/schemas/SettlementCredit"
+        valid_until:
+          type: number
+        requires_human_approval_above:
+          $ref: "#/components/schemas/SettlementCredit"
+        signature:
+          type: string
+    TaskRequest:
+      type: object
+      required: [task_id, quote_id, buyer, provider, capability, payload, mandate]
+      properties:
+        task_id:
+          type: string
+        quote_id:
+          type: string
+        buyer:
+          type: string
+        provider:
+          type: string
+        capability:
+          type: string
+        payload:
+          type: object
+        mandate:
+          $ref: "#/components/schemas/SpendingMandate"
+    TaskStatus:
+      type: object
+      required: [task_id, state]
+      properties:
+        task_id:
+          type: string
+        state:
+          type: string
+          enum: [TASK_SUBMITTED, TASK_RUNNING, RESULT_DELIVERED, DISPUTED, EXPIRED]
+    TaskResult:
+      type: object
+      required: [transaction_id, output, resource_usage, settlement_amount, proof]
+      properties:
+        transaction_id:
+          type: string
+        output:
+          type: object
+        resource_usage:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceUnit"
+        settlement_amount:
+          $ref: "#/components/schemas/SettlementCredit"
+        proof:
+          type: object
+    SettlementRequest:
+      type: object
+      required: [transaction_id, quote_id, sender, receiver, amount]
+      properties:
+        transaction_id:
+          type: string
+        quote_id:
+          type: string
+        sender:
+          type: string
+        receiver:
+          type: string
+        amount:
+          $ref: "#/components/schemas/SettlementCredit"
+        payment_adapter:
+          type: string
+          example: internal_credit
+    SettlementReceipt:
+      type: object
+      required: [receipt_id, transaction_id, state, amount, created_at]
+      properties:
+        receipt_id:
+          type: string
+        transaction_id:
+          type: string
+        state:
+          type: string
+          enum: [SETTLED, DISPUTED, REFUNDED, SLASHED]
+        amount:
+          $ref: "#/components/schemas/SettlementCredit"
+        created_at:
+          type: string
+          format: date-time
+    Dispute:
+      type: object
+      required: [dispute_id, transaction_id, opened_by, reason, state]
+      properties:
+        dispute_id:
+          type: string
+        transaction_id:
+          type: string
+        opened_by:
+          type: string
+        reason:
+          type: string
+        state:
+          type: string
+          enum: [DISPUTED, REFUNDED, SLASHED, SETTLED]
