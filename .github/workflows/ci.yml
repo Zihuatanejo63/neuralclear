@@ -14,3 +14,15 @@ jobs:
           python-version: "3.12"
       - name: Run tests
         run: python3 -m unittest discover
+
+  http-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install HTTP test dependencies
+        run: python3 -m pip install -e ".[http]"
+      - name: Run HTTP-capable tests
+        run: python3 -m unittest discover -v

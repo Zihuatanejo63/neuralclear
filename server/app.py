@@ -101,11 +101,14 @@ if app is not None:
 
     @app.post("/neuralclear/disputes")
     def open_dispute(body: dict[str, object]) -> dict[str, object]:
-        return service.open_dispute(
-            transaction_id=str(body["transaction_id"]),
-            opened_by=str(body.get("opened_by", "buyer.research")),
-            reason=str(body.get("reason", "unspecified")),
-        )
+        try:
+            return service.open_dispute(
+                transaction_id=str(body["transaction_id"]),
+                opened_by=str(body.get("opened_by", "buyer.research")),
+                reason=str(body.get("reason", "unspecified")),
+            )
+        except (KeyError, ProtocolError) as exc:
+            _handle_error(ProtocolError(str(exc)))
 
     @app.get("/neuralclear/receipts/{receipt_id}")
     def get_receipt(receipt_id: str) -> dict[str, object]:

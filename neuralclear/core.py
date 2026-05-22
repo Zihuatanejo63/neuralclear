@@ -350,6 +350,10 @@ class Ledger:
         return self.balances.get(account, 0)
 
     def settle(self, transaction: Transaction) -> None:
+        if transaction.settled_at is not None or any(
+            item.transaction_id == transaction.transaction_id for item in self.transactions
+        ):
+            raise ProtocolError("transaction already settled")
         total_debit = transaction.amount.amount + transaction.fee.amount
         if self.balance_of(transaction.sender) < total_debit:
             raise ProtocolError("insufficient credit")

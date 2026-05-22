@@ -3,10 +3,17 @@ name = "neuralclear"
 version = "0.1.0"
 description = "Prototype clearing protocol for AI agent-to-agent service transactions"
 requires-python = ">=3.10"
-dependencies = [
+dependencies = []
+
+[project.optional-dependencies]
+http = [
   "fastapi>=0.110",
+  "httpx>=0.27",
   "uvicorn>=0.27",
 ]
 
 [tool.black]
 line-length = 100
+
+[tool.setuptools.packages.find]
+include = ["neuralclear", "server", "client"]

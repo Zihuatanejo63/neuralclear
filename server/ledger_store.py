@@ -45,6 +45,8 @@ class ReferenceClearingService:
         payload: dict[str, object],
         mandate: SpendingMandate,
     ) -> dict[str, object]:
+        if task_id in self.tasks:
+            raise ProtocolError(f"duplicate task_id: {task_id}")
         quote = self._get_quote(quote_id)
         if quote.provider != provider:
             raise ProtocolError("quote provider mismatch")
@@ -77,6 +79,8 @@ class ReferenceClearingService:
             raise ProtocolError("proof verification failed")
         transaction.transition(TransactionState.PROOF_VERIFIED)
         self.ledger.settle(transaction)
+        if not self.ledger.verify_zero_sum():
+            raise ProtocolError("ledger invariant failed after settlement")
 
         receipt = Receipt(
             receipt_id=f"rcpt_{uuid4().hex}",
@@ -118,6 +122,7 @@ class ReferenceClearingService:
         raise ProtocolError(f"unknown settlement transaction: {transaction_id}")
 
     def open_dispute(self, transaction_id: str, opened_by: str, reason: str) -> dict[str, str]:
+        self._get_transaction(transaction_id)
         return {
             "dispute_id": f"disp_{uuid4().hex}",
             "transaction_id": transaction_id,
@@ -134,6 +139,12 @@ class ReferenceClearingService:
             return self.quotes[quote_id]
         except KeyError as exc:
             raise ProtocolError(f"unknown quote: {quote_id}") from exc
+
+    def _get_transaction(self, transaction_id: str) -> Transaction:
+        for transaction in self.ledger.transactions:
+            if transaction.transaction_id == transaction_id:
+                return transaction
+        raise ProtocolError(f"unknown transaction: {transaction_id}")
 
     def _platform_fee(self, amount: SettlementCredit) -> SettlementCredit:
         fee = max(1, amount.amount * self.platform_fee_bps // 10_000)
