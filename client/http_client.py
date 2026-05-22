@@ -29,7 +29,22 @@ class NeuralClearHTTPClient:
     def get_receipt(self, receipt_id: str) -> dict[str, object]:
         return self._get(f"/neuralclear/receipts/{receipt_id}")
 
-    def _get(self, path: str) -> dict[str, object]:
+    def list_receipts(self) -> list[dict[str, object]]:
+        return self._get("/neuralclear/receipts")
+
+    def balances(self) -> dict[str, object]:
+        return self._get("/neuralclear/balances")
+
+    def list_agents(self) -> list[dict[str, object]]:
+        return self._get("/registry/agents")
+
+    def search_agents(self, capability: str) -> list[dict[str, object]]:
+        return self._get(f"/registry/search?capability={capability}")
+
+    def register_agent(self, manifest: dict[str, object]) -> dict[str, object]:
+        return self._post("/registry/agents", manifest)
+
+    def _get(self, path: str):
         with request.urlopen(f"{self.base_url}{path}", timeout=10) as response:
             return json.loads(response.read().decode("utf-8"))
 
