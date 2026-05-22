@@ -1,15 +1,20 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import os
 from uuid import uuid4
 
 from neuralclear import SettlementCredit, SpendingMandate
 from neuralclear.core import ProtocolError
 
+from .dashboard import register_dashboard_routes
 from .ledger_store import ReferenceClearingService
 from .registry import manifest_for
+from .registry_store import build_default_registry_store
+from .routes_registry import register_registry_routes
 
-service = ReferenceClearingService()
+service = ReferenceClearingService(storage_path=os.environ.get("NEURALCLEAR_DB"))
+registry_store = build_default_registry_store()
 
 try:
     from fastapi import FastAPI, HTTPException
@@ -116,3 +121,14 @@ if app is not None:
             return service.get_receipt(receipt_id)
         except ProtocolError as exc:
             _handle_error(exc)
+
+    @app.get("/neuralclear/receipts")
+    def list_receipts() -> list[dict[str, object]]:
+        return service.list_receipts()
+
+    @app.get("/neuralclear/balances")
+    def get_balances() -> dict[str, object]:
+        return service.balances_snapshot()
+
+    register_registry_routes(app, registry_store, _handle_error)
+    register_dashboard_routes(app, service, registry_store)
