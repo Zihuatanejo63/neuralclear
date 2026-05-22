@@ -19,6 +19,7 @@ from neuralclear import (
     TransactionState,
 )
 from neuralclear.core import ProtocolError
+from server.ledger_store import ReferenceClearingService
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -215,3 +216,38 @@ class ProtocolTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue(path.exists())
                 json.loads(path.read_text(encoding="utf-8"))
+
+    def test_reference_marketplace_flow(self):
+        service = ReferenceClearingService()
+        quote = service.request_quote("agent.pdf_summarizer", "summarize.pdf")
+        mandate = SpendingMandate(
+            owner="buyer.research",
+            agent="buyer.research.agent",
+            allowed_capabilities=["summarize.pdf"],
+            max_per_task=SettlementCredit(100),
+            max_daily=SettlementCredit(1_000),
+            valid_until=(datetime.now(timezone.utc) + timedelta(days=1)).timestamp(),
+            requires_human_approval_above=SettlementCredit(500),
+            signature="ed25519:demo",
+        )
+
+        task = service.submit_task(
+            task_id="task_test_marketplace",
+            quote_id=str(quote["quote_id"]),
+            buyer="buyer.research",
+            provider="agent.pdf_summarizer",
+            payload={"text": "A PDF document about NeuralClear settlement receipts."},
+            mandate=mandate,
+        )
+
+        receipt = task["result"]["receipt"]
+        snapshot = service.balances_snapshot()
+        self.assertEqual(task["state"], TransactionState.SETTLED.value)
+        self.assertEqual(receipt["amount"]["amount"], 50)
+        self.assertEqual(snapshot["balances"]["buyer.research"], 945)
+        self.assertEqual(snapshot["balances"]["agent.pdf_summarizer"], 50)
+        self.assertEqual(snapshot["fee_pool"], 5)
+        self.assertEqual(
+            service.get_receipt_for_transaction(str(receipt["transaction_id"]))["receipt_id"],
+            receipt["receipt_id"],
+        )

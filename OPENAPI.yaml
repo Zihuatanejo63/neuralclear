@@ -104,6 +104,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Dispute"
+  /neuralclear/receipts/{receipt_id}:
+    get:
+      summary: Fetch a settlement receipt
+      operationId: getReceipt
+      parameters:
+        - name: receipt_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Settlement receipt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettlementReceipt"
 components:
   schemas:
     SettlementCredit:
@@ -179,7 +196,15 @@ components:
           type: number
     SpendingMandate:
       type: object
-      required: [owner, agent, allowed_capabilities, max_per_task, max_daily, valid_until, requires_human_approval_above, signature]
+      required:
+        - owner
+        - agent
+        - allowed_capabilities
+        - max_per_task
+        - max_daily
+        - valid_until
+        - requires_human_approval_above
+        - signature
       properties:
         owner:
           type: string
@@ -225,7 +250,12 @@ components:
           type: string
         state:
           type: string
-          enum: [TASK_SUBMITTED, TASK_RUNNING, RESULT_DELIVERED, DISPUTED, EXPIRED]
+          enum:
+            - TASK_SUBMITTED
+            - TASK_RUNNING
+            - RESULT_DELIVERED
+            - DISPUTED
+            - EXPIRED
     TaskResult:
       type: object
       required: [transaction_id, output, resource_usage, settlement_amount, proof]
@@ -261,16 +291,24 @@ components:
           example: internal_credit
     SettlementReceipt:
       type: object
-      required: [receipt_id, transaction_id, state, amount, created_at]
+      required: [receipt_id, transaction_id, quote_id, sender, receiver, amount, fee, state, created_at]
       properties:
         receipt_id:
           type: string
         transaction_id:
           type: string
+        quote_id:
+          type: string
+        sender:
+          type: string
+        receiver:
+          type: string
         state:
           type: string
           enum: [SETTLED, DISPUTED, REFUNDED, SLASHED]
         amount:
+          $ref: "#/components/schemas/SettlementCredit"
+        fee:
           $ref: "#/components/schemas/SettlementCredit"
         created_at:
           type: string
