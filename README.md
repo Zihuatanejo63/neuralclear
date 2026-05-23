@@ -64,12 +64,17 @@ python3 -m pip install -e ".[http]"
 Run the reference server:
 
 ```bash
+NEURALCLEAR_API_KEY=dev_neuralclear_key \
+NEURALCLEAR_DB=./neuralclear-sandbox.db \
 uvicorn server.app:app --port 8000
 ```
 
 Use the CLI from another terminal:
 
 ```bash
+export NEURALCLEAR_BASE_URL=http://127.0.0.1:8000
+export NEURALCLEAR_API_KEY=dev_neuralclear_key
+
 python3 -m client.cli agents list
 python3 -m client.cli agents search summarize.pdf
 python3 -m client.cli agent register examples/well-known/agent.json
@@ -77,6 +82,12 @@ python3 -m client.cli quote request agent.pdf_summarizer summarize.pdf
 python3 -m client.cli task submit quote_xxx --text "Summarize this PDF text."
 python3 -m client.cli receipts list
 python3 -m client.cli balances
+```
+
+Protected write endpoints require:
+
+```text
+X-NeuralClear-API-Key: dev_neuralclear_key
 ```
 
 The sandbox dashboard is available at:
@@ -94,6 +105,15 @@ For local persistence across restarts, set:
 ```bash
 NEURALCLEAR_DB=./neuralclear-sandbox.db uvicorn server.app:app --port 8000
 ```
+
+Docker Compose is also supported:
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Developer docs are in [docs/quickstart.md](docs/quickstart.md), [docs/api-reference.md](docs/api-reference.md), and [docs/deployment.md](docs/deployment.md).
 
 ## Protocol Objects
 
@@ -142,9 +162,9 @@ NeuralClear is intended to compose with these protocols, not replace them.
 
 ## Current Status
 
-Current stage: V0.2 reference implementation complete.
+Current stage: V0.3 sandbox prototype complete.
 
-Next milestone: V0.3 sandbox registry and dashboard.
+Next milestone: V0.4 hosted developer sandbox.
 
 Prototype only. Not production ready.
 
