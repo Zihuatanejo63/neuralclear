@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuralClear Developer Preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0a0b0d;
+      --panel: #111418;
+      --panel-2: #171b21;
+      --border: rgba(255,255,255,.12);
+      --text: #f2f5f7;
+      --muted: #9ba6b2;
+      --accent: #00d4aa;
+      --blue: #4da6ff;
+      --warn: #f5a623;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: radial-gradient(circle at top, rgba(0,212,170,.12), transparent 34rem), var(--bg); color: var(--text); }
+    a { color: inherit; }
+    header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 18px clamp(20px, 5vw, 72px); border-bottom: 1px solid var(--border); background: rgba(10,11,13,.82); backdrop-filter: blur(14px); }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .02em; }
+    .mark { width: 28px; height: 28px; border: 1px solid var(--accent); border-radius: 6px; display: grid; place-items: center; color: var(--accent); }
+    nav { display: flex; gap: 20px; color: var(--muted); font-size: 14px; }
+    nav a { text-decoration: none; }
+    main { padding: 84px clamp(20px, 5vw, 72px) 56px; }
+    .hero { max-width: 980px; }
+    .eyebrow { display: inline-flex; gap: 8px; align-items: center; padding: 6px 10px; border: 1px solid rgba(0,212,170,.32); color: var(--accent); border-radius: 999px; background: rgba(0,212,170,.08); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; }
+    h1 { margin: 28px 0 20px; font-size: clamp(42px, 7vw, 82px); line-height: .98; letter-spacing: -.05em; max-width: 940px; }
+    .lead { max-width: 760px; color: var(--muted); font-size: 20px; line-height: 1.7; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+    .btn { padding: 12px 18px; border-radius: 8px; text-decoration: none; border: 1px solid var(--border); color: var(--text); background: rgba(255,255,255,.04); font-weight: 650; }
+    .btn.primary { background: var(--accent); color: #031b15; border-color: var(--accent); }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 64px; }
+    .card { background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02)); border: 1px solid var(--border); border-radius: 12px; padding: 24px; min-height: 180px; }
+    .card h2 { margin: 0 0 10px; font-size: 18px; }
+    .card p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .flow { display: grid; grid-template-columns: repeat(7, minmax(120px, 1fr)); gap: 1px; margin-top: 28px; overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--border); }
+    .step { background: var(--panel); padding: 18px; min-height: 110px; }
+    .step span { color: var(--accent); font-size: 12px; font-weight: 700; }
+    .step strong { display: block; margin-top: 8px; }
+    section { margin-top: 84px; }
+    h2.section { font-size: 32px; margin-bottom: 12px; }
+    .code { background: #050607; border: 1px solid var(--border); border-radius: 12px; padding: 18px; overflow-x: auto; color: #c8d2dc; }
+    code, pre { font-family: "SFMono-Regular", Consolas, monospace; font-size: 14px; }
+    footer { padding: 36px clamp(20px, 5vw, 72px); color: var(--muted); border-top: 1px solid var(--border); }
+    @media (max-width: 820px) { nav { display: none; } .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><div class="mark">N</div><span>NeuralClear</span></div>
+    <nav>
+      <a href="#protocol">Protocol</a>
+      <a href="#sandbox">Sandbox</a>
+      <a href="#registry">Registry</a>
+      <a href="https://github.com/Zihuatanejo63/neuralclear">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow">Developer Preview</div>
+      <h1>Clearing and trust infrastructure for AI agent service transactions.</h1>
+      <p class="lead">NeuralClear standardizes how agents quote, authorize, execute, verify, settle, and dispute service transactions. It is a protocol prototype and sandbox reference implementation, not a production payment system.</p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/Zihuatanejo63/neuralclear">View on GitHub</a>
+        <a class="btn" href="#sandbox">Run local sandbox</a>
+      </div>
+    </section>
+
+    <section id="protocol">
+      <h2 class="section">Protocol flow</h2>
+      <p class="lead">A minimal commercial flow for buyer agents, provider agents, registries, ledgers, receipts, and disputes.</p>
+      <div class="flow">
+        <div class="step"><span>01</span><strong>Discover</strong><p>AgentManifest</p></div>
+        <div class="step"><span>02</span><strong>Quote</strong><p>Capability pricing</p></div>
+        <div class="step"><span>03</span><strong>Authorize</strong><p>SpendingMandate</p></div>
+        <div class="step"><span>04</span><strong>Submit</strong><p>TaskRequest</p></div>
+        <div class="step"><span>05</span><strong>Verify</strong><p>Proof / result hash</p></div>
+        <div class="step"><span>06</span><strong>Settle</strong><p>SignedReceipt</p></div>
+        <div class="step"><span>07</span><strong>Dispute</strong><p>Refund / slash policy</p></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="grid">
+        <div class="card"><h2>V0.1 Protocol</h2><p>SPEC, schemas, lifecycle states, mandate rules, proof levels, and zero-sum clearing tests.</p></div>
+        <div class="card"><h2>V0.2 HTTP</h2><p>FastAPI reference server, Python client, OpenAPI draft, quote/task/receipt/dispute flow.</p></div>
+        <div class="card"><h2>V0.3 Sandbox</h2><p>Registry, SQLite persistence, CLI, dashboard, seed agents, and marketplace demo.</p></div>
+      </div>
+    </section>
+
+    <section id="sandbox">
+      <h2 class="section">Run local sandbox</h2>
+      <div class="code"><pre>git clone https://github.com/Zihuatanejo63/neuralclear.git
+cd neuralclear
+python3 -m pip install -e ".[http]"
+uvicorn server.app:app --port 8000
+
+python3 -m client.cli --api-key dev_neuralclear_key agents list
+python3 -m client.cli --api-key dev_neuralclear_key quote request agent.pdf_summarizer summarize.pdf
+python3 -m client.cli --api-key dev_neuralclear_key task submit quote_xxx --text "Summarize this PDF text."</pre></div>
+    </section>
+
+    <section id="registry">
+      <h2 class="section">Reference agents</h2>
+      <div class="grid">
+        <div class="card"><h2>PDF Summarizer</h2><p><code>agent.pdf_summarizer</code><br/>Capability: <code>summarize.pdf</code></p></div>
+        <div class="card"><h2>Web Search</h2><p><code>agent.web_search</code><br/>Capabilities for search-style service calls.</p></div>
+        <div class="card"><h2>Code Review</h2><p><code>agent.code_review</code><br/>Structured review output with receipt and proof semantics.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>NeuralClear Developer Preview. Protocol open, infrastructure commercializable. Not production finance.</footer>
+</body>
+</html>
