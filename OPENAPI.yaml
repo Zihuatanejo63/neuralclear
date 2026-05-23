@@ -6,6 +6,20 @@ info:
 servers:
   - url: https://agent.example.com
 paths:
+  /health:
+    get:
+      summary: Check service health
+      operationId: health
+      responses:
+        "200":
+          description: Health status
+  /version:
+    get:
+      summary: Fetch service version
+      operationId: version
+      responses:
+        "200":
+          description: Version information
   /.well-known/neuralclear/agent.json:
     get:
       summary: Fetch an agent manifest
@@ -17,6 +31,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AgentManifest"
+  /registry/agents:
+    get:
+      summary: List registered agents
+      operationId: listAgents
+      responses:
+        "200":
+          description: Agent list
+    post:
+      summary: Register an agent manifest
+      operationId: registerAgent
+      responses:
+        "200":
+          description: Registered agent manifest
+  /registry/search:
+    get:
+      summary: Search agents by capability
+      operationId: searchAgents
+      parameters:
+        - name: capability
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Matching agents
   /neuralclear/quote:
     post:
       summary: Request a quote for a capability
@@ -121,6 +161,55 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SettlementReceipt"
+  /neuralclear/receipts:
+    get:
+      summary: List settlement receipts
+      operationId: listReceipts
+      responses:
+        "200":
+          description: Settlement receipts
+  /neuralclear/balances:
+    get:
+      summary: Fetch balance snapshot
+      operationId: getBalances
+      responses:
+        "200":
+          description: Balance snapshot
+  /dashboard/agents:
+    get:
+      summary: Agent dashboard page
+      operationId: dashboardAgents
+      responses:
+        "200":
+          description: HTML dashboard
+  /dashboard/transactions:
+    get:
+      summary: Transaction dashboard page
+      operationId: dashboardTransactions
+      responses:
+        "200":
+          description: HTML dashboard
+  /dashboard/receipts:
+    get:
+      summary: Receipt dashboard page
+      operationId: dashboardReceipts
+      responses:
+        "200":
+          description: HTML dashboard
+  /dashboard/disputes:
+    get:
+      summary: Dispute dashboard page
+      operationId: dashboardDisputes
+      responses:
+        "200":
+          description: HTML dashboard
+  /dashboard/balances:
+    get:
+      summary: Balance dashboard page
+      operationId: dashboardBalances
+      responses:
+        "200":
+          description: HTML dashboard
 components:
   schemas:
     SettlementCredit:

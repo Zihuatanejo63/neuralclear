@@ -3,7 +3,6 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS agents (
   agent_id TEXT PRIMARY KEY,
@@ -36,6 +35,14 @@ CREATE TABLE IF NOT EXISTS balances (
 CREATE TABLE IF NOT EXISTS metadata (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS idempotency_keys (
+  buyer TEXT NOT NULL,
+  idempotency_key TEXT NOT NULL,
+  request_hash TEXT NOT NULL,
+  task_id TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  PRIMARY KEY (buyer, idempotency_key)
 );
 """
 

@@ -43,6 +43,7 @@ def build_parser() -> argparse.ArgumentParser:
     submit.add_argument("--text", required=True)
     submit.add_argument("--buyer", default="buyer.research")
     submit.add_argument("--provider", default="agent.pdf_summarizer")
+    submit.add_argument("--idempotency-key")
 
     receipts = subcommands.add_parser("receipts")
     receipts_sub = receipts.add_subparsers(dest="action", required=True)
@@ -72,7 +73,8 @@ def main(argv: list[str] | None = None) -> int:
                 "provider": args.provider,
                 "quote_id": args.quote_id,
                 "payload": {"text": args.text},
-            }
+            },
+            idempotency_key=args.idempotency_key,
         )
     elif args.resource == "receipts" and args.action == "list":
         output = client.list_receipts()

@@ -29,7 +29,10 @@ def register_dashboard_routes(app, service, registry_store) -> None:
             f"<td>{escape(', '.join(map(str, agent.get('capabilities', []))))}</td></tr>"
             for agent in registry_store.list_agents()
         ]
-        return page("Agents", ["<table><tr><th>ID</th><th>Name</th><th>Capabilities</th></tr>", *rows, "</table>"])
+        return page(
+            "Agents",
+            ["<table><tr><th>ID</th><th>Name</th><th>Capabilities</th></tr>", *rows, "</table>"],
+        )
 
     @app.get("/dashboard/transactions", response_class=HTMLResponse)
     def dashboard_transactions():
@@ -41,7 +44,11 @@ def register_dashboard_routes(app, service, registry_store) -> None:
         ]
         return page(
             "Transactions",
-            ["<table><tr><th>ID</th><th>Sender</th><th>Receiver</th><th>Amount</th><th>Fee</th><th>State</th></tr>", *rows, "</table>"],
+            [
+                "<table><tr><th>ID</th><th>Sender</th><th>Receiver</th><th>Amount</th><th>Fee</th><th>State</th></tr>",
+                *rows,
+                "</table>",
+            ],
         )
 
     @app.get("/dashboard/receipts", response_class=HTMLResponse)
@@ -49,13 +56,17 @@ def register_dashboard_routes(app, service, registry_store) -> None:
         rows = [
             f"<tr><td><code>{escape(receipt.receipt_id)}</code></td>"
             f"<td><code>{escape(receipt.transaction_id)}</code></td>"
-            f"<td>{escape(receipt.sender)}</td><td>{escape(receipt.receiver)}</td>"
-            f"<td>{receipt.amount['amount']}</td><td>{receipt.fee['amount']}</td></tr>"
+            f"<td>{escape(receipt.buyer)}</td><td>{escape(receipt.provider)}</td>"
+            f"<td>{receipt.amount}</td><td>{receipt.fee}</td></tr>"
             for receipt in service.receipts.values()
         ]
         return page(
             "Receipts",
-            ["<table><tr><th>ID</th><th>Transaction</th><th>Sender</th><th>Receiver</th><th>Amount</th><th>Fee</th></tr>", *rows, "</table>"],
+            [
+                "<table><tr><th>ID</th><th>Transaction</th><th>Sender</th><th>Receiver</th><th>Amount</th><th>Fee</th></tr>",
+                *rows,
+                "</table>",
+            ],
         )
 
     @app.get("/dashboard/disputes", response_class=HTMLResponse)
@@ -68,7 +79,11 @@ def register_dashboard_routes(app, service, registry_store) -> None:
         ]
         return page(
             "Disputes",
-            ["<table><tr><th>ID</th><th>Transaction</th><th>Reason</th><th>State</th></tr>", *rows, "</table>"],
+            [
+                "<table><tr><th>ID</th><th>Transaction</th><th>Reason</th><th>State</th></tr>",
+                *rows,
+                "</table>",
+            ],
         )
 
     @app.get("/dashboard/balances", response_class=HTMLResponse)
@@ -85,4 +100,6 @@ def register_dashboard_routes(app, service, registry_store) -> None:
                 f"<tr><td>total_supply</td><td>{snapshot['total_supply']}</td></tr>",
             ]
         )
-        return page("Balances", ["<table><tr><th>Account</th><th>Amount</th></tr>", *rows, "</table>"])
+        return page(
+            "Balances", ["<table><tr><th>Account</th><th>Amount</th></tr>", *rows, "</table>"]
+        )

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import hashlib
+import json
 from uuid import uuid4
 
 from neuralclear import (
@@ -18,6 +20,7 @@ from neuralclear.core import ProtocolError
 
 from .models import Receipt, StoredTask
 from .registry import build_default_registry
+from .signing import result_hash, sign_receipt
 from .storage import SQLiteStorage
 
 
@@ -30,6 +33,7 @@ class ReferenceClearingService:
         self.tasks: dict[str, StoredTask] = {}
         self.receipts: dict[str, Receipt] = {}
         self.disputes: dict[str, dict[str, str]] = {}
+        self.idempotency_records: dict[tuple[str, str], dict[str, object]] = {}
         self.storage = SQLiteStorage(storage_path) if storage_path else None
         self.ledger.open_account("buyer.research", SettlementCredit(1_000, "CC"))
         self.ledger.open_account("agent.pdf_summarizer", SettlementCredit(0, "CC"))
@@ -51,14 +55,27 @@ class ReferenceClearingService:
         provider: str,
         payload: dict[str, object],
         mandate: SpendingMandate,
+        idempotency_key: str | None = None,
     ) -> dict[str, object]:
+        request_hash = self._request_hash(quote_id, buyer, provider, payload)
+        if idempotency_key:
+            existing = self.idempotency_records.get((buyer, idempotency_key))
+            if existing is not None:
+                if existing["request_hash"] != request_hash:
+                    raise ProtocolError("idempotency key conflict")
+                existing_task = existing.get("task") or existing.get("payload")
+                if isinstance(existing_task, dict):
+                    return existing_task
+                return self.get_task(str(existing["task_id"]))
         if task_id in self.tasks:
             raise ProtocolError(f"duplicate task_id: {task_id}")
         quote = self._get_quote(quote_id)
         if quote.provider != provider:
             raise ProtocolError("quote provider mismatch")
         mandate.assert_allows(quote.capability, quote.settlement_price)
-        spent_today = self.ledger.get_daily_spend(mandate.agent, mandate.owner, datetime.now(timezone.utc).date())
+        spent_today = self.ledger.get_daily_spend(
+            mandate.agent, mandate.owner, datetime.now(timezone.utc).date()
+        )
         mandate.assert_daily_budget(spent_today, quote.settlement_price)
 
         summary = self._summarize_pdf_text(str(payload.get("text", "")))
@@ -89,26 +106,40 @@ class ReferenceClearingService:
         if not self.ledger.verify_zero_sum():
             raise ProtocolError("ledger invariant failed after settlement")
 
+        result_payload = result.to_json()
+        timestamp = datetime.now(timezone.utc).isoformat()
+        receipt_payload = sign_receipt(
+            {
+                "receipt_id": f"rcpt_{uuid4().hex}",
+                "transaction_id": transaction.transaction_id,
+                "quote_id": quote.quote_id,
+                "buyer": transaction.sender,
+                "provider": transaction.receiver,
+                "sender": transaction.sender,
+                "receiver": transaction.receiver,
+                "amount": transaction.amount.amount,
+                "fee": transaction.fee.amount,
+                "currency": transaction.amount.currency,
+                "timestamp": timestamp,
+                "created_at": timestamp,
+                "result_hash": result_hash(result_payload),
+                "state": transaction.state.value,
+            }
+        )
         receipt = Receipt(
-            receipt_id=f"rcpt_{uuid4().hex}",
-            transaction_id=transaction.transaction_id,
-            quote_id=quote.quote_id,
-            sender=transaction.sender,
-            receiver=transaction.receiver,
-            amount=transaction.amount.to_json(),
-            fee=transaction.fee.to_json(),
-            state=transaction.state.value,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            **receipt_payload,
         )
         self.receipts[receipt.receipt_id] = receipt
         task = StoredTask(
             task_id=task_id,
             quote_id=quote_id,
             state=TransactionState.SETTLED.value,
-            result={**result.to_json(), "receipt": receipt.to_json()},
+            result={**result_payload, "receipt": receipt.to_json()},
         )
         self.tasks[task_id] = task
         self._persist_state(transaction, receipt, task)
+        if idempotency_key:
+            self._save_idempotency_record(buyer, idempotency_key, request_hash, task)
         return task.to_json()
 
     def get_task(self, task_id: str) -> dict[str, object]:
@@ -191,6 +222,7 @@ class ReferenceClearingService:
         if balances is not None:
             self.ledger.balances, self.ledger.fee_pool, self.ledger.total_supply = balances
         self.ledger.transactions = self.storage.load_transactions()
+        self.idempotency_records = self.storage.load_idempotency_records()
         for task in self.storage.load_tasks():
             self.tasks[str(task["task_id"])] = StoredTask(
                 task_id=str(task["task_id"]),
@@ -199,18 +231,32 @@ class ReferenceClearingService:
                 result=task.get("result") if isinstance(task.get("result"), dict) else None,
             )
         for receipt in self.storage.load_receipts():
-            amount = receipt.get("amount")
-            fee = receipt.get("fee")
-            if not isinstance(amount, dict) or not isinstance(fee, dict):
-                continue
             record = Receipt(
                 receipt_id=str(receipt["receipt_id"]),
                 transaction_id=str(receipt["transaction_id"]),
                 quote_id=str(receipt["quote_id"]),
-                sender=str(receipt["sender"]),
-                receiver=str(receipt["receiver"]),
-                amount=amount,
-                fee=fee,
+                buyer=str(receipt.get("buyer", receipt.get("sender"))),
+                provider=str(receipt.get("provider", receipt.get("receiver"))),
+                sender=str(receipt.get("sender", receipt.get("buyer"))),
+                receiver=str(receipt.get("receiver", receipt.get("provider"))),
+                amount=(
+                    int(receipt["amount"]["amount"])
+                    if isinstance(receipt.get("amount"), dict)
+                    else int(receipt["amount"])
+                ),
+                fee=(
+                    int(receipt["fee"]["amount"])
+                    if isinstance(receipt.get("fee"), dict)
+                    else int(receipt["fee"])
+                ),
+                currency=str(
+                    receipt["amount"]["currency"]
+                    if isinstance(receipt.get("amount"), dict)
+                    else receipt["currency"]
+                ),
+                timestamp=str(receipt.get("timestamp", receipt["created_at"])),
+                result_hash=str(receipt.get("result_hash", "")),
+                signature=str(receipt.get("signature", "")),
                 state=str(receipt["state"]),
                 created_at=str(receipt["created_at"]),
             )
@@ -230,3 +276,44 @@ class ReferenceClearingService:
         if not cleaned:
             return "No PDF text supplied."
         return cleaned[:220] + ("..." if len(cleaned) > 220 else "")
+
+    def _save_idempotency_record(
+        self,
+        buyer: str,
+        idempotency_key: str,
+        request_hash: str,
+        task: StoredTask,
+    ) -> None:
+        record = {
+            "request_hash": request_hash,
+            "task_id": task.task_id,
+            "task": task.to_json(),
+        }
+        self.idempotency_records[(buyer, idempotency_key)] = record
+        if self.storage is not None:
+            self.storage.save_idempotency_record(
+                buyer,
+                idempotency_key,
+                request_hash,
+                task.task_id,
+                task.to_json(),
+            )
+
+    @staticmethod
+    def _request_hash(
+        quote_id: str,
+        buyer: str,
+        provider: str,
+        payload: dict[str, object],
+    ) -> str:
+        canonical = json.dumps(
+            {
+                "quote_id": quote_id,
+                "buyer": buyer,
+                "provider": provider,
+                "payload": payload,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

@@ -21,7 +21,6 @@ from neuralclear import (
 from neuralclear.core import ProtocolError
 from server.ledger_store import ReferenceClearingService
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -70,7 +69,9 @@ class ProtocolTests(unittest.TestCase):
         sdk, ledger, agent = make_sdk()
         quote = sdk.request_quote(agent.agent_id, "summarize.paper")
 
-        sdk.call("user.alice", agent.agent_id, quote, {"url": "https://example.com"}, make_mandate())
+        sdk.call(
+            "user.alice", agent.agent_id, quote, {"url": "https://example.com"}, make_mandate()
+        )
 
         self.assertEqual(ledger.balance_of("user.alice"), 75)
         self.assertEqual(ledger.balance_of(agent.agent_id), 25)
@@ -120,7 +121,9 @@ class ProtocolTests(unittest.TestCase):
 
         matches = registry.discover("summarize.paper")
 
-        self.assertEqual([agent.agent_id for agent in matches], ["agent.researcher", "agent.writer"])
+        self.assertEqual(
+            [agent.agent_id for agent in matches], ["agent.researcher", "agent.writer"]
+        )
 
     def test_mandate_limit(self):
         sdk, _, agent = make_sdk(price=50)
@@ -243,7 +246,7 @@ class ProtocolTests(unittest.TestCase):
         receipt = task["result"]["receipt"]
         snapshot = service.balances_snapshot()
         self.assertEqual(task["state"], TransactionState.SETTLED.value)
-        self.assertEqual(receipt["amount"]["amount"], 50)
+        self.assertEqual(receipt["amount"], 50)
         self.assertEqual(snapshot["balances"]["buyer.research"], 945)
         self.assertEqual(snapshot["balances"]["agent.pdf_summarizer"], 50)
         self.assertEqual(snapshot["fee_pool"], 5)

@@ -110,7 +110,7 @@ class SQLitePersistenceTests(unittest.TestCase):
             try:
                 receipt = restarted.get_receipt(receipt_id)
                 self.assertEqual(receipt["receipt_id"], receipt_id)
-                self.assertEqual(receipt["amount"]["amount"], 50)
+                self.assertEqual(receipt["amount"], 50)
             finally:
                 first.close()
                 restarted.close()
@@ -196,6 +196,7 @@ class CLITests(unittest.TestCase):
         client_type.assert_called_with("http://127.0.0.1:8000", api_key=None)
         client.request_quote.assert_called_once()
         client.submit_task.assert_called_once()
+        self.assertIsNone(client.submit_task.call_args.kwargs["idempotency_key"])
 
 
 @unittest.skipIf(TestClient is None, "FastAPI/httpx test dependencies are not installed")
@@ -238,7 +239,7 @@ class ProcessE2ETests(unittest.TestCase):
                 receipt = client.get_receipt(task["result"]["receipt"]["receipt_id"])
                 balances = client.balances()
 
-                self.assertEqual(receipt["amount"]["amount"], 50)
+                self.assertEqual(receipt["amount"], 50)
                 self.assertEqual(balances["balances"]["buyer.research"], 945)
                 self.assertEqual(balances["balances"]["agent.pdf_summarizer"], 50)
                 self.assertEqual(balances["fee_pool"], 5)

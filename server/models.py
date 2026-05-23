@@ -8,12 +8,18 @@ class Receipt:
     receipt_id: str
     transaction_id: str
     quote_id: str
-    sender: str
-    receiver: str
-    amount: dict[str, int | str]
-    fee: dict[str, int | str]
+    buyer: str
+    provider: str
+    amount: int
+    fee: int
+    currency: str
+    timestamp: str
+    result_hash: str
+    signature: str
     state: str
     created_at: str
+    sender: str | None = None
+    receiver: str | None = None
 
     def to_json(self) -> dict[str, object]:
         return asdict(self)

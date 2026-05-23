@@ -47,19 +47,44 @@ def _handle_error(exc: ProtocolError) -> None:
     raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-def _expected_api_key() -> str:
-    return os.environ.get("NEURALCLEAR_API_KEY", "dev_neuralclear_key")
+def _read_api_key() -> str:
+    return os.environ.get(
+        "NEURALCLEAR_READ_API_KEY",
+        os.environ.get("NEURALCLEAR_API_KEY", "dev_neuralclear_read_key"),
+    )
 
 
-def _require_api_key(x_neuralclear_api_key: str | None = Header(default=None)) -> None:
-    if x_neuralclear_api_key != _expected_api_key():
+def _write_api_key() -> str:
+    return os.environ.get(
+        "NEURALCLEAR_WRITE_API_KEY",
+        os.environ.get("NEURALCLEAR_API_KEY", "dev_neuralclear_key"),
+    )
+
+
+def _require_read_key(x_neuralclear_api_key: str | None = Header(default=None)) -> None:
+    if x_neuralclear_api_key not in {_read_api_key(), _write_api_key()}:
+        if HTTPException is None:
+            raise ProtocolError("invalid or missing API key")
+        raise HTTPException(status_code=401, detail="invalid or missing API key")
+
+
+def _require_write_key(x_neuralclear_api_key: str | None = Header(default=None)) -> None:
+    if x_neuralclear_api_key is None:
+        if HTTPException is None:
+            raise ProtocolError("invalid or missing API key")
+        raise HTTPException(status_code=401, detail="invalid or missing API key")
+    if x_neuralclear_api_key == _read_api_key():
+        if HTTPException is None:
+            raise ProtocolError("write API key required")
+        raise HTTPException(status_code=403, detail="write API key required")
+    if x_neuralclear_api_key != _write_api_key():
         if HTTPException is None:
             raise ProtocolError("invalid or missing API key")
         raise HTTPException(status_code=401, detail="invalid or missing API key")
 
 
 if app is not None:
-    protected = [Depends(_require_api_key)]
+    write_protected = [Depends(_require_write_key)]
 
     @app.get("/")
     def index() -> dict[str, object]:
@@ -75,7 +100,21 @@ if app is not None:
     def get_agent_manifest() -> dict[str, object]:
         return manifest_for(service.registry.get("agent.pdf_summarizer"))
 
-    @app.post("/neuralclear/quote", dependencies=protected)
+    @app.get("/health")
+    def health() -> dict[str, str]:
+        storage = "ok"
+        if service.storage is not None:
+            try:
+                service.storage.connection.execute("SELECT 1")
+            except Exception:
+                storage = "error"
+        return {"status": "ok", "service": "neuralclear", "storage": storage}
+
+    @app.get("/version")
+    def version() -> dict[str, str]:
+        return {"service": "neuralclear", "version": "0.4.0-draft"}
+
+    @app.post("/neuralclear/quote", dependencies=write_protected)
     def request_quote(body: dict[str, object]) -> dict[str, object]:
         try:
             return service.request_quote(
@@ -85,8 +124,11 @@ if app is not None:
         except ProtocolError as exc:
             _handle_error(exc)
 
-    @app.post("/neuralclear/tasks", dependencies=protected)
-    def submit_task(body: dict[str, object]) -> dict[str, object]:
+    @app.post("/neuralclear/tasks", dependencies=write_protected)
+    def submit_task(
+        body: dict[str, object],
+        idempotency_key: str | None = Header(default=None),
+    ) -> dict[str, object]:
         try:
             mandate_body = body.get("mandate")
             mandate = _default_mandate()
@@ -110,8 +152,11 @@ if app is not None:
                 provider=str(body.get("provider", "agent.pdf_summarizer")),
                 payload=dict(body.get("payload", {})),
                 mandate=mandate,
+                idempotency_key=idempotency_key,
             )
         except (KeyError, ProtocolError) as exc:
+            if "idempotency key conflict" in str(exc) and HTTPException is not None:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
             _handle_error(ProtocolError(str(exc)))
 
     @app.get("/neuralclear/tasks/{task_id}")
@@ -128,7 +173,7 @@ if app is not None:
         except (KeyError, ProtocolError) as exc:
             _handle_error(ProtocolError(str(exc)))
 
-    @app.post("/neuralclear/disputes", dependencies=protected)
+    @app.post("/neuralclear/disputes", dependencies=write_protected)
     def open_dispute(body: dict[str, object]) -> dict[str, object]:
         try:
             return service.open_dispute(
@@ -154,5 +199,5 @@ if app is not None:
     def get_balances() -> dict[str, object]:
         return service.balances_snapshot()
 
-    register_registry_routes(app, registry_store, _handle_error, protected)
+    register_registry_routes(app, registry_store, _handle_error, write_protected)
     register_dashboard_routes(app, service, registry_store)

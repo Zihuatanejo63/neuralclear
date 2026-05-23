@@ -18,8 +18,12 @@ class NeuralClearHTTPClient:
             {"buyer": buyer, "provider": provider, "capability": capability},
         )
 
-    def submit_task(self, body: dict[str, object]) -> dict[str, object]:
-        return self._post("/neuralclear/tasks", body)
+    def submit_task(
+        self,
+        body: dict[str, object],
+        idempotency_key: str | None = None,
+    ) -> dict[str, object]:
+        return self._post("/neuralclear/tasks", body, idempotency_key=idempotency_key)
 
     def get_task(self, task_id: str) -> dict[str, object]:
         return self._get(f"/neuralclear/tasks/{task_id}")
@@ -49,19 +53,26 @@ class NeuralClearHTTPClient:
         with request.urlopen(f"{self.base_url}{path}", timeout=10) as response:
             return json.loads(response.read().decode("utf-8"))
 
-    def _post(self, path: str, body: dict[str, object]) -> dict[str, object]:
+    def _post(
+        self,
+        path: str,
+        body: dict[str, object],
+        idempotency_key: str | None = None,
+    ) -> dict[str, object]:
         data = json.dumps(body).encode("utf-8")
         req = request.Request(
             f"{self.base_url}{path}",
             data=data,
-            headers=self._headers(),
+            headers=self._headers(idempotency_key),
             method="POST",
         )
         with request.urlopen(req, timeout=10) as response:
             return json.loads(response.read().decode("utf-8"))
 
-    def _headers(self) -> dict[str, str]:
+    def _headers(self, idempotency_key: str | None = None) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["X-NeuralClear-API-Key"] = self.api_key
+        if idempotency_key:
+            headers["Idempotency-Key"] = idempotency_key
         return headers

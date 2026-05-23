@@ -53,6 +53,43 @@ class SQLiteStorage:
     def load_disputes(self) -> list[dict[str, object]]:
         return self._load_json_table("disputes")
 
+    def save_idempotency_record(
+        self,
+        buyer: str,
+        idempotency_key: str,
+        request_hash: str,
+        task_id: str,
+        payload: dict[str, object],
+    ) -> None:
+        with self.connection:
+            self.connection.execute(
+                "INSERT INTO idempotency_keys"
+                "(buyer, idempotency_key, request_hash, task_id, payload) "
+                "VALUES (?, ?, ?, ?, ?) "
+                "ON CONFLICT(buyer, idempotency_key) DO UPDATE SET "
+                "request_hash=excluded.request_hash, task_id=excluded.task_id, payload=excluded.payload",
+                (
+                    buyer,
+                    idempotency_key,
+                    request_hash,
+                    task_id,
+                    json.dumps(payload, sort_keys=True),
+                ),
+            )
+
+    def load_idempotency_records(self) -> dict[tuple[str, str], dict[str, object]]:
+        rows = self.connection.execute(
+            "SELECT buyer, idempotency_key, request_hash, task_id, payload FROM idempotency_keys"
+        ).fetchall()
+        return {
+            (str(row["buyer"]), str(row["idempotency_key"])): {
+                "request_hash": str(row["request_hash"]),
+                "task_id": str(row["task_id"]),
+                "payload": json.loads(row["payload"]),
+            }
+            for row in rows
+        }
+
     def save_balances(self, balances: dict[str, int], fee_pool: int, total_supply: int) -> None:
         with self.connection:
             self.connection.execute("DELETE FROM balances")
@@ -110,9 +147,9 @@ class SQLiteStorage:
             fee=SettlementCredit(**fee),
             capability=str(payload["capability"]),
             quote_id=str(payload["quote_id"]) if payload.get("quote_id") else None,
-            authorized_agent=str(payload["authorized_agent"])
-            if payload.get("authorized_agent")
-            else None,
+            authorized_agent=(
+                str(payload["authorized_agent"]) if payload.get("authorized_agent") else None
+            ),
             transaction_id=str(payload["transaction_id"]),
             state=TransactionState(str(payload["state"])),
         )
