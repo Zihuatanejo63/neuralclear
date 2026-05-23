@@ -1,0 +1,8 @@
+.git
+__pycache__/
+*.pyc
+*.pyo
+*.db
+.env
+neuralclear.egg-info/
+.pytest_cache/

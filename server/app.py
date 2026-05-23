@@ -17,9 +17,11 @@ service = ReferenceClearingService(storage_path=os.environ.get("NEURALCLEAR_DB")
 registry_store = build_default_registry_store()
 
 try:
-    from fastapi import FastAPI, HTTPException
+    from fastapi import Depends, FastAPI, Header, HTTPException
 except ImportError:  # pragma: no cover - keeps core tests dependency-free.
+    Depends = None
     FastAPI = None
+    Header = None
     HTTPException = None
     app = None
 else:
@@ -45,13 +47,35 @@ def _handle_error(exc: ProtocolError) -> None:
     raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+def _expected_api_key() -> str:
+    return os.environ.get("NEURALCLEAR_API_KEY", "dev_neuralclear_key")
+
+
+def _require_api_key(x_neuralclear_api_key: str | None = Header(default=None)) -> None:
+    if x_neuralclear_api_key != _expected_api_key():
+        if HTTPException is None:
+            raise ProtocolError("invalid or missing API key")
+        raise HTTPException(status_code=401, detail="invalid or missing API key")
+
+
 if app is not None:
+    protected = [Depends(_require_api_key)]
+
+    @app.get("/")
+    def index() -> dict[str, object]:
+        return {
+            "name": "NeuralClear Sandbox",
+            "stage": "V0.4 developer preview draft",
+            "docs": "/docs",
+            "dashboard": "/dashboard/agents",
+            "registry": "/registry/agents",
+        }
 
     @app.get("/.well-known/neuralclear/agent.json")
     def get_agent_manifest() -> dict[str, object]:
         return manifest_for(service.registry.get("agent.pdf_summarizer"))
 
-    @app.post("/neuralclear/quote")
+    @app.post("/neuralclear/quote", dependencies=protected)
     def request_quote(body: dict[str, object]) -> dict[str, object]:
         try:
             return service.request_quote(
@@ -61,7 +85,7 @@ if app is not None:
         except ProtocolError as exc:
             _handle_error(exc)
 
-    @app.post("/neuralclear/tasks")
+    @app.post("/neuralclear/tasks", dependencies=protected)
     def submit_task(body: dict[str, object]) -> dict[str, object]:
         try:
             mandate_body = body.get("mandate")
@@ -104,7 +128,7 @@ if app is not None:
         except (KeyError, ProtocolError) as exc:
             _handle_error(ProtocolError(str(exc)))
 
-    @app.post("/neuralclear/disputes")
+    @app.post("/neuralclear/disputes", dependencies=protected)
     def open_dispute(body: dict[str, object]) -> dict[str, object]:
         try:
             return service.open_dispute(
@@ -130,5 +154,5 @@ if app is not None:
     def get_balances() -> dict[str, object]:
         return service.balances_snapshot()
 
-    register_registry_routes(app, registry_store, _handle_error)
+    register_registry_routes(app, registry_store, _handle_error, protected)
     register_dashboard_routes(app, service, registry_store)

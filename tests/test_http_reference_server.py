@@ -16,6 +16,7 @@ class HTTPReferenceServerTests(unittest.TestCase):
     def setUp(self):
         app_module.service = ReferenceClearingService()
         self.client = TestClient(app_module.app)
+        self.headers = {"X-NeuralClear-API-Key": "dev_neuralclear_key"}
 
     def _quote(self):
         response = self.client.post(
@@ -25,6 +26,7 @@ class HTTPReferenceServerTests(unittest.TestCase):
                 "provider": "agent.pdf_summarizer",
                 "capability": "summarize.pdf",
             },
+            headers=self.headers,
         )
         self.assertEqual(response.status_code, 200)
         return response.json()
@@ -57,6 +59,7 @@ class HTTPReferenceServerTests(unittest.TestCase):
                 },
                 "mandate": mandate or self._mandate(),
             },
+            headers=self.headers,
         )
 
     def test_get_manifest(self):
@@ -100,6 +103,7 @@ class HTTPReferenceServerTests(unittest.TestCase):
                 "opened_by": "buyer.research",
                 "reason": "quality issue",
             },
+            headers=self.headers,
         )
 
         self.assertEqual(response.status_code, 200)
@@ -109,6 +113,7 @@ class HTTPReferenceServerTests(unittest.TestCase):
         response = self.client.post(
             "/neuralclear/quote",
             json={"provider": "agent.missing", "capability": "summarize.pdf"},
+            headers=self.headers,
         )
 
         self.assertEqual(response.status_code, 400)
@@ -117,6 +122,7 @@ class HTTPReferenceServerTests(unittest.TestCase):
         response = self.client.post(
             "/neuralclear/quote",
             json={"provider": "agent.pdf_summarizer", "capability": "translate.text"},
+            headers=self.headers,
         )
 
         self.assertEqual(response.status_code, 400)
@@ -165,6 +171,7 @@ class HTTPReferenceServerTests(unittest.TestCase):
         dispute_response = self.client.post(
             "/neuralclear/disputes",
             json={"transaction_id": "tx_missing", "opened_by": "buyer.research"},
+            headers=self.headers,
         )
 
         self.assertEqual(task_response.status_code, 400)

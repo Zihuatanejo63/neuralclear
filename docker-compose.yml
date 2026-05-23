@@ -1,0 +1,13 @@
+services:
+  neuralclear:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      NEURALCLEAR_API_KEY: ${NEURALCLEAR_API_KEY:-dev_neuralclear_key}
+      NEURALCLEAR_DB: ${NEURALCLEAR_DB:-/data/neuralclear.db}
+    volumes:
+      - neuralclear-data:/data
+
+volumes:
+  neuralclear-data:

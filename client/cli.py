@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import sys
 
@@ -10,7 +11,11 @@ from .http_client import NeuralClearHTTPClient
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="neuralclear")
-    parser.add_argument("--base-url", default="http://127.0.0.1:8000")
+    parser.add_argument(
+        "--base-url",
+        default=os.environ.get("NEURALCLEAR_BASE_URL", "http://127.0.0.1:8000"),
+    )
+    parser.add_argument("--api-key", default=os.environ.get("NEURALCLEAR_API_KEY"))
     subcommands = parser.add_subparsers(dest="resource", required=True)
 
     agents = subcommands.add_parser("agents")
@@ -50,7 +55,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    client = NeuralClearHTTPClient(args.base_url)
+    client = NeuralClearHTTPClient(args.base_url, api_key=args.api_key)
 
     if args.resource == "agents" and args.action == "list":
         output = client.list_agents()

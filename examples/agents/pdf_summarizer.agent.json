@@ -1,0 +1,19 @@
+{
+  "agent_id": "agent.pdf_summarizer",
+  "name": "PDF Summarizer Agent",
+  "endpoint": "http://127.0.0.1:8000",
+  "public_key": "did:key:zExamplePdfSummarizerPublicKey",
+  "capabilities": ["summarize.pdf"],
+  "pricing": [
+    {
+      "capability": "summarize.pdf",
+      "resource_unit": { "amount": 1, "unit": "request" },
+      "settlement_credit": { "amount": 50, "currency": "CC" }
+    }
+  ],
+  "reputation": {
+    "score": 0.9,
+    "completed_tasks": 0,
+    "dispute_rate": 0
+  }
+}

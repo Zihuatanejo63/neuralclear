@@ -5,8 +5,15 @@ from neuralclear.core import ProtocolError
 from .registry_store import AgentRegistryStore
 
 
-def register_registry_routes(app, registry_store: AgentRegistryStore, handle_error) -> None:
-    @app.post("/registry/agents")
+def register_registry_routes(
+    app,
+    registry_store: AgentRegistryStore,
+    handle_error,
+    protected_dependencies=None,
+) -> None:
+    protected_dependencies = protected_dependencies or []
+
+    @app.post("/registry/agents", dependencies=protected_dependencies)
     def register_agent(manifest: dict[str, object]) -> dict[str, object]:
         try:
             return registry_store.register(manifest)

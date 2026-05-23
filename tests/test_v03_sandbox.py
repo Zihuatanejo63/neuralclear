@@ -120,7 +120,9 @@ class SQLitePersistenceTests(unittest.TestCase):
             db_path = str(Path(tmp) / "neuralclear.db")
             first = ReferenceClearingService(storage_path=db_path)
             task = self._settle_task(first)
-            dispute = first.open_dispute(task["result"]["transaction_id"], "buyer.research", "quality")
+            dispute = first.open_dispute(
+                task["result"]["transaction_id"], "buyer.research", "quality"
+            )
 
             restarted = ReferenceClearingService(storage_path=db_path)
             try:
@@ -151,9 +153,14 @@ class DashboardAndRegistryHTTPTests(unittest.TestCase):
     def setUp(self):
         app_module.service = ReferenceClearingService()
         self.client = TestClient(app_module.app)
+        self.headers = {"X-NeuralClear-API-Key": "dev_neuralclear_key"}
 
     def test_registry_http_register_and_search(self):
-        response = self.client.post("/registry/agents", json=registerable_manifest())
+        response = self.client.post(
+            "/registry/agents",
+            json=registerable_manifest(),
+            headers=self.headers,
+        )
         search = self.client.get("/registry/search?capability=translate.text")
 
         self.assertEqual(response.status_code, 200)
@@ -186,6 +193,7 @@ class CLITests(unittest.TestCase):
 
         self.assertEqual(quote_code, 0)
         self.assertEqual(task_code, 0)
+        client_type.assert_called_with("http://127.0.0.1:8000", api_key=None)
         client.request_quote.assert_called_once()
         client.submit_task.assert_called_once()
 
@@ -205,7 +213,7 @@ class ProcessE2ETests(unittest.TestCase):
                 stderr=subprocess.DEVNULL,
             )
             try:
-                client = NeuralClearHTTPClient(base_url)
+                client = NeuralClearHTTPClient(base_url, api_key="dev_neuralclear_key")
                 for _ in range(50):
                     try:
                         manifest = client.get_manifest()
@@ -216,7 +224,9 @@ class ProcessE2ETests(unittest.TestCase):
                 else:
                     self.fail("server did not start")
 
-                quote = client.request_quote("buyer.research", "agent.pdf_summarizer", "summarize.pdf")
+                quote = client.request_quote(
+                    "buyer.research", "agent.pdf_summarizer", "summarize.pdf"
+                )
                 task = client.submit_task(
                     {
                         "buyer": "buyer.research",

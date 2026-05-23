@@ -5,8 +5,9 @@ from urllib import request
 
 
 class NeuralClearHTTPClient:
-    def __init__(self, base_url: str) -> None:
+    def __init__(self, base_url: str, api_key: str | None = None) -> None:
         self.base_url = base_url.rstrip("/")
+        self.api_key = api_key
 
     def get_manifest(self) -> dict[str, object]:
         return self._get("/.well-known/neuralclear/agent.json")
@@ -53,8 +54,14 @@ class NeuralClearHTTPClient:
         req = request.Request(
             f"{self.base_url}{path}",
             data=data,
-            headers={"Content-Type": "application/json"},
+            headers=self._headers(),
             method="POST",
         )
         with request.urlopen(req, timeout=10) as response:
             return json.loads(response.read().decode("utf-8"))
+
+    def _headers(self) -> dict[str, str]:
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["X-NeuralClear-API-Key"] = self.api_key
+        return headers

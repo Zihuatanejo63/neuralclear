@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import json
+from pathlib import Path
 
 from neuralclear.core import ProtocolError
 
@@ -39,21 +41,26 @@ class AgentRegistryStore:
 
 def build_default_registry_store() -> AgentRegistryStore:
     store = AgentRegistryStore()
-    store.register(
-        {
-            "agent_id": "agent.pdf_summarizer",
-            "name": "PDF Summarizer Agent",
-            "endpoint": "http://127.0.0.1:8000",
-            "public_key": "did:key:zExamplePdfSummarizerPublicKey",
-            "capabilities": ["summarize.pdf"],
-            "pricing": [
-                {
-                    "capability": "summarize.pdf",
-                    "resource_unit": {"amount": 1, "unit": "request"},
-                    "settlement_credit": {"amount": 50, "currency": "CC"},
-                }
-            ],
-            "reputation": {"score": 0.9, "completed_tasks": 0, "dispute_rate": 0},
-        }
-    )
+    seed_dir = Path(__file__).resolve().parents[1] / "examples" / "agents"
+    if seed_dir.exists():
+        for path in sorted(seed_dir.glob("*.agent.json")):
+            store.register(json.loads(path.read_text(encoding="utf-8")))
+    if not store.list_agents():
+        store.register(
+            {
+                "agent_id": "agent.pdf_summarizer",
+                "name": "PDF Summarizer Agent",
+                "endpoint": "http://127.0.0.1:8000",
+                "public_key": "did:key:zExamplePdfSummarizerPublicKey",
+                "capabilities": ["summarize.pdf"],
+                "pricing": [
+                    {
+                        "capability": "summarize.pdf",
+                        "resource_unit": {"amount": 1, "unit": "request"},
+                        "settlement_credit": {"amount": 50, "currency": "CC"},
+                    }
+                ],
+                "reputation": {"score": 0.9, "completed_tasks": 0, "dispute_rate": 0},
+            }
+        )
     return store

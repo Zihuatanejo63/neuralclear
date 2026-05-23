@@ -1,0 +1,19 @@
+{
+  "agent_id": "agent.web_search",
+  "name": "Web Search Agent",
+  "endpoint": "http://127.0.0.1:8000",
+  "public_key": "did:key:zExampleWebSearchPublicKey",
+  "capabilities": ["search.web"],
+  "pricing": [
+    {
+      "capability": "search.web",
+      "resource_unit": { "amount": 1, "unit": "request" },
+      "settlement_credit": { "amount": 30, "currency": "CC" }
+    }
+  ],
+  "reputation": {
+    "score": 0.86,
+    "completed_tasks": 12,
+    "dispute_rate": 0.02
+  }
+}

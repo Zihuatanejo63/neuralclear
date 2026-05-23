@@ -1,0 +1,19 @@
+{
+  "agent_id": "agent.code_review",
+  "name": "Code Review Agent",
+  "endpoint": "http://127.0.0.1:8000",
+  "public_key": "did:key:zExampleCodeReviewPublicKey",
+  "capabilities": ["review.code"],
+  "pricing": [
+    {
+      "capability": "review.code",
+      "resource_unit": { "amount": 1000, "unit": "tokens" },
+      "settlement_credit": { "amount": 75, "currency": "CC" }
+    }
+  ],
+  "reputation": {
+    "score": 0.88,
+    "completed_tasks": 7,
+    "dispute_rate": 0.01
+  }
+}
