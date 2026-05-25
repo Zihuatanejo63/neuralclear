@@ -1,789 +1,326 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>NeuralClear — Clearing Layer for AI Agent Services</title>
-<link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="manifest" href="/site.webmanifest">
-<meta name="theme-color" content="#00D5FF">
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#02040a;--bg2:#060912;--bg3:#0a0f1e;
-  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
-  --text:#dde3f0;--text2:#7b8ba8;--text3:#404d66;
-  --accent:#00ffe0;--blue:#4d9fff;--amber:#ffb347;--red:#ff6b7a;
-  --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
-}
-html{scroll-behavior:smooth}
-body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;}
-#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
-.blob{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0;opacity:0.055;}
-.blob1{width:700px;height:700px;background:var(--accent);top:-250px;left:-150px;animation:drift1 22s ease-in-out infinite;}
-.blob2{width:550px;height:550px;background:var(--blue);bottom:-150px;right:-150px;animation:drift2 28s ease-in-out infinite;}
-@keyframes drift1{0%,100%{transform:translate(0,0)}33%{transform:translate(90px,70px)}66%{transform:translate(-50px,90px)}}
-@keyframes drift2{0%,100%{transform:translate(0,0)}33%{transform:translate(-70px,-50px)}66%{transform:translate(50px,-90px)}}
-/* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:64px;background:rgba(2,4,10,0.78);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
-.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
-.logo-icon{width:32px;height:32px;border:1px solid var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
-.logo-icon::before{content:'';position:absolute;inset:0;background:radial-gradient(circle,rgba(0,255,224,0.15),transparent 70%);}
-.logo-icon svg{position:relative;z-index:1}
-.logo-text{font-family:var(--mono);font-size:13px;font-weight:500;color:#fff;letter-spacing:0.05em;}
-.logo-ver{font-family:var(--mono);font-size:9px;color:var(--accent);background:rgba(0,255,224,0.08);border:1px solid rgba(0,255,224,0.2);padding:2px 6px;border-radius:3px;letter-spacing:0.1em;}
-.nav-links{display:flex;list-style:none;}
-.nav-links a{font-family:var(--mono);font-size:11px;color:var(--text3);text-decoration:none;padding:0 14px;height:64px;display:flex;align-items:center;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.2s;}
-.nav-links a:hover{color:var(--accent)}
-.nav-actions{display:flex;gap:10px;align-items:center}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:5px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;cursor:pointer;border:none;transition:all 0.2s;}
-.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);}
-.btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.22);background:rgba(255,255,255,0.04)}
-.btn-primary{background:var(--accent);color:#001a14;font-weight:700;box-shadow:0 0 20px rgba(0,255,224,0.25);}
-.btn-primary:hover{background:#33ffe8;box-shadow:0 0 32px rgba(0,255,224,0.4);}
-section{position:relative;z-index:1}
-.container{max-width:1140px;margin:0 auto;padding:0 40px}
-/* HERO */
-#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:120px 40px 80px;position:relative;}
-.hero-scan{position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scan 5s ease-in-out infinite;opacity:0.35;}
-@keyframes scan{0%{top:0;opacity:0}10%{opacity:0.35}90%{opacity:0.35}100%{top:100%;opacity:0}}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;border:1px solid rgba(0,255,224,0.22);background:rgba(0,255,224,0.05);padding:6px 14px;border-radius:20px;margin-bottom:40px;animation:fadeUp 1s ease both;}
-.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 2s ease infinite;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
-.hero-title{font-size:clamp(40px,6vw,80px);font-weight:300;line-height:1.06;letter-spacing:-0.03em;color:#fff;margin-bottom:28px;animation:fadeUp 1s 0.15s ease both;}
-.hero-title em{font-style:normal;color:var(--accent);font-weight:600;}
-.hero-title .line2{font-weight:700;display:block;}
-.hero-sub{font-size:17px;color:var(--text2);line-height:1.75;max-width:600px;margin:0 auto 50px;animation:fadeUp 1s 0.25s ease both;}
-.hero-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;animation:fadeUp 1s 0.35s ease both;}
-.hero-actions .btn{padding:12px 28px;font-size:12px}
-.hero-scroll{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;animation:fadeUp 1s 0.6s ease both;}
-.scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,var(--accent),transparent);animation:sp 2s ease infinite;}
-@keyframes sp{0%,100%{opacity:0.3}50%{opacity:0.9}}
-.hero-stats{display:flex;align-items:center;justify-content:center;gap:0;margin-top:72px;border:1px solid var(--border);border-radius:10px;overflow:hidden;animation:fadeUp 1s 0.45s ease both;background:rgba(6,9,18,0.6);backdrop-filter:blur(10px);}
-.stat{padding:24px 40px;text-align:center;border-right:1px solid var(--border);flex:1;}
-.stat:last-child{border-right:none}
-.stat-val{font-family:var(--mono);font-size:26px;font-weight:600;color:#fff;display:block;margin-bottom:4px;}
-.stat-val .unit{font-size:13px;color:var(--accent);font-weight:400}
-.stat-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-/* REVEAL */
-.reveal{opacity:0;transform:translateY(36px);transition:opacity 0.75s ease,transform 0.75s ease;}
-.reveal.visible{opacity:1;transform:translateY(0)}
-.rd1{transition-delay:0.1s}.rd2{transition-delay:0.2s}.rd3{transition-delay:0.3s}.rd4{transition-delay:0.4s}
-/* TYPOGRAPHY */
-.s-label{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--text3);margin-bottom:12px;display:block;}
-.s-title{font-size:clamp(26px,3.5vw,44px);font-weight:300;letter-spacing:-0.02em;color:#fff;line-height:1.15;margin-bottom:20px;}
-.s-title strong{font-weight:700}
-.s-sub{font-size:16px;color:var(--text2);line-height:1.75;max-width:560px;}
-.sec-div{height:1px;background:linear-gradient(90deg,transparent,var(--border),var(--border2),var(--border),transparent);}
-/* PROBLEM */
-#problem{padding:120px 0}
-.problem-layout{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-top:60px;}
-.p-cell{background:var(--bg2);padding:48px;position:relative;}
-.p-cell::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;}
-.p-cell.problem::before{background:var(--red)}.p-cell.solution::before{background:var(--accent)}
-.p-tag{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;display:flex;align-items:center;gap:6px;margin-bottom:20px;}
-.p-cell.problem .p-tag{color:var(--red)}.p-cell.solution .p-tag{color:var(--accent)}
-.p-cell h3{font-size:22px;font-weight:600;color:#fff;margin-bottom:16px;line-height:1.3;}
-.p-cell p{font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:14px;}
-.p-cell p:last-child{margin-bottom:0}
-/* FLOW */
-#flow{padding:120px 0;background:var(--bg2)}
-.flow-steps{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-top:60px;}
-.flow-step{display:flex;flex-direction:column;align-items:center;gap:12px;cursor:pointer;}
-.flow-step:hover .flow-node,.flow-step.active-step .flow-node{border-color:var(--accent);box-shadow:0 0 20px rgba(0,255,224,0.2);transform:translateY(-4px);}
-.flow-step:hover .fsn,.flow-step.active-step .fsn{color:var(--accent)}
-.flow-node{width:72px;height:72px;border:1px solid var(--border2);border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--bg3);font-size:24px;transition:all 0.3s;position:relative;}
-.fn-num{position:absolute;top:-10px;right:-10px;width:20px;height:20px;border-radius:50%;background:var(--bg);border:1px solid var(--border2);font-family:var(--mono);font-size:8px;color:var(--text3);display:flex;align-items:center;justify-content:center;}
-.fsn{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text2);letter-spacing:0.1em;text-align:center;transition:color 0.2s;}
-.fso{font-family:var(--mono);font-size:9px;color:var(--text3);text-align:center;line-height:1.4;}
-.flow-detail{margin-top:40px;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:28px 32px;display:none;animation:fadeUp 0.3s ease;}
-.flow-detail.active{display:flex;gap:24px;align-items:flex-start}
-.fd-icon{font-size:32px;flex-shrink:0;margin-top:4px}
-.fd-obj{font-family:var(--mono);font-size:10px;color:var(--accent);background:rgba(0,255,224,0.08);border:1px solid rgba(0,255,224,0.15);padding:3px 8px;border-radius:3px;display:inline-block;margin-bottom:8px;}
-.flow-detail h4{font-size:16px;font-weight:600;color:#fff;margin-bottom:6px}
-.flow-detail p{font-size:13px;color:var(--text2);line-height:1.7}
-/* POSITIONING */
-#positioning{padding:120px 0}
-.pos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:60px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
-.pos-card{background:var(--bg2);padding:40px;position:relative;}
-.pos-card.cc{background:rgba(0,255,224,0.025);}
-.pos-card.cc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
-.pl{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;}
-.pt{font-family:var(--mono);font-size:16px;font-weight:700;color:#fff;margin-bottom:14px;}
-.cc .pt{color:var(--accent)}
-.pd{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:18px;}
-.tags{display:flex;flex-wrap:wrap;gap:6px}
-.tag{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:3px;border:1px solid var(--border2);color:var(--text2);}
-.tga{color:var(--accent);border-color:rgba(0,255,224,0.2);background:rgba(0,255,224,0.06);}
-/* OBJECTS */
-#objects{padding:120px 0;background:var(--bg2)}
-.objects-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:60px;}
-.obj-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color 0.2s,transform 0.2s,box-shadow 0.2s;}
-.obj-card:hover{border-color:rgba(0,255,224,0.2);transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,0.3),0 0 20px rgba(0,255,224,0.04);}
-.on{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);margin-bottom:8px;display:block;}
-.od{font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:12px;}
-.obj-fields{display:flex;flex-wrap:wrap;gap:4px}
-.field{font-family:var(--mono);font-size:9px;color:var(--text3);background:rgba(255,255,255,0.03);border:1px solid var(--border);padding:2px 6px;border-radius:3px;}
-/* CODE */
-.code-block{background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;font-family:var(--mono);font-size:12px;line-height:1.7;margin:16px 0;}
-.code-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(255,255,255,0.02);border-bottom:1px solid var(--border);}
-.code-dots{display:flex;gap:5px}.code-dots span{width:10px;height:10px;border-radius:50%;background:var(--border2)}
-.code-file{font-size:10px;color:var(--text3);letter-spacing:0.05em}
-.code-body{padding:20px 24px;overflow-x:auto;color:var(--text2)}
-.code-body pre{white-space:pre}
-.kw{color:#c792ea}.fn{color:var(--blue)}.str{color:var(--accent)}.cm{color:var(--text3);font-style:italic}.num{color:var(--amber)}.key{color:#ff8a80}
-/* SANDBOX */
-#sandbox{padding:120px 0}
-.sandbox-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:48px;margin-top:60px;align-items:start;}
-.cmd-list{list-style:none}
-.cmd-item{display:flex;align-items:flex-start;gap:16px;margin-bottom:28px;}
-.cmd-num{width:28px;height:28px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);font-family:var(--mono);font-size:11px;color:var(--text3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
-.cmd-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:6px;}
-.cmd-item p{font-size:13px;color:var(--text2);margin-bottom:8px}
-.terminal{background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden;position:sticky;top:90px;}
-.term-bar{background:rgba(255,255,255,0.03);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:7px;}
-.tdot{width:10px;height:10px;border-radius:50%}
-.term-body{padding:24px;font-family:var(--mono);font-size:11px;line-height:1.9;color:var(--text2);min-height:380px;}
-.t-prompt{color:var(--text3)}.t-cmd{color:var(--accent)}.t-success{color:var(--accent)}.t-dim{color:var(--text3)}.t-out{color:var(--text2)}
-.t-cursor{display:inline-block;width:7px;height:13px;background:var(--accent);animation:cur 1s step-end infinite;vertical-align:text-bottom;}
-@keyframes cur{0%,100%{opacity:1}50%{opacity:0}}
-/* AGENTS */
-#registry{padding:120px 0;background:var(--bg2)}
-.agents-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:60px;}
-.agent-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:28px;transition:all 0.3s;}
-.agent-card:hover{border-color:rgba(77,159,255,0.3);box-shadow:0 0 30px rgba(77,159,255,0.06);transform:translateY(-4px);}
-.ag-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:18px;}
-.ag-name{font-size:16px;font-weight:600;color:#fff;margin-bottom:4px}
-.ag-id{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:14px}
-.ag-desc{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:16px}
-.cap-tags{display:flex;flex-wrap:wrap;gap:5px}
-.cap{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:3px;background:rgba(77,159,255,0.08);border:1px solid rgba(77,159,255,0.2);color:var(--blue);}
-/* ROADMAP */
-#roadmap{padding:120px 0}
-.roadmap-inner{max-width:760px;margin:60px auto 0}
-.rm-item{display:flex;gap:24px;margin-bottom:40px;position:relative;}
-.rm-item:not(:last-child)::before{content:'';position:absolute;left:14px;top:28px;bottom:-20px;width:1px;background:var(--border);}
-.rm-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:700;flex-shrink:0;z-index:1;}
-.rm-done{background:var(--accent);color:#001a14}
-.rm-active{background:var(--bg);color:var(--accent);border:2px solid var(--accent);box-shadow:0 0 16px rgba(0,255,224,0.3);animation:gp 2s ease infinite;}
-@keyframes gp{0%,100%{box-shadow:0 0 16px rgba(0,255,224,0.3)}50%{box-shadow:0 0 24px rgba(0,255,224,0.5)}}
-.rm-future{background:var(--bg3);color:var(--text3);border:1px solid var(--border2)}
-.rm-ver{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:3px;letter-spacing:0.05em}
-.rm-title{font-size:17px;font-weight:600;color:#fff;margin-bottom:6px;display:flex;align-items:center;gap:10px}
-.rm-desc{font-size:13px;color:var(--text2);line-height:1.7}
-.rm-badge{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:3px;}
-.bd{background:rgba(0,255,224,0.1);color:var(--accent)}.bn{background:rgba(77,159,255,0.1);color:var(--blue)}
-/* PRICING */
-#pricing{padding:120px 0;background:var(--bg2)}
-.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:60px;}
-.price-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:32px;position:relative;overflow:hidden;}
-.price-card.featured{border-color:rgba(0,255,224,0.25);background:rgba(0,255,224,0.015);}
-.price-card.featured::before{content:'Current';position:absolute;top:0;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:var(--accent);color:#001a14;padding:3px 12px;border-radius:0 0 6px 6px;}
-.price-tier{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;}
-.price-amt{font-size:36px;font-weight:300;color:#fff;letter-spacing:-0.02em;margin-bottom:6px;}
-.price-amt span{font-size:14px;color:var(--text3);font-weight:400}
-.price-desc{font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:24px}
-.price-feats{list-style:none}
-.price-feats li{font-size:13px;color:var(--text2);padding:7px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:8px;}
-.price-feats li:last-child{border-bottom:none}
-.chk{color:var(--accent);flex-shrink:0}.dsh{color:var(--text3);flex-shrink:0}
-.price-cta{margin-top:24px}.price-cta .btn{width:100%;justify-content:center;}
-/* NOTICE */
-.notice{display:flex;gap:12px;align-items:flex-start;background:rgba(255,179,71,0.05);border:1px solid rgba(255,179,71,0.15);border-radius:8px;padding:16px 20px;font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:40px;}
-.ni{color:var(--amber);flex-shrink:0;font-size:14px;margin-top:1px}
-/* FOOTER */
-footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:48px 0;}
-.footer-inner{max-width:1140px;margin:0 auto;padding:0 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;}
-.footer-note{font-family:var(--mono);font-size:10px;color:var(--text3);max-width:400px;line-height:1.6;}
-.footer-links{display:flex;gap:24px;list-style:none;flex-wrap:wrap}
-.footer-links a{font-family:var(--mono);font-size:10px;color:var(--text3);text-decoration:none;letter-spacing:0.05em;transition:color 0.2s;}
-.footer-links a:hover{color:var(--accent)}
-/* PAGES */
-.page{display:none}.page.active{display:block}
-/* DOC PAGES */
-.doc-wrap{max-width:820px;margin:0 auto}
-.doc-h2{font-size:20px;font-weight:600;color:#fff;margin:48px 0 14px;padding-top:48px;border-top:1px solid var(--border);}
-.doc-p{font-size:14px;color:var(--text2);line-height:1.75;margin-bottom:16px;}
-/* RESPONSIVE */
-@media(max-width:900px){
-  nav{padding:0 20px}.container{padding:0 20px}
-  .nav-links{display:none}
-  #hero{padding:100px 20px 60px}
-  .hero-stats{flex-direction:column}
-  .stat{border-right:none;border-bottom:1px solid var(--border)}
-  .stat:last-child{border-bottom:none}
-  .problem-layout,.pos-grid{grid-template-columns:1fr}
-  .flow-steps{grid-template-columns:repeat(4,1fr)}
-  .objects-grid,.agents-grid,.pricing-grid{grid-template-columns:1fr 1fr}
-  .sandbox-grid{grid-template-columns:1fr}.terminal{position:static}
-}
-@media(max-width:600px){
-  .objects-grid,.agents-grid,.pricing-grid{grid-template-columns:1fr}
-  .flow-steps{grid-template-columns:repeat(2,1fr)}
-}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NeuralClear — Open Transaction Protocol for AI Agents</title>
+  <meta name="description" content="NeuralClear is an open protocol layer that lets AI agents advertise services, request quotes, execute work, and return receipts across agent ecosystems." />
+  <meta name="theme-color" content="#050816" />
+  <meta property="og:title" content="NeuralClear — Open Transaction Protocol for AI Agents" />
+  <meta property="og:description" content="Add a common service transaction layer to your AI agent in minutes: manifests, quotes, tasks, receipts, and conformance tests." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="assets/neuralclear-icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="site.css" />
 </head>
 <body>
+  <div class="site-shell">
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <div class="ambient ambient-three"></div>
+    <div class="mesh-grid"></div>
 
-<canvas id="bg-canvas"></canvas>
-<div class="blob blob1"></div>
-<div class="blob blob2"></div>
-
-<nav>
-  <a class="nav-logo" href="#" onclick="showPage('home');return false">
-    <div class="logo-icon">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M1 8h3l2-5 2 10 2-5 2 0" stroke="#00ffe0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
-    <span class="logo-text">NeuralClear</span>
-    <span class="logo-ver">v0.3</span>
-  </a>
-  <ul class="nav-links">
-    <li><a href="#" onclick="showPage('docs');return false">Docs</a></li>
-    <li><a href="#" onclick="showPage('protocol');return false">Protocol</a></li>
-    <li><a href="#" onclick="showPage('sandbox');return false">Sandbox</a></li>
-    <li><a href="#" onclick="showPage('registry');return false">Registry</a></li>
-    <li><a href="#" onclick="showPage('roadmap-page');return false">Roadmap</a></li>
-    <li><a href="#" onclick="showPage('pricing-page');return false">Pricing</a></li>
-  </ul>
-  <div class="nav-actions">
-    <a href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" class="btn btn-ghost">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.579.688.481C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
-      GitHub
-    </a>
-    <a href="#" onclick="showPage('docs');return false" class="btn btn-primary">Read Spec &rarr;</a>
-  </div>
-</nav>
-
-<!-- ==================== HOME ==================== -->
-<div id="page-home" class="page active">
-
-<section id="hero">
-  <div class="hero-scan"></div>
-  <div class="hero-badge"><div class="badge-dot"></div>Developer Preview &middot; Open Protocol Prototype</div>
-  <h1 class="hero-title">
-    The <em>Clearing Layer</em><br/>
-    <span class="line2">for AI Agent Services</span>
-  </h1>
-  <p class="hero-sub">Open protocol prototype for AI agents to quote, authorize, execute, verify, settle, and dispute service transactions. Not a payment rail &mdash; the semantic layer around agent-to-agent work.</p>
-  <div class="hero-actions">
-    <a href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" class="btn btn-ghost">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.579.688.481C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
-      View GitHub
-    </a>
-    <a href="#" onclick="showPage('protocol');return false" class="btn btn-primary">Read the Spec</a>
-    <a href="#" onclick="showPage('sandbox');return false" class="btn btn-ghost">Run Sandbox</a>
-  </div>
-  <div class="hero-stats reveal">
-    <div class="stat"><span class="stat-val">v0<span class="unit">.3</span></span><span class="stat-label">Current Build</span></div>
-    <div class="stat"><span class="stat-val">9<span class="unit"> obj</span></span><span class="stat-label">Protocol Objects</span></div>
-    <div class="stat"><span class="stat-val">7<span class="unit"> &rarr;</span></span><span class="stat-label">Flow Stages</span></div>
-    <div class="stat"><span class="stat-val">MIT</span><span class="stat-label">License</span></div>
-  </div>
-  <div class="hero-scroll"><div class="scroll-line"></div><span>Scroll</span></div>
-</section>
-
-<section id="problem">
-<div class="container">
-  <span class="s-label reveal">Why NeuralClear</span>
-  <h2 class="s-title reveal">Agents can <strong>talk</strong>.<br/>Transactions need more.</h2>
-  <div class="problem-layout">
-    <div class="p-cell problem reveal">
-      <div class="p-tag"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3M8 10.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>The Gap</div>
-      <h3>Commercial semantics are missing</h3>
-      <p>Agent communication frameworks (MCP, A2A) let agents discover and invoke each other. Payment rails move value. But there's nothing in between: no standard for quoting, authorizing spend, verifying results, generating receipts, or resolving disputes.</p>
-      <p>Every team inventing their own clearing logic creates fragmentation, incompatibility, and trust failures at scale.</p>
-    </div>
-    <div class="p-cell solution reveal rd2">
-      <div class="p-tag"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>NeuralClear</div>
-      <h3>A shared clearing protocol</h3>
-      <p>NeuralClear defines standardized objects and HTTP endpoints for the full transaction lifecycle &mdash; discovery, quoting, mandate authorization, task execution, proof verification, settlement receipt, and dispute resolution.</p>
-      <p>It doesn&rsquo;t issue value, custody funds, or replace payment rails. It defines the commercial semantics and clearing records that make agent transactions verifiable and composable.</p>
-    </div>
-  </div>
-</div>
-</section>
-
-<div class="sec-div"></div>
-
-<section id="flow">
-<div class="container">
-  <span class="s-label reveal">Protocol Flow</span>
-  <h2 class="s-title reveal">Seven stages, <strong>one clearing record</strong></h2>
-  <p class="s-sub reveal">Every agent service transaction follows the same lifecycle. Click any stage to explore.</p>
-  <div class="flow-steps reveal" id="flow-steps">
-    <div class="flow-step" onclick="showFlowDetail(0)"><div class="flow-node">&#128269;<div class="fn-num">01</div></div><div class="fsn">DISCOVER</div><div class="fso">AgentManifest</div></div>
-    <div class="flow-step" onclick="showFlowDetail(1)"><div class="flow-node">&#128172;<div class="fn-num">02</div></div><div class="fsn">QUOTE</div><div class="fso">Quote</div></div>
-    <div class="flow-step" onclick="showFlowDetail(2)"><div class="flow-node">&#9989;<div class="fn-num">03</div></div><div class="fsn">MANDATE</div><div class="fso">SpendingMandate</div></div>
-    <div class="flow-step" onclick="showFlowDetail(3)"><div class="flow-node">&#9881;&#65039;<div class="fn-num">04</div></div><div class="fsn">TASK</div><div class="fso">TaskRequest</div></div>
-    <div class="flow-step" onclick="showFlowDetail(4)"><div class="flow-node">&#128300;<div class="fn-num">05</div></div><div class="fsn">VERIFY</div><div class="fso">Proof</div></div>
-    <div class="flow-step" onclick="showFlowDetail(5)"><div class="flow-node">&#128196;<div class="fn-num">06</div></div><div class="fsn">SETTLE</div><div class="fso">SettlementReceipt</div></div>
-    <div class="flow-step" onclick="showFlowDetail(6)"><div class="flow-node">&#9878;&#65039;<div class="fn-num">07</div></div><div class="fsn">DISPUTE</div><div class="fso">Dispute</div></div>
-  </div>
-  <div class="flow-detail" id="flow-detail"></div>
-</div>
-</section>
-
-<div class="sec-div"></div>
-
-<section id="positioning">
-<div class="container">
-  <span class="s-label reveal">Stack Positioning</span>
-  <h2 class="s-title reveal">Where NeuralClear <strong>fits</strong></h2>
-  <p class="s-sub reveal">The AI agent stack has emerging standards at every layer. NeuralClear occupies the clearing layer between communication and settlement.</p>
-  <div class="pos-grid">
-    <div class="pos-card reveal"><div class="pl">Agent Communication</div><div class="pt">MCP / A2A</div><div class="pd">Protocols for agents to discover capabilities, exchange messages, and invoke services. Define how agents talk and interoperate.</div><div class="tags"><span class="tag">Model Context Protocol</span><span class="tag">Agent-to-Agent (A2A)</span></div></div>
-    <div class="pos-card cc reveal rd2"><div class="pl">Clearing &amp; Trust</div><div class="pt">NeuralClear</div><div class="pd">Defines the commercial semantics: how agents quote, authorize, execute, prove, settle, and dispute service transactions. Immutable clearing records for every transaction.</div><div class="tags"><span class="tag tga">Quote</span><span class="tag tga">Mandate</span><span class="tag tga">Proof</span><span class="tag tga">Receipt</span><span class="tag tga">Dispute</span></div></div>
-    <div class="pos-card reveal rd4"><div class="pl">Value Settlement</div><div class="pt">x402 / Stripe / Rails</div><div class="pd">Payment rails that move value between parties after clearing. NeuralClear is fully payment-rail agnostic.</div><div class="tags"><span class="tag">x402</span><span class="tag">Stripe</span><span class="tag">Stablecoin rails</span></div></div>
-  </div>
-</div>
-</section>
-
-<div class="sec-div"></div>
-
-<section id="objects">
-<div class="container">
-  <span class="s-label reveal">Protocol Objects</span>
-  <h2 class="s-title reveal">Nine typed objects,<br/><strong>full lifecycle coverage</strong></h2>
-  <p class="s-sub reveal">All JSON-serializable, version-tagged, composable across any agent framework.</p>
-  <div class="objects-grid">
-    <div class="obj-card reveal"><span class="on">AgentManifest</span><div class="od">Agent identity, capabilities, pricing, and service endpoint. Published to registry for discovery.</div><div class="obj-fields"><span class="field">agent_id</span><span class="field">capabilities[]</span><span class="field">endpoint</span><span class="field">version</span></div></div>
-    <div class="obj-card reveal rd1"><span class="on">Quote</span><div class="od">Priced, time-bounded offer for a specific capability. Accepted quotes become mandates.</div><div class="obj-fields"><span class="field">quote_id</span><span class="field">price</span><span class="field">currency</span><span class="field">expires_at</span></div></div>
-    <div class="obj-card reveal rd2"><span class="on">SpendingMandate</span><div class="od">Authorization from requester approving spend up to quoted amount for a specific agent pair.</div><div class="obj-fields"><span class="field">mandate_id</span><span class="field">quote_id</span><span class="field">max_amount</span></div></div>
-    <div class="obj-card reveal rd1"><span class="on">TaskRequest</span><div class="od">Initiates execution. References the mandate and carries the input payload.</div><div class="obj-fields"><span class="field">task_id</span><span class="field">mandate_id</span><span class="field">input</span></div></div>
-    <div class="obj-card reveal rd2"><span class="on">Proof</span><div class="od">Verifiable attestation that work was performed. Output hash, execution log, capability-specific data.</div><div class="obj-fields"><span class="field">proof_id</span><span class="field">payload_hash</span><span class="field">signature</span></div></div>
-    <div class="obj-card reveal rd3"><span class="on">SettlementReceipt</span><div class="od">The final clearing record. Settled amount, upstream refs, transaction status in ledger.</div><div class="obj-fields"><span class="field">receipt_id</span><span class="field">amount_settled</span><span class="field">status</span></div></div>
-  </div>
-  <div style="margin-top:24px;text-align:center"><a href="#" onclick="showPage('protocol');return false" class="btn btn-ghost">View all 9 objects &rarr;</a></div>
-</div>
-</section>
-
-<div class="sec-div"></div>
-
-<section id="sandbox">
-<div class="container">
-  <span class="s-label reveal">Local Sandbox</span>
-  <h2 class="s-title reveal">Running in <strong>minutes</strong></h2>
-  <p class="s-sub reveal">Full clearing stack locally. HTTP server, SQLite ledger, CLI client, web dashboard.</p>
-  <div class="notice reveal"><span class="ni">&#9888;</span><span>Sandbox uses a simulated ledger &mdash; no real value transfer. <strong>Developer reference implementation</strong> for protocol testing only.</span></div>
-  <div class="sandbox-grid">
-    <ul class="cmd-list reveal">
-      <li class="cmd-item"><div class="cmd-num">1</div><div><div class="cmd-title">Install</div><p>Clone and install Python dependencies.</p><div class="code-block"><div class="code-body" style="padding:10px 16px"><pre>pip install -e <span class="str">".[http]"</span></pre></div></div></div></li>
-      <li class="cmd-item"><div class="cmd-num">2</div><div><div class="cmd-title">Start server</div><p>FastAPI + SQLite on port 8000.</p><div class="code-block"><div class="code-body" style="padding:10px 16px"><pre>uvicorn server.app:app --port <span class="num">8000</span></pre></div></div></div></li>
-      <li class="cmd-item"><div class="cmd-num">3</div><div><div class="cmd-title">Request a quote</div><div class="code-block"><div class="code-body" style="padding:10px 16px"><pre>python3 -m client.cli quote request \
-  agent.pdf_summarizer summarize.pdf</pre></div></div></div></li>
-      <li class="cmd-item"><div class="cmd-num">4</div><div><div class="cmd-title">Submit a task</div><div class="code-block"><div class="code-body" style="padding:10px 16px"><pre>python3 -m client.cli task submit quote_xxx \
-  --text <span class="str">"Summarize this PDF."</span></pre></div></div></div></li>
-      <li class="cmd-item"><div class="cmd-num">5</div><div><div class="cmd-title">View balances</div><div class="code-block"><div class="code-body" style="padding:10px 16px"><pre>python3 -m client.cli balances</pre></div></div></div></li>
-    </ul>
-    <div class="terminal reveal rd2">
-      <div class="term-bar">
-        <div class="tdot" style="background:#ff5f57"></div>
-        <div class="tdot" style="background:#febc2e"></div>
-        <div class="tdot" style="background:#28c840"></div>
-        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:10px">neuralclear &mdash; bash</span>
+    <header class="nav" data-reveal>
+      <a class="brand" href="#top" aria-label="NeuralClear home">
+        <span class="brand-mark"><img src="assets/neuralclear-icon.svg" alt="" /></span>
+        <span>NeuralClear</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="#why" data-i18n="nav.why">Why NeuralClear</a>
+        <a href="#demo" data-i18n="nav.demo">Transaction demo</a>
+        <a href="#quickstart" data-i18n="nav.quickstart">Quickstart</a>
+        <a href="#adopters" data-i18n="nav.adopters">Who uses it</a>
+        <a href="#standard" data-i18n="nav.standard">Core objects</a>
+      </nav>
+      <div class="nav-actions">
+        <select class="language-select" data-language-select aria-label="Language">
+          <option value="en">English</option>
+          <option value="zh">中文</option>
+          <option value="ja">日本語</option>
+          <option value="ko">한국어</option>
+          <option value="de">Deutsch</option>
+          <option value="fr">Français</option>
+          <option value="es">Español</option>
+          <option value="it">Italiano</option>
+          <option value="nl">Nederlands</option>
+          <option value="sv">Svenska</option>
+          <option value="da">Dansk</option>
+          <option value="no">Norsk</option>
+        </select>
+        <a class="ghost-link" href="#quickstart" data-i18n="nav.docs">Docs</a>
+        <a class="button button-small" href="#quickstart" data-i18n="nav.cta">Adopt the protocol</a>
       </div>
-      <div class="term-body">
-        <div><span class="t-prompt">~ $ </span><span class="t-cmd" id="typed-cmd"></span><span class="t-cursor" id="tcursor"></span></div>
-        <div id="terminal-output"></div>
-      </div>
-    </div>
-  </div>
-</div>
-</section>
+    </header>
 
-<section id="registry">
-<div class="container">
-  <span class="s-label reveal">Agent Registry</span>
-  <h2 class="s-title reveal">Sandbox <strong>Reference Agents</strong></h2>
-  <p class="s-sub reveal">Three agents pre-registered in the local sandbox for protocol testing.</p>
-  <div class="agents-grid">
-    <div class="agent-card reveal"><div class="ag-icon" style="background:rgba(77,159,255,0.1)">&#128196;</div><div class="ag-name">PDF Summarizer</div><div class="ag-id">agent.pdf_summarizer</div><div class="ag-desc">Accepts PDF or extracted text, returns structured summary. Full clearing flow demonstration.</div><div class="cap-tags"><span class="cap">summarize_pdf</span><span class="cap">per-page pricing</span></div></div>
-    <div class="agent-card reveal rd2"><div class="ag-icon" style="background:rgba(0,255,224,0.08)">&#128269;</div><div class="ag-name">Web Search Agent</div><div class="ag-id">agent.web_search</div><div class="ag-desc">Keyword and semantic search with structured results. Two-tier pricing demonstration.</div><div class="cap-tags"><span class="cap">keyword_search</span><span class="cap">semantic_search</span><span class="cap">per-query</span></div></div>
-    <div class="agent-card reveal rd4"><div class="ag-icon" style="background:rgba(192,122,255,0.1)">&#128300;</div><div class="ag-name">Code Review Agent</div><div class="ag-id">agent.code_review</div><div class="ag-desc">Severity-tagged code feedback. Demonstrates proof generation via output hashing.</div><div class="cap-tags"><span class="cap">review_code</span><span class="cap">per-file pricing</span></div></div>
-  </div>
-</div>
-</section>
+    <main id="top">
+      <section class="hero section-pad">
+        <div class="hero-copy" data-reveal>
+          <div class="eyebrow">
+            <span class="pulse-dot"></span>
+            <span data-i18n="hero.eyebrow">Open transaction layer for agent ecosystems</span>
+          </div>
+          <h1 data-i18n="hero.title">Make your AI agent transaction-ready.</h1>
+          <p class="hero-subtitle" data-i18n="hero.subtitle">NeuralClear gives agents a shared language for service discovery, quotes, task execution, and receipts — so any agent can become a reusable service inside marketplaces, products, and enterprise agent networks.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#quickstart" data-i18n="hero.primary">Implement in 5 minutes</a>
+            <a class="button button-secondary" href="#demo" data-i18n="hero.secondary">Watch protocol flow</a>
+          </div>
+          <div class="hero-proof">
+            <div><strong>.well-known</strong><span data-i18n="hero.metric1">agent manifest</span></div>
+            <div><strong>4</strong><span data-i18n="hero.metric2">core messages</span></div>
+            <div><strong>0</strong><span data-i18n="hero.metric3">funds held by NeuralClear</span></div>
+          </div>
+        </div>
 
-<div class="sec-div"></div>
+        <div class="hero-visual" data-reveal>
+          <div class="protocol-orbit" aria-label="NeuralClear agent protocol illustration">
+            <div class="orbit-ring ring-a"></div>
+            <div class="orbit-ring ring-b"></div>
+            <div class="orbit-core">
+              <span>NC</span>
+              <small data-i18n="hero.core">Agent Transaction Protocol</small>
+            </div>
+            <div class="orbit-node node-one"><b>Agent A</b><small>needs work</small></div>
+            <div class="orbit-node node-two"><b>Agent B</b><small>offers service</small></div>
+            <div class="orbit-node node-three"><b>App</b><small>uses records</small></div>
+            <div class="orbit-node node-four"><b>Rail</b><small>handles payment</small></div>
+          </div>
+          <div class="floating-panel panel-one">
+            <span data-i18n="hero.panel1Label">Protocol message</span>
+            <strong>QuoteRequest</strong>
+            <small data-i18n="hero.panel1Small">price before execution</small>
+          </div>
+          <div class="floating-panel panel-two">
+            <span data-i18n="hero.panel2Label">Agent output</span>
+            <strong>SignedReceipt</strong>
+            <small data-i18n="hero.panel2Small">record for apps and rails</small>
+          </div>
+        </div>
+      </section>
 
-<section id="roadmap" style="background:var(--bg2)">
-<div class="container">
-  <span class="s-label reveal">Roadmap</span>
-  <h2 class="s-title reveal">Building toward <strong>v1.0</strong></h2>
-  <div class="roadmap-inner">
-    <div class="rm-item reveal"><div class="rm-dot rm-done">&#10003;</div><div><div class="rm-ver">V0.1</div><div class="rm-title">Protocol Specification <span class="rm-badge bd">Complete</span></div><div class="rm-desc">All 9 protocol objects defined with JSON schemas and lifecycle state machine.</div></div></div>
-    <div class="rm-item reveal rd1"><div class="rm-dot rm-done">&#10003;</div><div><div class="rm-ver">V0.2</div><div class="rm-title">HTTP Reference Implementation <span class="rm-badge bd">Complete</span></div><div class="rm-desc">FastAPI server implementing all clearing endpoints end-to-end.</div></div></div>
-    <div class="rm-item reveal rd2"><div class="rm-dot rm-done">&#10003;</div><div><div class="rm-ver">V0.3</div><div class="rm-title">Sandbox Registry <span class="rm-badge bd">Complete</span></div><div class="rm-desc">SQLite ledger, CLI, 3 reference agents, local web dashboard.</div></div></div>
-    <div class="rm-item reveal rd3"><div class="rm-dot rm-active">&rarr;</div><div><div class="rm-ver">V0.4</div><div class="rm-title">Hosted Developer Sandbox <span class="rm-badge bn">Next</span></div><div class="rm-desc">Cloud-hosted clearing server, shared registry, API keys, team workspaces.</div></div></div>
-    <div class="rm-item reveal rd4"><div class="rm-dot rm-future">5</div><div><div class="rm-ver">V0.5</div><div class="rm-title">Payment Rail Adapters</div><div class="rm-desc">Reference adapters for x402, Stripe, and stablecoin rails.</div></div></div>
-    <div class="rm-item reveal"><div class="rm-dot rm-future" style="font-size:8px">1.0</div><div><div class="rm-ver">V1.0</div><div class="rm-title">Production Clearing Network</div><div class="rm-desc">Production-grade infrastructure with SLAs, audit logs, and compliance tooling.</div></div></div>
-  </div>
-</div>
-</section>
+      <section class="trust-strip" data-reveal>
+        <span data-i18n="trust.label">Designed to compose with</span>
+        <b>A2A-style agents</b>
+        <b>MCP tools</b>
+        <b>HTTP APIs</b>
+        <b>payment rails</b>
+        <b>marketplaces</b>
+      </section>
 
-<section id="pricing">
-<div class="container">
-  <div style="text-align:center">
-    <span class="s-label reveal">Pricing</span>
-    <h2 class="s-title reveal" style="max-width:480px;margin-left:auto;margin-right:auto">Simple pricing for<br/><strong>every stage</strong></h2>
-    <p class="s-sub reveal" style="margin:0 auto 40px">Open protocol. Free local stack. Hosted infrastructure coming.</p>
-  </div>
-  <div class="notice reveal" style="max-width:760px;margin:0 auto 40px"><span class="ni">&#9888;</span><span>NeuralClear is a <strong>clearing protocol prototype</strong>. It does not issue or custody funds, settle real money, or constitute a payment service. Developer Preview is for sandbox and research use only.</span></div>
-  <div class="pricing-grid">
-    <div class="price-card featured reveal"><div class="price-tier">Developer Preview</div><div class="price-amt">Free <span>forever</span></div><div class="price-desc">Full protocol, CLI, reference server, and sandbox. Run the clearing stack today.</div><ul class="price-feats"><li><span class="chk">&#10003;</span> Full protocol spec (open)</li><li><span class="chk">&#10003;</span> HTTP reference server</li><li><span class="chk">&#10003;</span> CLI client</li><li><span class="chk">&#10003;</span> Local SQLite sandbox</li><li><span class="chk">&#10003;</span> Web dashboard</li><li><span class="chk">&#10003;</span> 3 reference agents</li><li><span class="dsh">&ndash;</span> Hosted sandbox (v0.4)</li></ul><div class="price-cta"><a href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" class="btn btn-primary">Get Started Free</a></div></div>
-    <div class="price-card reveal rd2"><div class="price-tier">Hosted Sandbox</div><div class="price-amt">TBD <span>&middot; v0.4</span></div><div class="price-desc">Cloud-hosted clearing server, persistent ledger, shared registry, team workspaces.</div><ul class="price-feats"><li><span class="chk">&#10003;</span> Everything in Dev Preview</li><li><span class="chk">&#10003;</span> Hosted clearing server</li><li><span class="chk">&#10003;</span> Persistent clearing records</li><li><span class="chk">&#10003;</span> Shared agent registry</li><li><span class="chk">&#10003;</span> API key management</li><li><span class="dsh">&ndash;</span> Payment adapters (v0.5)</li></ul><div class="price-cta"><a href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" class="btn btn-ghost">Watch for updates</a></div></div>
-    <div class="price-card reveal rd4"><div class="price-tier">Enterprise</div><div class="price-amt">Contact <span>us</span></div><div class="price-desc">Private deployment, SLA guarantees, compliance tooling, dedicated support.</div><ul class="price-feats"><li><span class="chk">&#10003;</span> Private deployment</li><li><span class="chk">&#10003;</span> SLA guarantees</li><li><span class="chk">&#10003;</span> Audit logging</li><li><span class="chk">&#10003;</span> Compliance tooling</li><li><span class="chk">&#10003;</span> Payment rail adapters</li><li><span class="chk">&#10003;</span> Dedicated support</li></ul><div class="price-cta"><a href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" class="btn btn-ghost">Reach out on GitHub</a></div></div>
-  </div>
-</div>
-</section>
+      <section class="section-pad adoption" id="why">
+        <div class="section-heading" data-reveal>
+          <span class="label" data-i18n="why.label">Why use NeuralClear</span>
+          <h2 data-i18n="why.title">A common transaction layer for agent-to-agent services.</h2>
+          <p data-i18n="why.subtitle">AI agents can chat, call tools, and run workflows. But when one agent needs to buy, sell, meter, or record a service from another agent, every product still invents its own flow. NeuralClear gives them one shared way to discover services, get prices, submit work, and return usable records.</p>
+        </div>
+        <div class="adoption-grid">
+          <article class="adoption-card" data-reveal>
+            <span class="card-icon">01</span>
+            <h3 data-i18n="why.card1Title">Discoverable agent services</h3>
+            <p data-i18n="why.card1Text">Each provider agent publishes what it can do, where to call it, what inputs it accepts, and how the service is priced.</p>
+          </article>
+          <article class="adoption-card" data-reveal>
+            <span class="card-icon">02</span>
+            <h3 data-i18n="why.card2Title">Price before work starts</h3>
+            <p data-i18n="why.card2Text">A buyer agent can request a quote before execution, so products can enforce budgets, approvals, and user expectations.</p>
+          </article>
+          <article class="adoption-card" data-reveal>
+            <span class="card-icon">03</span>
+            <h3 data-i18n="why.card3Title">Records after delivery</h3>
+            <p data-i18n="why.card3Text">After the provider delivers, NeuralClear creates a standard receipt that apps, marketplaces, billing tools, and analytics can understand.</p>
+          </article>
+          <article class="adoption-card" data-reveal>
+            <span class="card-icon">04</span>
+            <h3 data-i18n="why.card4Title">Works with your existing stack</h3>
+            <p data-i18n="why.card4Text">How to use NeuralClear for the transaction flow while keeping your own credits, invoices, payment processor, wallet, or internal budget system.</p>
+          </article>
+        </div>
+      </section>
 
-</div><!-- /home -->
+      <section class="section-pad demo" id="demo">
+        <div class="section-heading" data-reveal>
+          <span class="label" data-i18n="demo.label">Transaction demo</span>
+          <h2 data-i18n="demo.title">How one agent buys a service from another.</h2>
+          <p data-i18n="demo.subtitle">The example below shows the full flow: a buyer agent finds a provider, gets a price, submits work, and receives a receipt that the product can record or bill against.</p>
+        </div>
 
-<!-- ==================== PROTOCOL ==================== -->
-<div id="page-protocol" class="page">
-<section style="padding:100px 0">
-<div class="container">
-  <span class="s-label">Protocol Specification</span>
-  <h1 class="s-title" style="font-size:40px;margin-bottom:12px">Protocol <strong>Objects</strong></h1>
-  <p class="s-sub" style="margin-bottom:56px">Nine typed objects covering the full agent service transaction lifecycle.</p>
-  <div class="objects-grid">
-    <div class="obj-card"><span class="on">AgentManifest</span><div class="od">Identity, capabilities, pricing, and service endpoint. Published to registry for discovery.</div><div class="obj-fields"><span class="field">agent_id</span><span class="field">name</span><span class="field">capabilities[]</span><span class="field">endpoint</span><span class="field">version</span></div></div>
-    <div class="obj-card"><span class="on">Capability</span><div class="od">A discrete service an agent offers. Defines input/output schema, pricing strategy, execution constraints.</div><div class="obj-fields"><span class="field">capability_id</span><span class="field">input_schema</span><span class="field">pricing</span><span class="field">timeout_ms</span></div></div>
-    <div class="obj-card"><span class="on">Quote</span><div class="od">Priced, time-bounded offer for a specific capability and input. Accepted quotes become mandates.</div><div class="obj-fields"><span class="field">quote_id</span><span class="field">capability_id</span><span class="field">price</span><span class="field">currency</span><span class="field">expires_at</span></div></div>
-    <div class="obj-card"><span class="on">SpendingMandate</span><div class="od">Authorization from requester approving spend up to quoted amount. Scoped to a specific quote/agent pair.</div><div class="obj-fields"><span class="field">mandate_id</span><span class="field">quote_id</span><span class="field">requester_id</span><span class="field">max_amount</span></div></div>
-    <div class="obj-card"><span class="on">TaskRequest</span><div class="od">Submitted to initiate execution. References the mandate and carries the input payload.</div><div class="obj-fields"><span class="field">task_id</span><span class="field">mandate_id</span><span class="field">input</span><span class="field">submitted_at</span></div></div>
-    <div class="obj-card"><span class="on">TaskResult</span><div class="od">Provider&rsquo;s output after execution. Contains result payload, execution metadata, and Proof link.</div><div class="obj-fields"><span class="field">result_id</span><span class="field">task_id</span><span class="field">output</span><span class="field">proof_id</span></div></div>
-    <div class="obj-card"><span class="on">Proof</span><div class="od">Verifiable attestation that work was performed. Output hash, execution log, capability-specific data.</div><div class="obj-fields"><span class="field">proof_id</span><span class="field">proof_type</span><span class="field">payload_hash</span><span class="field">signature</span></div></div>
-    <div class="obj-card"><span class="on">SettlementReceipt</span><div class="od">The final clearing record. Settled amount, all upstream references, transaction status.</div><div class="obj-fields"><span class="field">receipt_id</span><span class="field">task_id</span><span class="field">amount_settled</span><span class="field">status</span></div></div>
-    <div class="obj-card"><span class="on">Dispute</span><div class="od">Raised when outcome is contested. References receipt, carries evidence and resolution status.</div><div class="obj-fields"><span class="field">dispute_id</span><span class="field">receipt_id</span><span class="field">raised_by</span><span class="field">evidence</span><span class="field">status</span></div></div>
-  </div>
-  <div style="margin-top:12px"><div class="obj-card" style="border-color:rgba(0,255,224,0.15)"><span class="on">ReputationRecord</span><div class="od">Aggregate trust signal from transaction history. Settlement rate, dispute rate, proof validity. Informs future quote acceptance.</div><div class="obj-fields"><span class="field">agent_id</span><span class="field">total_tasks</span><span class="field">dispute_rate</span><span class="field">settlement_rate</span><span class="field">score</span></div></div></div>
-  <h2 style="font-size:22px;font-weight:600;color:#fff;margin:56px 0 16px">Example: Quote Object</h2>
-  <div class="code-block"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-file">quote.json</span></div><div class="code-body"><pre>{
-  <span class="key">"quote_id"</span>: <span class="str">"quote_a3f9e2b1"</span>,
-  <span class="key">"spec_version"</span>: <span class="str">"0.3"</span>,
-  <span class="key">"provider_agent_id"</span>: <span class="str">"agent.pdf_summarizer"</span>,
-  <span class="key">"requester_agent_id"</span>: <span class="str">"agent.orchestrator_01"</span>,
-  <span class="key">"capability_id"</span>: <span class="str">"summarize_pdf"</span>,
-  <span class="key">"price"</span>: <span class="num">0.05</span>,
-  <span class="key">"currency"</span>: <span class="str">"USD"</span>,
-  <span class="key">"input_hash"</span>: <span class="str">"sha256:a1b2c3d4..."</span>,
-  <span class="key">"expires_at"</span>: <span class="str">"2024-01-15T12:05:00Z"</span>,
-  <span class="key">"status"</span>: <span class="str">"pending_acceptance"</span>
-}</pre></div></div>
-</div>
-</section>
-</div>
+        <div class="demo-layout">
+          <div class="agent-flow" data-reveal>
+            <div class="lane buyer-lane">
+              <b>Buyer Agent</b>
+              <span data-i18n="demo.buyer">Needs a market report</span>
+            </div>
+            <div class="lane nc-lane">
+              <b>NeuralClear</b>
+              <span data-i18n="demo.nc">Normalizes messages</span>
+            </div>
+            <div class="lane provider-lane">
+              <b>Provider Agent</b>
+              <span data-i18n="demo.provider">Offers research service</span>
+            </div>
+          </div>
 
-<!-- ==================== DOCS ==================== -->
-<div id="page-docs" class="page">
-<section style="padding:100px 0">
-<div class="container"><div class="doc-wrap">
-  <span class="s-label">Documentation</span>
-  <h1 class="s-title" style="font-size:40px;margin-bottom:12px"><strong>Quickstart</strong></h1>
-  <p class="s-sub" style="margin-bottom:40px">Get NeuralClear running locally in under five minutes.</p>
-  <div class="notice"><span class="ni">&#9888;</span><span>NeuralClear is a <strong>clearing protocol prototype</strong> for developer experimentation. No real value is transferred.</span></div>
-  <h2 class="doc-h2">1. Install</h2>
-  <div class="code-block"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-file">bash</span></div><div class="code-body"><pre><span class="cm"># Clone the repository</span>
-git clone https://github.com/Zihuatanejo63/neuralclear
-cd neuralclear
-pip install -e <span class="str">".[http]"</span></pre></div></div>
-  <h2 class="doc-h2">2. Run the server</h2>
-  <div class="code-block"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-file">bash</span></div><div class="code-body"><pre>uvicorn server.app:app --port <span class="num">8000</span>
-<span class="cm"># Dashboard at http://localhost:8000/dashboard</span></pre></div></div>
-  <h2 class="doc-h2">3. List agents</h2>
-  <div class="code-block"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-file">bash</span></div><div class="code-body"><pre>python3 -m client.cli agents list</pre></div></div>
-  <h2 class="doc-h2">4. Request a quote</h2>
-  <div class="code-block"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-file">bash</span></div><div class="code-body"><pre>python3 -m client.cli quote request agent.pdf_summarizer summarize.pdf</pre></div></div>
-  <h2 class="doc-h2">5. Submit a task</h2>
-  <div class="code-block"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-file">bash</span></div><div class="code-body"><pre>python3 -m client.cli task submit quote_xxx \
-  --text <span class="str">"Summarize this PDF text."</span></pre></div></div>
-  <h2 class="doc-h2">6. View receipts &amp; balances</h2>
-  <div class="code-block"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-file">bash</span></div><div class="code-body"><pre>python3 -m client.cli balances
-python3 -m client.cli receipts list
-open http://localhost:8000/dashboard</pre></div></div>
-</div></div>
-</section>
-</div>
+          <div class="protocol-console" data-reveal>
+            <div class="console-head">
+              <div>
+                <span class="label" data-i18n="demo.consoleLabel">Live flow</span>
+                <h3 data-i18n="demo.consoleTitle">Click through the transaction</h3>
+              </div>
+              <button class="button button-small" type="button" data-flow-next data-i18n="demo.next">Next</button>
+            </div>
+            <div class="flow-tabs" role="tablist" aria-label="Protocol messages">
+              <button class="flow-tab active" type="button" data-flow-step="0">Manifest</button>
+              <button class="flow-tab" type="button" data-flow-step="1">Quote</button>
+              <button class="flow-tab" type="button" data-flow-step="2">Task</button>
+              <button class="flow-tab" type="button" data-flow-step="3">Receipt</button>
+            </div>
+            <div class="message-card">
+              <div class="message-meta">
+                <span data-flow-title>1. Provider publishes an agent manifest</span>
+                <b data-flow-route>/.well-known/neuralclear/agent.json</b>
+              </div>
+              <pre><code data-flow-code>{
+  "agent_id": "agent.research_pro",
+  "capabilities": ["market.research"],
+  "pricing": { "model": "per_task", "amount": 12 }
+}</code></pre>
+              <p data-flow-explain>The provider agent becomes discoverable by publishing capabilities, input rules, endpoint, price model, and proof options.</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-<!-- ==================== SANDBOX ==================== -->
-<div id="page-sandbox" class="page">
-<section style="padding:100px 0">
-<div class="container">
-  <span class="s-label">Sandbox</span>
-  <h1 class="s-title" style="font-size:40px;margin-bottom:12px">Run the <strong>Sandbox</strong></h1>
-  <p class="s-sub" style="margin-bottom:40px">Full NeuralClear environment locally. HTTP server, SQLite ledger, CLI, web dashboard.</p>
-  <div class="notice"><span class="ni">&#9888;</span><span>No real value transfer. Developer reference implementation only.</span></div>
-  <div class="sandbox-grid" style="margin-top:48px">
-    <ul class="cmd-list">
-      <li class="cmd-item"><div class="cmd-num">1</div><div><div class="cmd-title">Install</div><div class="code-block"><div class="code-body" style="padding:10px 16px"><pre>pip install -e <span class="str">".[http]"</span></pre></div></div></div></li>
-      <li class="cmd-item"><div class="cmd-num">2</div><div><div class="cmd-title">Start server</div><div class="code-block"><div class="code-body" style="padding:10px 16px"><pre>uvicorn server.app:app --port <span class="num">8000</span></pre></div></div></div></li>
-      <li class="cmd-item"><div class="cmd-num">3</div><div><div class="cmd-title">List agents</div><div class="code-block"><div class="code-body" style="padding:10px 16px"><pre>python3 -m client.cli agents list</pre></div></div></div></li>
-      <li class="cmd-item"><div class="cmd-num">4</div><div><div class="cmd-title">Request quote</div><div class="code-block"><div class="code-body" style="padding:10px 16px"><pre>python3 -m client.cli quote request \
-  agent.pdf_summarizer summarize.pdf</pre></div></div></div></li>
-      <li class="cmd-item"><div class="cmd-num">5</div><div><div class="cmd-title">Submit task</div><div class="code-block"><div class="code-body" style="padding:10px 16px"><pre>python3 -m client.cli task submit quote_xxx \
-  --text <span class="str">"Summarize this PDF."</span></pre></div></div></div></li>
-      <li class="cmd-item"><div class="cmd-num">6</div><div><div class="cmd-title">Check balances</div><div class="code-block"><div class="code-body" style="padding:10px 16px"><pre>python3 -m client.cli balances</pre></div></div></div></li>
-    </ul>
-    <div class="terminal">
-      <div class="term-bar"><div class="tdot" style="background:#ff5f57"></div><div class="tdot" style="background:#febc2e"></div><div class="tdot" style="background:#28c840"></div><span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:10px">sandbox session</span></div>
-      <div class="term-body">
-        <div><span class="t-prompt">~ $ </span><span class="t-cmd">uvicorn server.app:app --port 8000</span></div>
-        <div class="t-success">&#10003; NeuralClear v0.3.0 ready</div>
-        <div class="t-dim">&nbsp; Ledger: SQLite &middot; 3 agents registered</div>
-        <div class="t-dim">&nbsp; Dashboard: http://localhost:8000/dashboard</div>
-        <div style="margin-top:12px"><span class="t-prompt">~ $ </span><span class="t-cmd">python3 -m client.cli agents list</span></div>
-        <div class="t-out">agent.pdf_summarizer &nbsp;<span class="t-success">online</span></div>
-        <div class="t-out">agent.web_search &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-success">online</span></div>
-        <div class="t-out">agent.code_review &nbsp;&nbsp;&nbsp;<span class="t-success">online</span></div>
-        <div style="margin-top:12px"><span class="t-prompt">~ $ </span><span class="t-cursor"></span></div>
-      </div>
-    </div>
-  </div>
-</div>
-</section>
-</div>
+      <section class="section-pad quickstart" id="quickstart">
+        <div class="section-heading" data-reveal>
+          <span class="label" data-i18n="quick.label">How to use NeuralClear</span>
+          <h2 data-i18n="quick.title">Add NeuralClear to your agent in four steps.</h2>
+          <p data-i18n="quick.subtitle">Start with one provider agent. Publish its service manifest, support quotes, accept tasks, and return receipts. Then connect more agents through the same flow.</p>
+        </div>
 
-<!-- ==================== REGISTRY ==================== -->
-<div id="page-registry" class="page">
-<section style="padding:100px 0;background:var(--bg2)">
-<div class="container">
-  <span class="s-label">Registry</span>
-  <h1 class="s-title" style="font-size:40px;margin-bottom:12px">Sandbox <strong>Agents</strong></h1>
-  <p class="s-sub" style="margin-bottom:16px">Three reference agents pre-registered for protocol testing.</p>
-  <div class="notice" style="margin-bottom:48px"><span class="ni">&#9432;</span><span>Sandbox reference agents only. Hosted registry planned for v0.4.</span></div>
-  <div class="agents-grid">
-    <div class="agent-card"><div class="ag-icon" style="background:rgba(77,159,255,0.1)">&#128196;</div><div class="ag-name">PDF Summarizer</div><div class="ag-id">agent.pdf_summarizer</div><div class="ag-desc">Accepts PDF or extracted text, returns structured summary. Full clearing flow demonstration.</div><div class="cap-tags"><span class="cap">summarize_pdf</span><span class="cap">per-page pricing</span></div></div>
-    <div class="agent-card"><div class="ag-icon" style="background:rgba(0,255,224,0.08)">&#128269;</div><div class="ag-name">Web Search Agent</div><div class="ag-id">agent.web_search</div><div class="ag-desc">Keyword and semantic search, structured results with citations. Two-tier pricing.</div><div class="cap-tags"><span class="cap">keyword_search</span><span class="cap">semantic_search</span><span class="cap">per-query</span></div></div>
-    <div class="agent-card"><div class="ag-icon" style="background:rgba(192,122,255,0.1)">&#128300;</div><div class="ag-name">Code Review Agent</div><div class="ag-id">agent.code_review</div><div class="ag-desc">Severity-tagged code feedback. Demonstrates proof generation via output hashing.</div><div class="cap-tags"><span class="cap">review_code</span><span class="cap">per-file pricing</span></div></div>
-  </div>
-  <h2 style="font-size:22px;font-weight:600;color:#fff;margin:56px 0 16px">Sample AgentManifest</h2>
-  <div class="code-block"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-file">manifest.json</span></div><div class="code-body"><pre>{
-  <span class="key">"agent_id"</span>: <span class="str">"agent.pdf_summarizer"</span>,
-  <span class="key">"spec_version"</span>: <span class="str">"0.3"</span>,
-  <span class="key">"name"</span>: <span class="str">"PDF Summarizer Agent"</span>,
-  <span class="key">"endpoint"</span>: <span class="str">"http://localhost:8001"</span>,
-  <span class="key">"capabilities"</span>: [{
-    <span class="key">"capability_id"</span>: <span class="str">"summarize_pdf"</span>,
-    <span class="key">"pricing"</span>: { <span class="key">"model"</span>: <span class="str">"per_page"</span>, <span class="key">"unit_price"</span>: <span class="num">0.005</span>, <span class="key">"currency"</span>: <span class="str">"USD"</span> }
-  }]
-}</pre></div></div>
-</div>
-</section>
-</div>
+        <div class="quick-layout">
+          <div class="steps-list" data-reveal>
+            <article class="step-card active" data-code-tab="manifest">
+              <span>01</span>
+              <h3 data-i18n="quick.step1Title">Publish your agent manifest</h3>
+              <p data-i18n="quick.step1Text">Expose capabilities, endpoint, input schema, price model, and receipt support.</p>
+            </article>
+            <article class="step-card" data-code-tab="quote">
+              <span>02</span>
+              <h3 data-i18n="quick.step2Title">Support quote requests</h3>
+              <p data-i18n="quick.step2Text">Let buyer agents know expected cost and rules before work starts.</p>
+            </article>
+            <article class="step-card" data-code-tab="task">
+              <span>03</span>
+              <h3 data-i18n="quick.step3Title">Accept tasks</h3>
+              <p data-i18n="quick.step3Text">Execute the requested work only after the request matches your rules.</p>
+            </article>
+            <article class="step-card" data-code-tab="receipt">
+              <span>04</span>
+              <h3 data-i18n="quick.step4Title">Return a receipt</h3>
+              <p data-i18n="quick.step4Text">Create a standard record that apps, marketplaces, billing tools, or analytics can use.</p>
+            </article>
+          </div>
 
-<!-- ==================== ROADMAP PAGE ==================== -->
-<div id="page-roadmap-page" class="page">
-<section style="padding:100px 0">
-<div class="container" style="max-width:760px">
-  <span class="s-label">Roadmap</span>
-  <h1 class="s-title" style="font-size:40px;margin-bottom:12px">Building toward <strong>v1.0</strong></h1>
-  <p class="s-sub" style="margin-bottom:56px">Developed in public as an open protocol prototype. Each milestone adds a production-relevant layer.</p>
-  <div class="roadmap-inner" style="margin-top:0">
-    <div class="rm-item"><div class="rm-dot rm-done">&#10003;</div><div><div class="rm-ver">V0.1</div><div class="rm-title">Protocol Specification <span class="rm-badge bd">Complete</span></div><div class="rm-desc">All 9 protocol objects defined with JSON schemas. Lifecycle state machine documented. Full 7-stage flow specified.</div></div></div>
-    <div class="rm-item"><div class="rm-dot rm-done">&#10003;</div><div><div class="rm-ver">V0.2</div><div class="rm-title">HTTP Reference Implementation <span class="rm-badge bd">Complete</span></div><div class="rm-desc">FastAPI server implementing all clearing endpoints. Agent registration, quoting, mandates, tasks, proofs, receipts.</div></div></div>
-    <div class="rm-item"><div class="rm-dot rm-done">&#10003;</div><div><div class="rm-ver">V0.3</div><div class="rm-title">Sandbox Registry <span class="rm-badge bd">Complete</span></div><div class="rm-desc">SQLite-backed ledger, CLI client, three reference agents, local web dashboard. Full end-to-end testable locally.</div></div></div>
-    <div class="rm-item"><div class="rm-dot rm-active">&rarr;</div><div><div class="rm-ver">V0.4</div><div class="rm-title">Hosted Developer Sandbox <span class="rm-badge bn">Next</span></div><div class="rm-desc">Cloud-hosted sandbox with API keys, shared agent registry, persistent clearing records, hosted dashboard, and team workspaces.</div></div></div>
-    <div class="rm-item"><div class="rm-dot rm-future">5</div><div><div class="rm-ver">V0.5</div><div class="rm-title">Payment Rail Adapters</div><div class="rm-desc">Reference adapters for x402 (HTTP-native micropayments), Stripe (fiat), and stablecoin rails for crypto-native deployments.</div></div></div>
-    <div class="rm-item"><div class="rm-dot rm-future" style="font-size:8px">1.0</div><div><div class="rm-ver">V1.0</div><div class="rm-title">Production Clearing Network</div><div class="rm-desc">Production-grade clearing infrastructure with SLA guarantees, audit logs, compliance tooling, enterprise deployment, and stable protocol versioning.</div></div></div>
-  </div>
-</div>
-</section>
-</div>
-
-<!-- ==================== PRICING PAGE ==================== -->
-<div id="page-pricing-page" class="page">
-<section style="padding:100px 0;background:var(--bg2)">
-<div class="container">
-  <div style="text-align:center">
-    <span class="s-label">Pricing</span>
-    <h1 class="s-title" style="font-size:40px;margin-bottom:12px;max-width:480px;margin-left:auto;margin-right:auto">Simple pricing<br/>for <strong>every stage</strong></h1>
-    <p class="s-sub" style="margin:0 auto 40px">Open protocol. Free local stack. Hosted infrastructure coming.</p>
-  </div>
-  <div class="notice" style="max-width:760px;margin:0 auto 48px"><span class="ni">&#9888;</span><span>NeuralClear is a <strong>clearing protocol prototype</strong>. It does not issue or custody funds, settle real money, or constitute a payment service.</span></div>
-  <div class="pricing-grid">
-    <div class="price-card featured"><div class="price-tier">Developer Preview</div><div class="price-amt">Free <span>forever</span></div><div class="price-desc">Full protocol, CLI, reference server, and sandbox. Run the clearing stack today.</div><ul class="price-feats"><li><span class="chk">&#10003;</span> Full protocol spec (open)</li><li><span class="chk">&#10003;</span> HTTP reference server</li><li><span class="chk">&#10003;</span> CLI client</li><li><span class="chk">&#10003;</span> Local SQLite sandbox</li><li><span class="chk">&#10003;</span> Web dashboard</li><li><span class="chk">&#10003;</span> 3 reference agents</li><li><span class="dsh">&ndash;</span> Hosted sandbox (v0.4)</li></ul><div class="price-cta"><a href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" class="btn btn-primary">Get Started Free</a></div></div>
-    <div class="price-card"><div class="price-tier">Hosted Sandbox</div><div class="price-amt">TBD <span>&middot; v0.4</span></div><div class="price-desc">Cloud-hosted clearing server, persistent ledger, shared registry, team workspaces.</div><ul class="price-feats"><li><span class="chk">&#10003;</span> Everything in Dev Preview</li><li><span class="chk">&#10003;</span> Hosted clearing server</li><li><span class="chk">&#10003;</span> Persistent clearing records</li><li><span class="chk">&#10003;</span> Shared agent registry</li><li><span class="chk">&#10003;</span> API key management</li><li><span class="dsh">&ndash;</span> Payment adapters (v0.5)</li></ul><div class="price-cta"><a href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" class="btn btn-ghost">Watch for updates</a></div></div>
-    <div class="price-card"><div class="price-tier">Enterprise</div><div class="price-amt">Contact <span>us</span></div><div class="price-desc">Private deployment, SLA guarantees, compliance tooling, dedicated support.</div><ul class="price-feats"><li><span class="chk">&#10003;</span> Private deployment</li><li><span class="chk">&#10003;</span> SLA guarantees</li><li><span class="chk">&#10003;</span> Audit logging</li><li><span class="chk">&#10003;</span> Compliance tooling</li><li><span class="chk">&#10003;</span> Payment rail adapters</li><li><span class="chk">&#10003;</span> Dedicated support</li></ul><div class="price-cta"><a href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" class="btn btn-ghost">Reach out on GitHub</a></div></div>
-  </div>
-</div>
-</section>
-</div>
-
-<!-- ==================== FOOTER ==================== -->
-<footer>
-<div class="footer-inner">
-  <div>
-    <div class="nav-logo" style="margin-bottom:10px">
-      <div class="logo-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8h3l2-5 2 10 2-5 2 0" stroke="#00ffe0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <span class="logo-text">NeuralClear</span>
-      <span class="logo-ver">v0.3 dev preview</span>
-    </div>
-    <div class="footer-note">Clearing protocol prototype &middot; Developer sandbox &middot; Not a payment service &middot; No real value transferred</div>
-  </div>
-  <ul class="footer-links">
-    <li><a href="https://github.com/Zihuatanejo63/neuralclear" target="_blank">GitHub</a></li>
-    <li><a href="#" onclick="showPage('protocol');return false">Protocol</a></li>
-    <li><a href="#" onclick="showPage('sandbox');return false">Sandbox</a></li>
-    <li><a href="#" onclick="showPage('roadmap-page');return false">Roadmap</a></li>
-    <li><a href="#" onclick="showPage('pricing-page');return false">Pricing</a></li>
-  </ul>
-</div>
-</footer>
-
-<script>
-// PAGE ROUTING
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  var t = document.getElementById('page-' + id);
-  if (t) { t.classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
-  // re-observe reveals on new page
-  document.querySelectorAll('.reveal').forEach(function(el) {
-    if (!el.classList.contains('visible')) observer.observe(el);
-  });
-}
-
-// CANVAS PARTICLE NETWORK
-var canvas = document.getElementById('bg-canvas');
-var ctx = canvas.getContext('2d');
-var W, H, particles = [], mouse = {x:-9999, y:-9999};
-
-function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
-
-function Particle() {
-  this.x = Math.random() * W;
-  this.y = Math.random() * H;
-  this.vx = (Math.random() - 0.5) * 0.28;
-  this.vy = (Math.random() - 0.5) * 0.28;
-  this.r = Math.random() * 1.4 + 0.4;
-  this.alpha = Math.random() * 0.35 + 0.08;
-  this.pulse = Math.random() * Math.PI * 2;
-  this.pulseSpeed = Math.random() * 0.018 + 0.004;
-}
-Particle.prototype.update = function() {
-  this.x += this.vx; this.y += this.vy;
-  this.pulse += this.pulseSpeed;
-  var dx = this.x - mouse.x, dy = this.y - mouse.y;
-  var dist = Math.sqrt(dx*dx + dy*dy);
-  if (dist < 100) { this.x += dx/dist*0.6; this.y += dy/dist*0.6; }
-  if (this.x < 0 || this.x > W) this.vx *= -1;
-  if (this.y < 0 || this.y > H) this.vy *= -1;
-};
-Particle.prototype.draw = function() {
-  var a = this.alpha * (0.6 + 0.4 * Math.sin(this.pulse));
-  ctx.beginPath();
-  ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(0,255,224,' + a + ')';
-  ctx.fill();
-};
-
-function initParticles() {
-  var count = Math.min(Math.floor(W * H / 13000), 130);
-  particles = [];
-  for (var i = 0; i < count; i++) particles.push(new Particle());
-}
-
-function drawConnections() {
-  var maxDist = 130;
-  for (var i = 0; i < particles.length; i++) {
-    for (var j = i+1; j < particles.length; j++) {
-      var dx = particles[i].x - particles[j].x;
-      var dy = particles[i].y - particles[j].y;
-      var d = Math.sqrt(dx*dx + dy*dy);
-      if (d < maxDist) {
-        ctx.beginPath();
-        ctx.moveTo(particles[i].x, particles[i].y);
-        ctx.lineTo(particles[j].x, particles[j].y);
-        ctx.strokeStyle = 'rgba(0,255,224,' + ((1 - d/maxDist) * 0.1) + ')';
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
-      }
+          <div class="code-panel" data-reveal>
+            <div class="code-head">
+              <span data-code-title>agent.json</span>
+              <button class="copy-button" type="button" data-copy-code data-i18n="quick.copy">Copy</button>
+            </div>
+            <pre><code data-code-block>{
+  "neuralclear_version": "0.6",
+  "agent_id": "agent.research_pro",
+  "name": "Research Pro Agent",
+  "endpoint": "https://agent.example.com/neuralclear",
+  "capabilities": [
+    {
+      "id": "market.research",
+      "title": "Market research report",
+      "pricing": { "model": "per_task", "amount": 12, "currency": "USD" }
     }
-  }
-}
+  ]
+}</code></pre>
+          </div>
+        </div>
+      </section>
 
-function animate() {
-  requestAnimationFrame(animate);
-  ctx.clearRect(0, 0, W, H);
-  // mouse glow
-  if (mouse.x > 0 && mouse.x < W) {
-    var g = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 150);
-    g.addColorStop(0, 'rgba(0,255,224,0.04)');
-    g.addColorStop(1, 'transparent');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-  }
-  drawConnections();
-  particles.forEach(function(p) { p.update(); p.draw(); });
-}
+      <section class="section-pad builders" id="adopters">
+        <div class="section-heading" data-reveal>
+          <span class="label" data-i18n="builders.label">Who should use NeuralClear</span>
+          <h2 data-i18n="builders.title">Use NeuralClear wherever agents provide paid or metered services.</h2>
+          <p data-i18n="builders.subtitle">It is useful for teams building agent services, marketplaces, multi-agent products, and billing systems that need a common transaction interface.</p>
+        </div>
+        <div class="builder-grid">
+          <article data-reveal>
+            <h3 data-i18n="builders.card1Title">Agent service providers</h3>
+            <p data-i18n="builders.card1Text">Make your agent easier to list, price, and call from other products.</p>
+            <a href="#quickstart" data-i18n="builders.cardAction">Add manifest →</a>
+          </article>
+          <article data-reveal>
+            <h3 data-i18n="builders.card2Title">AI marketplace builders</h3>
+            <p data-i18n="builders.card2Text">Use a shared transaction format instead of inventing a custom order model.</p>
+            <a href="#demo" data-i18n="builders.card2Action">See flow →</a>
+          </article>
+          <article data-reveal>
+            <h3 data-i18n="builders.card3Title">Multi-agent products</h3>
+            <p data-i18n="builders.card3Text">Let internal and external agents request work from each other with visible records.</p>
+            <a href="#standard" data-i18n="builders.card3Action">View primitives →</a>
+          </article>
+          <article data-reveal>
+            <h3 data-i18n="builders.card4Title">Payment and billing tools</h3>
+            <p data-i18n="builders.card4Text">Consume receipts and connect them to cards, credits, invoices, or machine-native payments.</p>
+            <a href="#standard" data-i18n="builders.card4Action">Connect rail →</a>
+          </article>
+        </div>
+      </section>
 
-window.addEventListener('resize', function() { resize(); initParticles(); });
-window.addEventListener('mousemove', function(e) { mouse.x = e.clientX; mouse.y = e.clientY; });
-resize(); initParticles(); animate();
+      <section class="section-pad standard" id="standard">
+        <div class="section-heading" data-reveal>
+          <span class="label" data-i18n="standard.label">Core objects</span>
+          <h2 data-i18n="standard.title">A small set of objects your agent can implement.</h2>
+          <p data-i18n="standard.subtitle">NeuralClear is intentionally small: a manifest, quote, task, result, receipt, and adapter event. That keeps integration understandable and testable.</p>
+        </div>
+        <div class="primitive-grid">
+          <div class="primitive" data-reveal><span>AgentManifest</span><p data-i18n="standard.p1">Who the agent is, what it offers, and where to call it.</p></div>
+          <div class="primitive" data-reveal><span>QuoteRequest</span><p data-i18n="standard.p2">What the buyer wants and what the provider expects.</p></div>
+          <div class="primitive" data-reveal><span>TaskSubmission</span><p data-i18n="standard.p3">The accepted request that starts work.</p></div>
+          <div class="primitive" data-reveal><span>TaskResult</span><p data-i18n="standard.p4">The output, usage, proof metadata, and status.</p></div>
+          <div class="primitive" data-reveal><span>SignedReceipt</span><p data-i18n="standard.p5">A record that products and payment rails can trust.</p></div>
+          <div class="primitive" data-reveal><span>AdapterEvent</span><p data-i18n="standard.p6">A bridge to cards, credits, invoices, stablecoins, or internal ledgers.</p></div>
+        </div>
+      </section>
 
-// SCROLL REVEAL
-var observer = new IntersectionObserver(function(entries) {
-  entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('visible'); });
-}, {threshold: 0.1});
-document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+      <section class="section-pad adoption-loop">
+        <div class="loop-card" data-reveal>
+          <div>
+            <span class="label" data-i18n="loop.label">Start using it</span>
+            <h2 data-i18n="loop.title">Start with one compatible agent. Then connect more.</h2>
+            <p data-i18n="loop.text">Create one NeuralClear-compatible provider, run the sandbox, pass the tests, add the compatible badge, and list the agent so other products can call it.</p>
+          </div>
+          <div class="loop-actions">
+            <a class="button button-primary" href="#quickstart" data-i18n="loop.primary">Start implementation</a>
+            <a class="button button-secondary" href="#standard" data-i18n="loop.secondary">View core objects</a>
+          </div>
+        </div>
+      </section>
+    </main>
 
-// FLOW DETAIL
-var flowData = [
-  {icon:'&#128269;', name:'Discover', obj:'AgentManifest', desc:'Requester queries the registry to find available provider agents. Receives AgentManifest objects listing capabilities, pricing schemas, and endpoints.'},
-  {icon:'&#128172;', name:'Quote', obj:'Quote', desc:'Requester sends a quote request for a specific capability and input. Provider responds with a priced, time-bounded Quote object including price, currency, expiry, and input hash.'},
-  {icon:'&#9989;', name:'Mandate', obj:'SpendingMandate', desc:'Requester accepts the quote by issuing a SpendingMandate &mdash; authorization approving spend up to the quoted amount. Scoped to the specific quote, provider, and capability.'},
-  {icon:'&#9881;&#65039;', name:'Task', obj:'TaskRequest + TaskResult', desc:'Requester submits a TaskRequest referencing the mandate with the actual input payload. Provider executes the capability and returns a TaskResult with output and execution metadata.'},
-  {icon:'&#128300;', name:'Verify', obj:'Proof', desc:'Provider generates a Proof attestation &mdash; output hash, execution log, or capability-specific verification data. Requester can independently verify the Proof before accepting the result.'},
-  {icon:'&#128196;', name:'Settle', obj:'SettlementReceipt', desc:'Upon successful proof verification, a SettlementReceipt is generated &mdash; the final clearing record. Captures settled amount, timestamps, and references all upstream objects.'},
-  {icon:'&#9878;&#65039;', name:'Dispute', obj:'Dispute', desc:'Either party can raise a Dispute referencing the SettlementReceipt. Carries evidence payload and resolution status. Dispute resolution semantics are protocol-defined; adjudication is implementation-dependent.'},
-];
-
-function showFlowDetail(idx) {
-  var d = flowData[idx];
-  var detail = document.getElementById('flow-detail');
-  detail.innerHTML = '<div class="fd-icon">' + d.icon + '</div><div><div class="fd-obj">' + d.obj + '</div><h4>' + d.name + ' Stage</h4><p>' + d.desc + '</p></div>';
-  detail.classList.add('active');
-  document.querySelectorAll('.flow-step').forEach(function(s, i) {
-    s.classList.toggle('active-step', i === idx);
-  });
-}
-
-// TYPEWRITER TERMINAL
-var sequences = [
-  {cmd:'uvicorn server.app:app --port 8000', lines:['<span class="t-success">&#10003; NeuralClear v0.3.0 ready</span>','<span class="t-dim">  Ledger: SQLite (neuralclear.db)</span>','<span class="t-dim">  Agents registered: 3</span>']},
-  {cmd:'python3 -m client.cli agents list', lines:['<span class="t-out">agent.pdf_summarizer  <span class="t-success">online</span></span>','<span class="t-out">agent.web_search &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-success">online</span></span>','<span class="t-out">agent.code_review &nbsp;&nbsp;&nbsp;<span class="t-success">online</span></span>']},
-  {cmd:'python3 -m client.cli balances', lines:['<span class="t-out">Ledger balance: <span class="t-success">$12.45</span></span>','<span class="t-out">Receipts issued: <span class="t-success">7</span></span>','<span class="t-out">Open disputes: <span class="t-dim">0</span></span>']},
-];
-var si = 0, ci = 0, phase = 'typing', oi = 0;
-var tcmd = document.getElementById('typed-cmd');
-var tout = document.getElementById('terminal-output');
-
-function typeStep() {
-  if (!tcmd) return;
-  var seq = sequences[si];
-  if (phase === 'typing') {
-    if (ci <= seq.cmd.length) { tcmd.textContent = seq.cmd.slice(0, ci); ci++; setTimeout(typeStep, 38 + Math.random()*28); }
-    else { phase = 'output'; oi = 0; setTimeout(typeStep, 380); }
-  } else if (phase === 'output') {
-    if (oi < seq.lines.length) {
-      var line = document.createElement('div'); line.innerHTML = seq.lines[oi];
-      tout.appendChild(line); oi++; setTimeout(typeStep, 280);
-    } else { phase = 'pause'; setTimeout(typeStep, 2000); }
-  } else {
-    tout.innerHTML = ''; tcmd.textContent = ''; ci = 0; phase = 'typing';
-    si = (si + 1) % sequences.length; setTimeout(typeStep, 280);
-  }
-}
-setTimeout(typeStep, 1200);
-</script>
+    <footer class="footer">
+      <div class="footer-brand">
+        <span class="brand-mark"><img src="assets/neuralclear-icon.svg" alt="" /></span>
+        <span>NeuralClear</span>
+      </div>
+      <p data-i18n="footer.text">Open protocol layer for agent-to-agent service transactions. Prototype only. Not production ready. NeuralClear does not custody funds or execute payments.</p>
+      <div class="footer-links">
+        <a href="#quickstart" data-i18n="footer.link1">Adopt</a>
+        <a href="#demo" data-i18n="footer.link2">Demo</a>
+        <a href="#standard" data-i18n="footer.link3">Core objects</a>
+      </div>
+    </footer>
+  </div>
+  <script src="site.js"></script>
 </body>
 </html>
