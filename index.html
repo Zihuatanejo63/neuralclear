@@ -1,326 +1,53 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NeuralClear — Open Transaction Protocol for AI Agents</title>
-  <meta name="description" content="NeuralClear is an open protocol layer that lets AI agents advertise services, request quotes, execute work, and return receipts across agent ecosystems." />
-  <meta name="theme-color" content="#050816" />
-  <meta property="og:title" content="NeuralClear — Open Transaction Protocol for AI Agents" />
-  <meta property="og:description" content="Add a common service transaction layer to your AI agent in minutes: manifests, quotes, tasks, receipts, and conformance tests." />
-  <meta property="og:type" content="website" />
-  <link rel="icon" href="/favicon.ico" sizes="any" />
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <link rel="icon" href="assets/neuralclear-icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="site.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NeuralClear — Open Transaction Protocol for AI Agents</title>
+<meta name="description" content="NeuralClear gives AI agents a shared way to publish services, request quotes, submit tasks, and return receipts." />
+<meta name="theme-color" content="#050816" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<style>
+:root{color-scheme:dark;--bg:#050816;--panel:rgba(12,18,42,.72);--line:rgba(157,186,255,.18);--text:#eef4ff;--muted:#9aa8c6;--soft:#cbd6f6;--blue:#4cc9ff;--purple:#9d6cff;--cyan:#54f3ff;--green:#72f5b2}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at top,#182252,#050816 45%,#02030a);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-x:hidden}a{color:inherit;text-decoration:none}button,select{font:inherit}.bg{position:fixed;inset:0;z-index:-2;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(circle at top,#000,transparent 75%)}.orb{position:fixed;width:420px;height:420px;border-radius:999px;filter:blur(75px);opacity:.35;z-index:-3}.o1{background:#2f7dff;left:-120px;top:80px}.o2{background:#9d6cff;right:-160px;top:190px}.o3{background:#54f3ff;left:44%;bottom:-180px}.nav{position:sticky;top:16px;z-index:20;width:min(1180px,calc(100% - 36px));margin:16px auto 0;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid var(--line);border-radius:999px;background:rgba(5,8,22,.72);backdrop-filter:blur(22px)}.brand{display:flex;align-items:center;gap:10px;font-weight:900}.mark{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,rgba(76,201,255,.28),rgba(157,108,255,.24));border:1px solid var(--line);font-size:12px}.navlinks{display:flex;gap:18px;color:var(--muted);font-size:14px}.navlinks a:hover{color:var(--text)}.actions{display:flex;align-items:center;gap:10px}.lang{height:38px;max-width:132px;color:var(--text);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;padding:0 12px}.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid rgba(157,186,255,.22);padding:12px 18px;font-weight:800;transition:.2s}.btn:hover{transform:translateY(-1px);border-color:rgba(84,243,255,.45)}.primary{background:linear-gradient(135deg,var(--blue),var(--purple));color:white;box-shadow:0 18px 50px rgba(76,201,255,.18)}.secondary{background:rgba(255,255,255,.07)}.small{padding:10px 14px;font-size:14px}.wrap{width:min(1180px,calc(100% - 36px));margin:0 auto}.section{padding:96px 0}.hero{display:grid;grid-template-columns:1.02fr .98fr;gap:56px;align-items:center;min-height:760px;padding-top:92px}.eyebrow,.label{display:inline-flex;align-items:center;gap:9px;color:var(--cyan);font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.11em}.dot{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 22px var(--green)}h1,h2,h3,p{margin:0}h1{margin-top:18px;font-size:clamp(46px,7vw,88px);line-height:.94;letter-spacing:-.07em}h2{margin-top:14px;font-size:clamp(32px,4vw,54px);line-height:1;letter-spacing:-.045em}h3{font-size:20px;letter-spacing:-.02em}.lead,.sectionhead p{margin-top:24px;color:var(--soft);font-size:19px;line-height:1.75}.ctas{display:flex;gap:14px;flex-wrap:wrap;margin-top:34px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:36px}.metrics div,.card,.console,.code,.step,.loop,.visual{border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.035));border-radius:28px;box-shadow:0 18px 60px rgba(0,0,0,.22)}.metrics div,.card{padding:24px}.metrics strong{display:block;font-size:24px}.metrics span,.card p,.step p,.loop p{display:block;margin-top:8px;color:var(--muted);line-height:1.65}.visual{position:relative;min-height:560px;overflow:hidden}.ring{position:absolute;border:1px solid rgba(84,243,255,.26);border-radius:50%;inset:74px}.r2{inset:116px;border-color:rgba(157,108,255,.32)}.core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:170px;height:170px;border-radius:42px;background:radial-gradient(circle at top,rgba(84,243,255,.22),rgba(157,108,255,.16));border:1px solid rgba(255,255,255,.16);text-align:center}.core b{font-size:46px}.core span{max-width:125px;color:var(--soft);font-size:12px}.node,.float{position:absolute;padding:14px 16px;border:1px solid var(--line);border-radius:18px;background:rgba(5,8,22,.76);backdrop-filter:blur(18px)}.node small,.float small{display:block;color:var(--muted);font-size:12px}.n1{left:32px;top:70px}.n2{right:32px;top:125px}.n3{left:56px;bottom:86px}.n4{right:54px;bottom:66px}.f1{left:0;bottom:34px}.f2{right:0;top:38px}.strip{margin-top:-20px;padding:18px 22px;display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.045);color:var(--muted)}.strip b{color:var(--text)}.sectionhead{text-align:center;max-width:850px;margin:0 auto 44px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.card .num{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:14px;background:rgba(76,201,255,.12);color:var(--cyan);font-weight:900;margin-bottom:18px}.twocol{display:grid;grid-template-columns:.9fr 1.1fr;gap:22px}.flow{display:grid;gap:14px}.lane{padding:22px;border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.045)}.lane b{display:block;font-size:22px}.lane span{display:block;margin-top:8px;color:var(--muted)}.console,.code{padding:22px}.consolehead,.codehead,.meta{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:16px}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.tab,.copy{border:1px solid var(--line);color:var(--soft);background:rgba(255,255,255,.05);border-radius:999px;padding:9px 13px;cursor:pointer}.tab.active,.step.active{border-color:rgba(84,243,255,.45);background:linear-gradient(135deg,rgba(76,201,255,.18),rgba(157,108,255,.18));color:white}.msg{border:1px solid var(--line);border-radius:22px;padding:18px;background:rgba(2,3,10,.42)}.meta{font-size:13px;color:var(--soft)}.meta b{color:var(--cyan)}pre{margin:0;white-space:pre-wrap;overflow:auto;background:#050816;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:18px;color:#dce8ff;line-height:1.55}code{font-family:SFMono-Regular,Consolas,"Liberation Mono",monospace}.msg p{margin-top:14px;color:var(--muted);line-height:1.65}.steps{display:grid;gap:12px}.step{padding:18px;cursor:pointer}.step span,.primitive b{color:var(--cyan);font-weight:900}.builder a{display:inline-flex;margin-top:18px;color:var(--cyan);font-weight:800}.loop{padding:34px;display:flex;align-items:center;justify-content:space-between;gap:24px;background:linear-gradient(135deg,rgba(76,201,255,.13),rgba(157,108,255,.13))}.footer{padding:38px 0 52px;display:flex;align-items:center;justify-content:space-between;gap:20px;border-top:1px solid var(--line);color:var(--muted)}.footer p{max-width:620px;line-height:1.6}.footerlinks{display:flex;gap:14px}[data-reveal]{opacity:0;transform:translateY(18px);transition:opacity .7s,transform .7s}[data-reveal].on{opacity:1;transform:none}@media(max-width:980px){.navlinks{display:none}.hero,.twocol{grid-template-columns:1fr}.grid4,.grid3{grid-template-columns:repeat(2,1fr)}.loop,.footer{flex-direction:column;align-items:flex-start}.metrics{grid-template-columns:1fr}}@media(max-width:640px){.wrap,.nav{width:calc(100% - 24px)}.section{padding:70px 0}.nav{border-radius:26px}.hide-sm{display:none}.lang{max-width:96px}.grid4,.grid3{grid-template-columns:1fr}.visual{min-height:430px}.f1,.f2{display:none}.strip{border-radius:26px}.hero{padding-top:60px}.meta,.consolehead{align-items:flex-start;flex-direction:column}}
+</style>
 </head>
 <body>
-  <div class="site-shell">
-    <div class="ambient ambient-one"></div>
-    <div class="ambient ambient-two"></div>
-    <div class="ambient ambient-three"></div>
-    <div class="mesh-grid"></div>
-
-    <header class="nav" data-reveal>
-      <a class="brand" href="#top" aria-label="NeuralClear home">
-        <span class="brand-mark"><img src="assets/neuralclear-icon.svg" alt="" /></span>
-        <span>NeuralClear</span>
-      </a>
-      <nav class="nav-links" aria-label="Primary navigation">
-        <a href="#why" data-i18n="nav.why">Why NeuralClear</a>
-        <a href="#demo" data-i18n="nav.demo">Transaction demo</a>
-        <a href="#quickstart" data-i18n="nav.quickstart">Quickstart</a>
-        <a href="#adopters" data-i18n="nav.adopters">Who uses it</a>
-        <a href="#standard" data-i18n="nav.standard">Core objects</a>
-      </nav>
-      <div class="nav-actions">
-        <select class="language-select" data-language-select aria-label="Language">
-          <option value="en">English</option>
-          <option value="zh">中文</option>
-          <option value="ja">日本語</option>
-          <option value="ko">한국어</option>
-          <option value="de">Deutsch</option>
-          <option value="fr">Français</option>
-          <option value="es">Español</option>
-          <option value="it">Italiano</option>
-          <option value="nl">Nederlands</option>
-          <option value="sv">Svenska</option>
-          <option value="da">Dansk</option>
-          <option value="no">Norsk</option>
-        </select>
-        <a class="ghost-link" href="#quickstart" data-i18n="nav.docs">Docs</a>
-        <a class="button button-small" href="#quickstart" data-i18n="nav.cta">Adopt the protocol</a>
-      </div>
-    </header>
-
-    <main id="top">
-      <section class="hero section-pad">
-        <div class="hero-copy" data-reveal>
-          <div class="eyebrow">
-            <span class="pulse-dot"></span>
-            <span data-i18n="hero.eyebrow">Open transaction layer for agent ecosystems</span>
-          </div>
-          <h1 data-i18n="hero.title">Make your AI agent transaction-ready.</h1>
-          <p class="hero-subtitle" data-i18n="hero.subtitle">NeuralClear gives agents a shared language for service discovery, quotes, task execution, and receipts — so any agent can become a reusable service inside marketplaces, products, and enterprise agent networks.</p>
-          <div class="hero-actions">
-            <a class="button button-primary" href="#quickstart" data-i18n="hero.primary">Implement in 5 minutes</a>
-            <a class="button button-secondary" href="#demo" data-i18n="hero.secondary">Watch protocol flow</a>
-          </div>
-          <div class="hero-proof">
-            <div><strong>.well-known</strong><span data-i18n="hero.metric1">agent manifest</span></div>
-            <div><strong>4</strong><span data-i18n="hero.metric2">core messages</span></div>
-            <div><strong>0</strong><span data-i18n="hero.metric3">funds held by NeuralClear</span></div>
-          </div>
-        </div>
-
-        <div class="hero-visual" data-reveal>
-          <div class="protocol-orbit" aria-label="NeuralClear agent protocol illustration">
-            <div class="orbit-ring ring-a"></div>
-            <div class="orbit-ring ring-b"></div>
-            <div class="orbit-core">
-              <span>NC</span>
-              <small data-i18n="hero.core">Agent Transaction Protocol</small>
-            </div>
-            <div class="orbit-node node-one"><b>Agent A</b><small>needs work</small></div>
-            <div class="orbit-node node-two"><b>Agent B</b><small>offers service</small></div>
-            <div class="orbit-node node-three"><b>App</b><small>uses records</small></div>
-            <div class="orbit-node node-four"><b>Rail</b><small>handles payment</small></div>
-          </div>
-          <div class="floating-panel panel-one">
-            <span data-i18n="hero.panel1Label">Protocol message</span>
-            <strong>QuoteRequest</strong>
-            <small data-i18n="hero.panel1Small">price before execution</small>
-          </div>
-          <div class="floating-panel panel-two">
-            <span data-i18n="hero.panel2Label">Agent output</span>
-            <strong>SignedReceipt</strong>
-            <small data-i18n="hero.panel2Small">record for apps and rails</small>
-          </div>
-        </div>
-      </section>
-
-      <section class="trust-strip" data-reveal>
-        <span data-i18n="trust.label">Designed to compose with</span>
-        <b>A2A-style agents</b>
-        <b>MCP tools</b>
-        <b>HTTP APIs</b>
-        <b>payment rails</b>
-        <b>marketplaces</b>
-      </section>
-
-      <section class="section-pad adoption" id="why">
-        <div class="section-heading" data-reveal>
-          <span class="label" data-i18n="why.label">Why use NeuralClear</span>
-          <h2 data-i18n="why.title">A common transaction layer for agent-to-agent services.</h2>
-          <p data-i18n="why.subtitle">AI agents can chat, call tools, and run workflows. But when one agent needs to buy, sell, meter, or record a service from another agent, every product still invents its own flow. NeuralClear gives them one shared way to discover services, get prices, submit work, and return usable records.</p>
-        </div>
-        <div class="adoption-grid">
-          <article class="adoption-card" data-reveal>
-            <span class="card-icon">01</span>
-            <h3 data-i18n="why.card1Title">Discoverable agent services</h3>
-            <p data-i18n="why.card1Text">Each provider agent publishes what it can do, where to call it, what inputs it accepts, and how the service is priced.</p>
-          </article>
-          <article class="adoption-card" data-reveal>
-            <span class="card-icon">02</span>
-            <h3 data-i18n="why.card2Title">Price before work starts</h3>
-            <p data-i18n="why.card2Text">A buyer agent can request a quote before execution, so products can enforce budgets, approvals, and user expectations.</p>
-          </article>
-          <article class="adoption-card" data-reveal>
-            <span class="card-icon">03</span>
-            <h3 data-i18n="why.card3Title">Records after delivery</h3>
-            <p data-i18n="why.card3Text">After the provider delivers, NeuralClear creates a standard receipt that apps, marketplaces, billing tools, and analytics can understand.</p>
-          </article>
-          <article class="adoption-card" data-reveal>
-            <span class="card-icon">04</span>
-            <h3 data-i18n="why.card4Title">Works with your existing stack</h3>
-            <p data-i18n="why.card4Text">How to use NeuralClear for the transaction flow while keeping your own credits, invoices, payment processor, wallet, or internal budget system.</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="section-pad demo" id="demo">
-        <div class="section-heading" data-reveal>
-          <span class="label" data-i18n="demo.label">Transaction demo</span>
-          <h2 data-i18n="demo.title">How one agent buys a service from another.</h2>
-          <p data-i18n="demo.subtitle">The example below shows the full flow: a buyer agent finds a provider, gets a price, submits work, and receives a receipt that the product can record or bill against.</p>
-        </div>
-
-        <div class="demo-layout">
-          <div class="agent-flow" data-reveal>
-            <div class="lane buyer-lane">
-              <b>Buyer Agent</b>
-              <span data-i18n="demo.buyer">Needs a market report</span>
-            </div>
-            <div class="lane nc-lane">
-              <b>NeuralClear</b>
-              <span data-i18n="demo.nc">Normalizes messages</span>
-            </div>
-            <div class="lane provider-lane">
-              <b>Provider Agent</b>
-              <span data-i18n="demo.provider">Offers research service</span>
-            </div>
-          </div>
-
-          <div class="protocol-console" data-reveal>
-            <div class="console-head">
-              <div>
-                <span class="label" data-i18n="demo.consoleLabel">Live flow</span>
-                <h3 data-i18n="demo.consoleTitle">Click through the transaction</h3>
-              </div>
-              <button class="button button-small" type="button" data-flow-next data-i18n="demo.next">Next</button>
-            </div>
-            <div class="flow-tabs" role="tablist" aria-label="Protocol messages">
-              <button class="flow-tab active" type="button" data-flow-step="0">Manifest</button>
-              <button class="flow-tab" type="button" data-flow-step="1">Quote</button>
-              <button class="flow-tab" type="button" data-flow-step="2">Task</button>
-              <button class="flow-tab" type="button" data-flow-step="3">Receipt</button>
-            </div>
-            <div class="message-card">
-              <div class="message-meta">
-                <span data-flow-title>1. Provider publishes an agent manifest</span>
-                <b data-flow-route>/.well-known/neuralclear/agent.json</b>
-              </div>
-              <pre><code data-flow-code>{
-  "agent_id": "agent.research_pro",
-  "capabilities": ["market.research"],
-  "pricing": { "model": "per_task", "amount": 12 }
-}</code></pre>
-              <p data-flow-explain>The provider agent becomes discoverable by publishing capabilities, input rules, endpoint, price model, and proof options.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section-pad quickstart" id="quickstart">
-        <div class="section-heading" data-reveal>
-          <span class="label" data-i18n="quick.label">How to use NeuralClear</span>
-          <h2 data-i18n="quick.title">Add NeuralClear to your agent in four steps.</h2>
-          <p data-i18n="quick.subtitle">Start with one provider agent. Publish its service manifest, support quotes, accept tasks, and return receipts. Then connect more agents through the same flow.</p>
-        </div>
-
-        <div class="quick-layout">
-          <div class="steps-list" data-reveal>
-            <article class="step-card active" data-code-tab="manifest">
-              <span>01</span>
-              <h3 data-i18n="quick.step1Title">Publish your agent manifest</h3>
-              <p data-i18n="quick.step1Text">Expose capabilities, endpoint, input schema, price model, and receipt support.</p>
-            </article>
-            <article class="step-card" data-code-tab="quote">
-              <span>02</span>
-              <h3 data-i18n="quick.step2Title">Support quote requests</h3>
-              <p data-i18n="quick.step2Text">Let buyer agents know expected cost and rules before work starts.</p>
-            </article>
-            <article class="step-card" data-code-tab="task">
-              <span>03</span>
-              <h3 data-i18n="quick.step3Title">Accept tasks</h3>
-              <p data-i18n="quick.step3Text">Execute the requested work only after the request matches your rules.</p>
-            </article>
-            <article class="step-card" data-code-tab="receipt">
-              <span>04</span>
-              <h3 data-i18n="quick.step4Title">Return a receipt</h3>
-              <p data-i18n="quick.step4Text">Create a standard record that apps, marketplaces, billing tools, or analytics can use.</p>
-            </article>
-          </div>
-
-          <div class="code-panel" data-reveal>
-            <div class="code-head">
-              <span data-code-title>agent.json</span>
-              <button class="copy-button" type="button" data-copy-code data-i18n="quick.copy">Copy</button>
-            </div>
-            <pre><code data-code-block>{
+<div class="bg"></div><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+<header class="nav">
+<a class="brand" href="#top"><span class="mark">NC</span><span>NeuralClear</span></a>
+<nav class="navlinks"><a href="#why" data-i="nav.why">Why NeuralClear</a><a href="#demo" data-i="nav.demo">Transaction demo</a><a href="#quickstart" data-i="nav.quickstart">Quickstart</a><a href="#adopters" data-i="nav.adopters">Who uses it</a><a href="#standard" data-i="nav.standard">Core objects</a></nav>
+<div class="actions"><select class="lang" id="lang" aria-label="Language"><option value="en">English</option><option value="zh">中文</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="de">Deutsch</option><option value="fr">Français</option><option value="es">Español</option><option value="it">Italiano</option><option value="nl">Nederlands</option><option value="sv">Svenska</option><option value="da">Dansk</option><option value="no">Norsk</option></select><a class="btn small" href="#quickstart" data-i="nav.cta">Adopt the protocol</a></div>
+</header>
+<main id="top">
+<section class="wrap hero section">
+<div data-reveal><div class="eyebrow"><span class="dot"></span><span data-i="hero.eyebrow">Open transaction layer for agent ecosystems</span></div><h1 data-i="hero.title">Make your AI agent transaction-ready.</h1><p class="lead" data-i="hero.subtitle">NeuralClear gives agents a shared language for service discovery, quotes, task execution, and receipts — so any agent can become a reusable service inside marketplaces, products, and enterprise agent networks.</p><div class="ctas"><a class="btn primary" href="#quickstart" data-i="hero.primary">Implement in 5 minutes</a><a class="btn secondary" href="#demo" data-i="hero.secondary">Watch protocol flow</a></div><div class="metrics"><div><strong>.well-known</strong><span data-i="hero.metric1">agent manifest</span></div><div><strong>4</strong><span data-i="hero.metric2">core messages</span></div><div><strong>0</strong><span data-i="hero.metric3">funds held by NeuralClear</span></div></div></div>
+<div class="visual" data-reveal><div class="ring"></div><div class="ring r2"></div><div class="core"><b>NC</b><span data-i="hero.core">Agent Transaction Protocol</span></div><div class="node n1"><b>Agent A</b><small>needs work</small></div><div class="node n2"><b>Agent B</b><small>offers service</small></div><div class="node n3"><b>App</b><small>uses records</small></div><div class="node n4"><b>Rail</b><small>handles payment</small></div><div class="float f1"><small data-i="hero.panel1Label">Protocol message</small><b>QuoteRequest</b><small data-i="hero.panel1Small">price before execution</small></div><div class="float f2"><small data-i="hero.panel2Label">Agent output</small><b>SignedReceipt</b><small data-i="hero.panel2Small">record for apps and rails</small></div></div>
+</section>
+<div class="wrap strip" data-reveal><span data-i="trust.label">Designed to compose with</span><b>A2A-style agents</b><b>MCP tools</b><b>HTTP APIs</b><b>payment rails</b><b>marketplaces</b></div>
+<section class="wrap section" id="why"><div class="sectionhead" data-reveal><span class="label" data-i="why.label">Why use NeuralClear</span><h2 data-i="why.title">A common transaction layer for agent-to-agent services.</h2><p data-i="why.subtitle">AI agents can chat, call tools, and run workflows. But when one agent needs to buy, sell, meter, or record a service from another agent, every product still invents its own flow.</p></div><div class="grid4"><article class="card" data-reveal><span class="num">01</span><h3 data-i="why.card1Title">Discoverable agent services</h3><p data-i="why.card1Text">Each provider agent publishes what it can do, where to call it, what inputs it accepts, and how the service is priced.</p></article><article class="card" data-reveal><span class="num">02</span><h3 data-i="why.card2Title">Price before work starts</h3><p data-i="why.card2Text">A buyer agent can request a quote before execution, so products can enforce budgets, approvals, and user expectations.</p></article><article class="card" data-reveal><span class="num">03</span><h3 data-i="why.card3Title">Records after delivery</h3><p data-i="why.card3Text">After delivery, NeuralClear creates a standard receipt that apps, marketplaces, billing tools, and analytics can understand.</p></article><article class="card" data-reveal><span class="num">04</span><h3 data-i="why.card4Title">Works with your stack</h3><p data-i="why.card4Text">Use NeuralClear for the transaction flow while keeping your own credits, invoices, payment processor, wallet, or budget system.</p></article></div></section>
+<section class="wrap section" id="demo"><div class="sectionhead" data-reveal><span class="label" data-i="demo.label">Transaction demo</span><h2 data-i="demo.title">How one agent buys a service from another.</h2><p data-i="demo.subtitle">The example below shows the full flow: a buyer agent finds a provider, gets a price, submits work, and receives a receipt.</p></div><div class="twocol"><div class="flow" data-reveal><div class="lane"><b>Buyer Agent</b><span data-i="demo.buyer">Needs a market report</span></div><div class="lane"><b>NeuralClear</b><span data-i="demo.nc">Normalizes messages</span></div><div class="lane"><b>Provider Agent</b><span data-i="demo.provider">Offers research service</span></div></div><div class="console" data-reveal><div class="consolehead"><div><span class="label" data-i="demo.consoleLabel">Live flow</span><h3 data-i="demo.consoleTitle">Click through the transaction</h3></div><button class="btn small" type="button" id="next" data-i="demo.next">Next</button></div><div class="tabs"><button class="tab active" data-step="0">Manifest</button><button class="tab" data-step="1">Quote</button><button class="tab" data-step="2">Task</button><button class="tab" data-step="3">Receipt</button></div><div class="msg"><div class="meta"><span id="flowTitle">1. Provider publishes an agent manifest</span><b id="flowRoute">/.well-known/neuralclear/agent.json</b></div><pre><code id="flowCode"></code></pre><p id="flowExplain"></p></div></div></div></section>
+<section class="wrap section" id="quickstart"><div class="sectionhead" data-reveal><span class="label" data-i="quick.label">How to use NeuralClear</span><h2 data-i="quick.title">Add NeuralClear to your agent in four steps.</h2><p data-i="quick.subtitle">Start with one provider agent. Publish its service manifest, support quotes, accept tasks, and return receipts. Then connect more agents through the same flow.</p></div><div class="twocol"><div class="steps" data-reveal><article class="step active"><span>01</span><h3 data-i="quick.step1Title">Publish your agent manifest</h3><p data-i="quick.step1Text">Expose capabilities, endpoint, input schema, price model, and receipt support.</p></article><article class="step"><span>02</span><h3 data-i="quick.step2Title">Support quote requests</h3><p data-i="quick.step2Text">Let buyer agents know expected cost and rules before work starts.</p></article><article class="step"><span>03</span><h3 data-i="quick.step3Title">Accept tasks</h3><p data-i="quick.step3Text">Execute the requested work only after the request matches your rules.</p></article><article class="step"><span>04</span><h3 data-i="quick.step4Title">Return a receipt</h3><p data-i="quick.step4Text">Create a standard record that apps, marketplaces, billing tools, or analytics can use.</p></article></div><div class="code" data-reveal><div class="codehead"><span>agent.json</span><button class="copy" type="button" id="copy" data-i="quick.copy">Copy</button></div><pre><code id="codeblock">{
   "neuralclear_version": "0.6",
   "agent_id": "agent.research_pro",
   "name": "Research Pro Agent",
   "endpoint": "https://agent.example.com/neuralclear",
-  "capabilities": [
-    {
-      "id": "market.research",
-      "title": "Market research report",
-      "pricing": { "model": "per_task", "amount": 12, "currency": "USD" }
-    }
-  ]
-}</code></pre>
-          </div>
-        </div>
-      </section>
-
-      <section class="section-pad builders" id="adopters">
-        <div class="section-heading" data-reveal>
-          <span class="label" data-i18n="builders.label">Who should use NeuralClear</span>
-          <h2 data-i18n="builders.title">Use NeuralClear wherever agents provide paid or metered services.</h2>
-          <p data-i18n="builders.subtitle">It is useful for teams building agent services, marketplaces, multi-agent products, and billing systems that need a common transaction interface.</p>
-        </div>
-        <div class="builder-grid">
-          <article data-reveal>
-            <h3 data-i18n="builders.card1Title">Agent service providers</h3>
-            <p data-i18n="builders.card1Text">Make your agent easier to list, price, and call from other products.</p>
-            <a href="#quickstart" data-i18n="builders.cardAction">Add manifest →</a>
-          </article>
-          <article data-reveal>
-            <h3 data-i18n="builders.card2Title">AI marketplace builders</h3>
-            <p data-i18n="builders.card2Text">Use a shared transaction format instead of inventing a custom order model.</p>
-            <a href="#demo" data-i18n="builders.card2Action">See flow →</a>
-          </article>
-          <article data-reveal>
-            <h3 data-i18n="builders.card3Title">Multi-agent products</h3>
-            <p data-i18n="builders.card3Text">Let internal and external agents request work from each other with visible records.</p>
-            <a href="#standard" data-i18n="builders.card3Action">View primitives →</a>
-          </article>
-          <article data-reveal>
-            <h3 data-i18n="builders.card4Title">Payment and billing tools</h3>
-            <p data-i18n="builders.card4Text">Consume receipts and connect them to cards, credits, invoices, or machine-native payments.</p>
-            <a href="#standard" data-i18n="builders.card4Action">Connect rail →</a>
-          </article>
-        </div>
-      </section>
-
-      <section class="section-pad standard" id="standard">
-        <div class="section-heading" data-reveal>
-          <span class="label" data-i18n="standard.label">Core objects</span>
-          <h2 data-i18n="standard.title">A small set of objects your agent can implement.</h2>
-          <p data-i18n="standard.subtitle">NeuralClear is intentionally small: a manifest, quote, task, result, receipt, and adapter event. That keeps integration understandable and testable.</p>
-        </div>
-        <div class="primitive-grid">
-          <div class="primitive" data-reveal><span>AgentManifest</span><p data-i18n="standard.p1">Who the agent is, what it offers, and where to call it.</p></div>
-          <div class="primitive" data-reveal><span>QuoteRequest</span><p data-i18n="standard.p2">What the buyer wants and what the provider expects.</p></div>
-          <div class="primitive" data-reveal><span>TaskSubmission</span><p data-i18n="standard.p3">The accepted request that starts work.</p></div>
-          <div class="primitive" data-reveal><span>TaskResult</span><p data-i18n="standard.p4">The output, usage, proof metadata, and status.</p></div>
-          <div class="primitive" data-reveal><span>SignedReceipt</span><p data-i18n="standard.p5">A record that products and payment rails can trust.</p></div>
-          <div class="primitive" data-reveal><span>AdapterEvent</span><p data-i18n="standard.p6">A bridge to cards, credits, invoices, stablecoins, or internal ledgers.</p></div>
-        </div>
-      </section>
-
-      <section class="section-pad adoption-loop">
-        <div class="loop-card" data-reveal>
-          <div>
-            <span class="label" data-i18n="loop.label">Start using it</span>
-            <h2 data-i18n="loop.title">Start with one compatible agent. Then connect more.</h2>
-            <p data-i18n="loop.text">Create one NeuralClear-compatible provider, run the sandbox, pass the tests, add the compatible badge, and list the agent so other products can call it.</p>
-          </div>
-          <div class="loop-actions">
-            <a class="button button-primary" href="#quickstart" data-i18n="loop.primary">Start implementation</a>
-            <a class="button button-secondary" href="#standard" data-i18n="loop.secondary">View core objects</a>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="footer">
-      <div class="footer-brand">
-        <span class="brand-mark"><img src="assets/neuralclear-icon.svg" alt="" /></span>
-        <span>NeuralClear</span>
-      </div>
-      <p data-i18n="footer.text">Open protocol layer for agent-to-agent service transactions. Prototype only. Not production ready. NeuralClear does not custody funds or execute payments.</p>
-      <div class="footer-links">
-        <a href="#quickstart" data-i18n="footer.link1">Adopt</a>
-        <a href="#demo" data-i18n="footer.link2">Demo</a>
-        <a href="#standard" data-i18n="footer.link3">Core objects</a>
-      </div>
-    </footer>
-  </div>
-  <script src="site.js"></script>
+  "capabilities": [{
+    "id": "market.research",
+    "title": "Market research report",
+    "pricing": { "model": "per_task", "amount": 12, "currency": "USD" }
+  }]
+}</code></pre></div></div></section>
+<section class="wrap section" id="adopters"><div class="sectionhead" data-reveal><span class="label" data-i="builders.label">Who should use NeuralClear</span><h2 data-i="builders.title">Use NeuralClear wherever agents provide paid or metered services.</h2><p data-i="builders.subtitle">It is useful for teams building agent services, marketplaces, multi-agent products, and billing systems that need a common transaction interface.</p></div><div class="grid4 builder"><article class="card" data-reveal><h3 data-i="builders.card1Title">Agent service providers</h3><p data-i="builders.card1Text">Make your agent easier to list, price, and call from other products.</p><a href="#quickstart" data-i="builders.cardAction">Add manifest →</a></article><article class="card" data-reveal><h3 data-i="builders.card2Title">AI marketplace builders</h3><p data-i="builders.card2Text">Use a shared transaction format instead of inventing a custom order model.</p><a href="#demo" data-i="builders.card2Action">See flow →</a></article><article class="card" data-reveal><h3 data-i="builders.card3Title">Multi-agent products</h3><p data-i="builders.card3Text">Let internal and external agents request work from each other with visible records.</p><a href="#standard" data-i="builders.card3Action">View primitives →</a></article><article class="card" data-reveal><h3 data-i="builders.card4Title">Payment and billing tools</h3><p data-i="builders.card4Text">Consume receipts and connect them to cards, credits, invoices, or machine-native payments.</p><a href="#standard" data-i="builders.card4Action">Connect rail →</a></article></div></section>
+<section class="wrap section" id="standard"><div class="sectionhead" data-reveal><span class="label" data-i="standard.label">Core objects</span><h2 data-i="standard.title">A small set of objects your agent can implement.</h2><p data-i="standard.subtitle">NeuralClear is intentionally small: a manifest, quote, task, result, receipt, and adapter event. That keeps integration understandable and testable.</p></div><div class="grid3"><div class="card primitive" data-reveal><b>AgentManifest</b><p data-i="standard.p1">Who the agent is, what it offers, and where to call it.</p></div><div class="card primitive" data-reveal><b>QuoteRequest</b><p data-i="standard.p2">What the buyer wants and what the provider expects.</p></div><div class="card primitive" data-reveal><b>TaskSubmission</b><p data-i="standard.p3">The accepted request that starts work.</p></div><div class="card primitive" data-reveal><b>TaskResult</b><p data-i="standard.p4">The output, usage, proof metadata, and status.</p></div><div class="card primitive" data-reveal><b>SignedReceipt</b><p data-i="standard.p5">A record that products and payment rails can trust.</p></div><div class="card primitive" data-reveal><b>AdapterEvent</b><p data-i="standard.p6">A bridge to cards, credits, invoices, stablecoins, or internal ledgers.</p></div></div></section>
+<section class="wrap section"><div class="loop" data-reveal><div><span class="label" data-i="loop.label">Start using it</span><h2 data-i="loop.title">Start with one compatible agent. Then connect more.</h2><p data-i="loop.text">Create one NeuralClear-compatible provider, run the sandbox, pass the tests, add the compatible badge, and list the agent so other products can call it.</p></div><div class="ctas"><a class="btn primary" href="#quickstart" data-i="loop.primary">Start implementation</a><a class="btn secondary" href="#standard" data-i="loop.secondary">View core objects</a></div></div></section>
+</main>
+<footer class="wrap footer"><div class="brand"><span class="mark">NC</span><span>NeuralClear</span></div><p data-i="footer.text">Open protocol layer for agent-to-agent service transactions. Prototype only. Not production ready. NeuralClear does not custody funds or execute payments.</p><div class="footerlinks"><a href="#quickstart" data-i="footer.link1">Adopt</a><a href="#demo" data-i="footer.link2">Demo</a><a href="#standard" data-i="footer.link3">Core objects</a></div></footer>
+<script>
+const flow=[{t:'1. Provider publishes an agent manifest',r:'/.well-known/neuralclear/agent.json',c:'{\n  "agent_id": "agent.research_pro",\n  "capabilities": ["market.research"],\n  "pricing": { "model": "per_task", "amount": 12 }\n}',e:'The provider agent becomes discoverable by publishing capabilities, input rules, endpoint, price model, and proof options.'},{t:'2. Buyer agent requests a quote',r:'POST /neuralclear/quote',c:'{\n  "buyer_agent": "agent.operator",\n  "capability": "market.research",\n  "input_summary": "compare 5 competitors"\n}',e:'Before work starts, the buyer gets price, expiration, capability, and execution conditions.'},{t:'3. Buyer submits a task',r:'POST /neuralclear/tasks',c:'{\n  "quote_id": "quote_42",\n  "task_input": { "topic": "AI coding tools" },\n  "idempotency_key": "task-2026-001"\n}',e:'The task starts only after the buyer accepts the quote and the request matches the provider rules.'},{t:'4. Provider returns result and receipt',r:'GET /neuralclear/receipts/task_42',c:'{\n  "task_id": "task_42",\n  "status": "delivered",\n  "receipt": { "amount": 12, "provider": "agent.research_pro" }\n}',e:'The product can record the receipt, show usage, connect billing, or feed analytics.'}];let step=0;function renderFlow(){const f=flow[step];flowTitle.textContent=f.t;flowRoute.textContent=f.r;flowCode.textContent=f.c;flowExplain.textContent=f.e;document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===step))}document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{step=+b.dataset.step;renderFlow()});next.onclick=()=>{step=(step+1)%flow.length;renderFlow()};renderFlow();copy.onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(codeblock.textContent);const translations={zh:{'nav.why':'为什么使用','nav.demo':'交易演示','nav.quickstart':'快速接入','nav.adopters':'适用对象','nav.standard':'核心对象','nav.cta':'采用协议','hero.eyebrow':'面向 Agent 生态的开放交易层','hero.title':'让你的 AI Agent 具备交易能力。','hero.subtitle':'NeuralClear 为 Agent 提供服务发现、报价、任务执行与收据记录的共同语言，让任何 Agent 都可以成为市场、产品和企业网络里的可复用服务。','hero.primary':'5 分钟开始接入','hero.secondary':'查看协议流程','hero.metric1':'Agent 服务清单','hero.metric2':'核心消息','hero.metric3':'NeuralClear 托管资金','hero.core':'Agent 交易协议','why.label':'为什么使用 NeuralClear','why.title':'Agent-to-Agent 服务需要共同交易层。','why.subtitle':'Agent 已经可以聊天、调用工具、执行任务。但当一个 Agent 需要向另一个 Agent 购买、计量或记录服务时，每个产品仍在重复发明自己的流程。','why.card1Title':'可发现的 Agent 服务','why.card1Text':'服务方 Agent 发布能力、调用地址、输入要求和定价方式。','why.card2Title':'执行前报价','why.card2Text':'购买方 Agent 可以在任务开始前获得报价，产品也能执行预算和审批规则。','why.card3Title':'交付后记录','why.card3Text':'服务交付后生成标准收据，供应用、市场、计费和分析系统读取。','why.card4Title':'兼容现有系统','why.card4Text':'使用 NeuralClear 处理交易流程，同时保留你的积分、发票、支付处理器、钱包或内部预算系统。','demo.label':'交易演示','demo.title':'一个 Agent 如何购买另一个 Agent 的服务。','demo.subtitle':'下面展示完整流程：发现服务、获得价格、提交任务、收到可记录或计费的收据。','demo.buyer':'需要一份市场报告','demo.nc':'标准化交易消息','demo.provider':'提供研究服务','demo.consoleLabel':'实时流程','demo.consoleTitle':'点击查看交易过程','demo.next':'下一步','quick.label':'如何使用 NeuralClear','quick.title':'四步把 NeuralClear 加入你的 Agent。','quick.subtitle':'从一个服务方 Agent 开始：发布清单、支持报价、接受任务、返回收据，然后让更多 Agent 连接进来。','quick.copy':'复制','quick.step1Title':'发布 Agent 清单','quick.step1Text':'公开能力、端点、输入结构、定价模型和收据支持。','quick.step2Title':'支持报价请求','quick.step2Text':'让购买方 Agent 在任务开始前知道预计成本和规则。','quick.step3Title':'接受任务','quick.step3Text':'只在请求符合规则后执行任务。','quick.step4Title':'返回收据','quick.step4Text':'创建应用、市场、计费或分析工具可以使用的标准记录。','builders.label':'谁应该使用 NeuralClear','builders.title':'只要 Agent 提供付费或计量服务，就可以使用 NeuralClear。','builders.subtitle':'适合构建 Agent 服务、市场、多 Agent 产品和计费系统的团队。','builders.card1Title':'Agent 服务提供方','builders.card1Text':'让你的 Agent 更容易被列出、定价和调用。','builders.cardAction':'添加清单 →','builders.card2Title':'AI 市场构建者','builders.card2Text':'使用共享交易格式，而不是自建订单模型。','builders.card2Action':'查看流程 →','builders.card3Title':'多 Agent 产品','builders.card3Text':'让内部和外部 Agent 以可见记录互相请求工作。','builders.card3Action':'查看对象 →','builders.card4Title':'支付与计费工具','builders.card4Text':'读取收据，并连接到卡、积分、发票或机器原生支付。','builders.card4Action':'连接轨道 →','standard.label':'核心对象','standard.title':'你的 Agent 可以实现的一小组对象。','standard.subtitle':'NeuralClear 故意保持小型：清单、报价、任务、结果、收据和适配器事件，便于理解和测试。','standard.p1':'Agent 是谁、提供什么、在哪里调用。','standard.p2':'购买方想要什么，服务方要求什么。','standard.p3':'启动工作的已接受请求。','standard.p4':'输出、用量、证明元数据和状态。','standard.p5':'产品和支付轨道可以信任的记录。','standard.p6':'连接卡、积分、发票、稳定币或内部账本。','loop.label':'开始使用','loop.title':'从一个兼容 Agent 开始，然后连接更多。','loop.text':'创建一个兼容 NeuralClear 的服务方，运行沙盒，通过测试，添加兼容徽章，并将 Agent 列入注册表。','loop.primary':'开始实现','loop.secondary':'查看核心对象','footer.text':'面向 Agent-to-Agent 服务交易的开放协议层。仅为原型，尚未生产就绪。NeuralClear 不托管资金，也不执行支付。','footer.link1':'采用','footer.link2':'演示','footer.link3':'核心对象'}};const languageNames={ja:'日本語',ko:'한국어',de:'Deutsch',fr:'Français',es:'Español',it:'Italiano',nl:'Nederlands',sv:'Svenska',da:'Dansk',no:'Norsk'};function applyLang(l){document.documentElement.lang=l;localStorage.setItem('neuralclear_lang',l);if(l==='en'){document.querySelectorAll('[data-i]').forEach(el=>{if(el.dataset.en)el.textContent=el.dataset.en});return}const dict=translations[l]||translations.zh;document.querySelectorAll('[data-i]').forEach(el=>{if(!el.dataset.en)el.dataset.en=el.textContent;el.textContent=dict[el.dataset.i]||el.dataset.en});if(!translations[l]){document.querySelector('[data-i="hero.eyebrow"]').textContent=languageNames[l]+' preview · NeuralClear';}}document.querySelectorAll('[data-i]').forEach(el=>el.dataset.en=el.textContent);lang.onchange=e=>applyLang(e.target.value);lang.value=localStorage.getItem('neuralclear_lang')||'en';applyLang(lang.value);const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')}),{threshold:.12});document.querySelectorAll('[data-reveal]').forEach(el=>io.observe(el));
+</script>
 </body>
 </html>
