@@ -10,10 +10,10 @@ Please open a private security advisory on GitHub or contact the maintainers bef
 
 ## Known Prototype Limits
 
-- No real signature verification
+- Signatures are symmetric HMAC-SHA256 only (shared secret); no asymmetric / public-key (ed25519) verification yet
 - No real TEE attestation verification
 - No ZK proof verification
-- No replay protection
+- Replay protection is limited to idempotency keys on task submission; no nonce-based protection on proofs or protocol messages
 - No identity recovery
 - No compliance or sanctions controls
 - No production-grade dispute process
