@@ -33,6 +33,43 @@ flowchart LR
 
 `Transaction.amount > 0` always means `sender` pays `receiver`.
 
+## Make Your Agent Transaction-Ready (10 lines)
+
+Provider side — wrap any function as a priced capability:
+
+```python
+from neuralclear.provider import ProviderAgent
+
+agent = ProviderAgent("agent.pdf_summarizer", endpoint="https://agent.example.com")
+
+@agent.capability("summarize.pdf", price=25, resource_estimate=8000, resource_unit="tokens")
+def summarize(payload):
+    return {"summary": payload["text"][:100]}
+```
+
+The agent now produces a `.well-known` manifest (`agent.manifest()`), quotes, executes tasks, and returns `TaskResult` objects with proof metadata.
+
+Buyer side — one call from capability name to settled receipt:
+
+```python
+from neuralclear.buyer import BuyerAgent
+
+buyer = BuyerAgent("buyer.bot", registry=registry, ledger=ledger, mandate=mandate)
+buyer.connect_local(agent)  # sandbox mode; HTTP client for remote providers
+
+outcome = buyer.purchase("summarize.pdf", payload={"text": "..."})
+outcome.result   # provider output
+outcome.receipt  # settlement record for apps, billing, analytics
+```
+
+`purchase()` runs the full clearing flow — discover, quote, mandate check, task, proof verification, settlement — and raises `ProtocolError` at the first violated rule.
+
+MCP bridge example (clearing commercial usage around MCP-style tool calls):
+
+```
+python3 examples/integrations/mcp_bridge.py
+```
+
 ## Quick Run
 
 ```bash
@@ -114,6 +151,53 @@ docker compose up --build
 ```
 
 Developer docs are in [docs/quickstart.md](docs/quickstart.md), [docs/api-reference.md](docs/api-reference.md), and [docs/deployment.md](docs/deployment.md).
+
+## The Real Closed Loop
+
+The full clearing economy runs cross-process over real HTTP — stdlib only, no blockchain, no third-party dependencies:
+
+```
+python3 examples/closed_loop_demo.py
+```
+
+What executes: two provider agents serve `/.well-known` manifests + quote/task endpoints over real sockets (`neuralclear.httpwire`); a buyer discovers them by HTTP, runs one retail task through escrow clearing to a signed receipt; then opens a **netting channel** (`neuralclear.netting`) — one deposit, 100 hash-chained micro-tasks metered over HTTP, ONE net settlement (a 100x reduction in settlement events, the structural fix for micro-priced agent services where per-call settlement costs exceed the call price); a dispute refunds real escrowed funds; and the whole clearing state round-trips through SQLite (`neuralclear.store`) with receipt signatures surviving the reload.
+
+Netting channel API:
+
+```python
+from neuralclear.netting import NettingService
+
+netting = NettingService(clearing_service)
+channel = netting.open_channel("owner.acme", "agent.embedder", deposit=120)
+channel.meter("embed.text", amount=1, payload_hash="sha256:...")  # tamper-evident chain
+receipt = netting.settle(channel.channel_id)  # one transfer: net + refund + fee
+```
+
+Remote providers are a one-liner for buyers:
+
+```python
+buyer.connect_remote("http://provider.example.com")  # fetches manifest, ready to purchase
+```
+
+## Commercial Clearing Layer
+
+`neuralclear.clearing` upgrades the protocol sketch to an economically real flow:
+
+- `EscrowLedger` — buyer funds are **held** on task submission, **released** to the provider on proof verification, **refunded** on buyer-favored disputes, **slashed** on provider bad faith, or **split** for partial resolutions. Refunds move money, not just state. Zero-sum invariant covers balances + escrow + fee pool.
+- `FeePolicy` / `FeeSchedule` — the protocol revenue engine: basis-point fee + flat + minimum, with per-capability overrides. Every released transaction pays the fee into `ledger.fee_pool`.
+- `Dispute` + `ClearingService.open_dispute() / resolve_dispute()` — evidence-carrying disputes with four resolutions: `refund`, `slash`, `split`, `settle`.
+- `EventBus` — `transaction.held`, `receipt.created`, `dispute.opened`, `dispute.resolved`. A hosted deployment swaps handlers for webhook delivery.
+- `ReceiptSigner` — HMAC-SHA256 signed receipts (stdlib), verifiable by any party holding the secret; interface ready for ed25519.
+
+`neuralclear.reputation` closes the trust loop:
+
+- `ReputationEngine` — settlements raise scores, disputes and slashes lower them; `rank_providers()` orders discovery so reliable agents win work. `engine.attach(clearing_service)` wires score updates to clearing events automatically.
+
+Run the commercial demo (fees, ranked discovery, dispute with real refund):
+
+```
+python3 examples/commercial_demo.py
+```
 
 ## Protocol Objects
 
