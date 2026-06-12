@@ -408,7 +408,7 @@ var LINES=[['tk','$ python3 examples/closed_loop_demo.py'],
  ['ta','    settlements avoided: 99  (100× reduction)'],
  ['tc','[5] dispute → escrow refunded: 325 → 356'],
  ['tc','[6] SQLite reload: state identical = true'],
- ['tg','  zero-sum invariant: TRUE · 121/121 tests']];
+ ['tg','  zero-sum invariant: TRUE · 127/127 tests']];
 var term=document.getElementById('term'),li=0;
 function typeLine(){if(li>=LINES.length){setTimeout(function(){term.innerHTML='';li=0;typeLine()},5400);return}
  var l=LINES[li],d=document.createElement('div');if(l[0])d.className=l[0];d.textContent=l[1];term.appendChild(d);
@@ -499,7 +499,7 @@ var EN={},ZH={
  p2p:'我们运营中立清算节点：托管账本、API 密钥、仪表盘、Webhook。按结算笔数付费。',
  p3p:'部署在你的内网，支付通道适配器、合规支持、SLA 保障。',
  p1b:'克隆仓库',p2b:'加入候补名单',p3b:'联系我们',
- bh:'Demo <b>就是</b>路演。',bandb:'运行真实闭环 →',
+ bandh:'Demo <b>就是</b>路演。',bandb:'运行真实闭环 →',
  fn:'面向 Agent 间服务交易的清算引擎原型。非支付服务，不托管资金，不执行真实支付。仅沙盒积分——不发生真实价值转移。'
 };
 var STZH=[
@@ -511,9 +511,10 @@ var STZH=[
  {h:'一份双方都信任的签名记录',d:'托管释放：提供方收款、运营方收费、回执签名并持久化到 SQLite。签名跨重启依然有效——可直接交给财务。'}];
 var EPZH=['开户','一次调用完成清算','开通净额通道','哈希链计量记录','一次净额转账','冻结+裁决','实时余额'];
 var LANG='en';
-document.querySelectorAll('[data-i]').forEach(function(el){EN[el.getAttribute('data-i')]=el.innerHTML});
+function i18nKey(el){return el.getAttribute('data-i')||el.getAttribute('data-ih')}
+document.querySelectorAll('[data-i],[data-ih]').forEach(function(el){EN[i18nKey(el)]=el.innerHTML});
 function setLang(l){LANG=l;var D=l==='zh'?ZH:EN;
- document.querySelectorAll('[data-i]').forEach(function(el){var k=el.getAttribute('data-i');if(D[k]!==undefined)el.innerHTML=D[k]});
+ document.querySelectorAll('[data-i],[data-ih]').forEach(function(el){var k=i18nKey(el);if(D[k]!==undefined)el.innerHTML=D[k]});
  rp();document.querySelectorAll('.ep small').forEach(function(s,i){s.textContent=l==='zh'?EPZH[i]:EPS[i].s});}
 </script>
 </body>
