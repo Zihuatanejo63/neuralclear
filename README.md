@@ -199,6 +199,31 @@ Run the commercial demo (fees, ranked discovery, dispute with real refund):
 python3 examples/commercial_demo.py
 ```
 
+## Self-Hosted Clearing Gateway
+
+`neuralclear.gateway` serves the same engine over HTTP — stdlib only, no framework. One neutral clearing point holds escrow, meters channels, signs receipts, and persists to SQLite:
+
+```python
+from neuralclear.gateway import ClearingGateway
+
+gw = ClearingGateway(api_key="your_write_key", port=8080)
+gw.start()
+```
+
+```text
+POST /v1/accounts                 open an account with a deposit
+POST /v1/clear                    full clearing loop in one call
+POST /v1/channels                 open a netting channel
+POST /v1/channels/{id}/meter      append a hash-chained usage record
+POST /v1/channels/{id}/settle     one net transfer closes the channel
+POST /v1/disputes                 freeze a transaction
+POST /v1/disputes/{id}/resolve    refund | slash | split | settle
+GET  /v1/ledger                   live balances, escrow, fee pool
+GET  /v1/receipts/{id}            signed receipt lookup
+```
+
+Write endpoints require `X-NeuralClear-Api-Key`. A single `POST /v1/clear` runs the whole loop: quote → mandate → escrow hold → remote HTTP execution → proof → release → signed receipt. `neuralclear.tenancy` adds isolated multi-tenant workspaces with per-tenant API keys and usage metering on top.
+
 ## Protocol Objects
 
 `ResourceUnit` measures resources such as tokens, GPU seconds, bandwidth, or storage.
@@ -246,16 +271,10 @@ NeuralClear is intended to compose with these protocols, not replace them.
 
 ## Current Status
 
-Current stage: V0.3 sandbox prototype complete.
+Current stage: V0.4 developer preview. The clearing gateway (`neuralclear.gateway`), netting channels, multi-tenant workspaces (`neuralclear.tenancy`), API-key auth, and the commercial clearing layer are implemented and covered by the test suite (127 tests).
 
-Next milestone: V0.4 hosted developer sandbox.
+Next milestone: hosted gateway deployment.
 
 Prototype only. Not production ready.
 
 This repository does not implement real custody, real payment execution, real TEE attestation, real ZK verification, identity recovery, compliance, finality guarantees, or adversarial dispute resolution. Treat it as a protocol sketch with executable tests.
-
-Suggested GitHub About text:
-
-```text
-Prototype clearing, authorization, proof, and dispute layer for AI agent-to-agent service transactions.
-```

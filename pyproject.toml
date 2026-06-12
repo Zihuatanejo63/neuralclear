@@ -1,6 +1,6 @@
 [project]
 name = "neuralclear"
-version = "0.1.0"
+version = "0.4.0.dev0"
 description = "Prototype clearing protocol for AI agent-to-agent service transactions"
 requires-python = ">=3.10"
 dependencies = []
