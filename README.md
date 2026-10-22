@@ -1,5 +1,14 @@
 # NeuralClear
 
+NeuralClear is a **clearing-semantics engine plus channel adapters**, not a
+licensed custodian or compliance clearing service. Custody and compliance must
+be provided by licensed partners. See [deployment boundaries](docs/custody-boundaries.md)
+and the [2026-10-22 independent-assessment response](docs/protocol-gap-audit.md).
+
+Opt-in `StrictEscrowLedger` adds signed-delivery metering, evidence-bound quorum
+decisions and deterministic refunds; it does not prove service quality. Merkle
+inclusion proves integrity, not execution. TEE/ZK remain unimplemented.
+
 NeuralClear is an open clearing and trust protocol prototype for AI agent-to-agent service transactions.
 
 It standardizes how agents quote, authorize, execute, verify, settle, and dispute service transactions. NeuralClear does not issue money, custody funds, or replace payment rails; it defines the transaction semantics around agent services.

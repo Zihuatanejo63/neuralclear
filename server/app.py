@@ -61,26 +61,27 @@ def _write_api_key() -> str:
     )
 
 
-def _require_read_key(x_neuralclear_api_key: str | None = Header(default=None)) -> None:
-    if x_neuralclear_api_key not in {_read_api_key(), _write_api_key()}:
-        if HTTPException is None:
-            raise ProtocolError("invalid or missing API key")
-        raise HTTPException(status_code=401, detail="invalid or missing API key")
+if FastAPI is not None:
 
+    def _require_read_key(x_neuralclear_api_key: str | None = Header(default=None)) -> None:
+        if x_neuralclear_api_key not in {_read_api_key(), _write_api_key()}:
+            if HTTPException is None:
+                raise ProtocolError("invalid or missing API key")
+            raise HTTPException(status_code=401, detail="invalid or missing API key")
 
-def _require_write_key(x_neuralclear_api_key: str | None = Header(default=None)) -> None:
-    if x_neuralclear_api_key is None:
-        if HTTPException is None:
-            raise ProtocolError("invalid or missing API key")
-        raise HTTPException(status_code=401, detail="invalid or missing API key")
-    if x_neuralclear_api_key == _read_api_key():
-        if HTTPException is None:
-            raise ProtocolError("write API key required")
-        raise HTTPException(status_code=403, detail="write API key required")
-    if x_neuralclear_api_key != _write_api_key():
-        if HTTPException is None:
-            raise ProtocolError("invalid or missing API key")
-        raise HTTPException(status_code=401, detail="invalid or missing API key")
+    def _require_write_key(x_neuralclear_api_key: str | None = Header(default=None)) -> None:
+        if x_neuralclear_api_key is None:
+            if HTTPException is None:
+                raise ProtocolError("invalid or missing API key")
+            raise HTTPException(status_code=401, detail="invalid or missing API key")
+        if x_neuralclear_api_key == _read_api_key():
+            if HTTPException is None:
+                raise ProtocolError("write API key required")
+            raise HTTPException(status_code=403, detail="write API key required")
+        if x_neuralclear_api_key != _write_api_key():
+            if HTTPException is None:
+                raise ProtocolError("invalid or missing API key")
+            raise HTTPException(status_code=401, detail="invalid or missing API key")
 
 
 if app is not None:

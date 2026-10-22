@@ -1,0 +1,58 @@
+{
+  "observed_at": "2026-10-22T12:32:19.489784+00:00",
+  "status": "blocked_transfer_region",
+  "platform": {
+    "id": "acct_1TQJQcE5PKlMxr4M",
+    "available": {"amount": 0, "currency": "jpy"},
+    "pending": {"amount": 73, "currency": "jpy"},
+    "livemode": false
+  },
+  "provider": {
+    "id": "acct_1UTL2zE5PK2LWR96",
+    "payouts_enabled": true,
+    "transfers_status": "active",
+    "card_payments_status": "active",
+    "available": {"amount": 0, "currency": "usd"},
+    "pending": {"amount": 0, "currency": "usd"},
+    "balance_livemode": false
+  },
+  "bank": {
+    "id": "ba_1UTL38E5PK2LWR96LThzYD9p",
+    "currency": "usd",
+    "status": "verified"
+  },
+  "payment_intent": {
+    "id": "pi_3UTEXcE5PKlMxr4M1BLslkNm",
+    "amount": 50,
+    "currency": "usd",
+    "status": "succeeded",
+    "livemode": false
+  },
+  "charge": {
+    "id": "ch_3UTEXcE5PKlMxr4M1o0whdoo",
+    "amount": 50,
+    "currency": "usd",
+    "livemode": false
+  },
+  "source_transfer_attempt": {
+    "request_id": "req_qpK9hJFxPlXYU7",
+    "status": "transfers_not_allowed",
+    "amount": 50,
+    "currency": "usd"
+  },
+  "balance_transfer_attempt": {
+    "request_id": "req_9XLNvxfEaTn6eL",
+    "status": "transfers_not_allowed",
+    "amount": 50,
+    "currency": "usd"
+  },
+  "transfer": {"id": null, "status": "not_created"},
+  "payout": {"id": null, "status": "not_attempted"},
+  "internal_transaction": {
+    "id": "nc_stripe_test_aafa336c0da8416a9bcc34c96cae4abe",
+    "status": "SETTLED",
+    "amount": 50,
+    "currency": "usd",
+    "receipt_verification_status": "VALID"
+  }
+}

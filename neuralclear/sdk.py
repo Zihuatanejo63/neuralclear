@@ -17,9 +17,24 @@ from .core import (
 
 
 class NeuralClearSDK:
-    def __init__(self, registry: AgentRegistry, ledger: Ledger) -> None:
+    def __init__(self, registry: AgentRegistry, ledger: Ledger, *, profile="legacy") -> None:
+        from .wire import PROFILE
+
+        if profile not in {"legacy", PROFILE}:
+            raise ProtocolError("unsupported profile")
         self.registry = registry
         self.ledger = ledger
+        self.profile = profile
+
+    def escrow(self):
+        """Unified opt-in entry; legacy call/request_quote contracts stay unchanged."""
+        from .clearing import EscrowWorkflow
+        from .escrow import EscrowLedger
+        from .wire import PROFILE
+
+        if self.profile != PROFILE or not isinstance(self.ledger, EscrowLedger):
+            raise ProtocolError("escrow profile and ledger required")
+        return EscrowWorkflow(self.ledger)
 
     def request_quote(self, provider: str, capability: str, ttl_seconds: int = 300) -> Quote:
         return self.registry.get(provider).quote_for(capability, ttl_seconds=ttl_seconds)
@@ -32,6 +47,8 @@ class NeuralClearSDK:
         task_payload: object,
         mandate: SpendingMandate | None = None,
     ) -> TaskResult:
+        if self.profile != "legacy":
+            raise ProtocolError("use sdk.escrow() for explicit escrow execution")
         if quote.is_expired():
             raise ProtocolError("quote expired")
         if provider != quote.provider:
@@ -60,7 +77,9 @@ class NeuralClearSDK:
         result = TaskResult(
             transaction_id=transaction.transaction_id,
             output={"echo": task_payload, "handled_by": provider},
-            resource_usage=[ResourceUnit(quote.resource_estimate.amount, quote.resource_estimate.unit)],
+            resource_usage=[
+                ResourceUnit(quote.resource_estimate.amount, quote.resource_estimate.unit)
+            ],
             settlement_amount=quote.settlement_price,
             proof=MockProof(),
         )

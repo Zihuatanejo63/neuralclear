@@ -1,0 +1,31 @@
+{
+  "observed_at": "2026-10-22T12:43:11.629369+00:00",
+  "status": "account_creation_liability_unacknowledged",
+  "platform_id": "acct_1TQJQcE5PKlMxr4M",
+  "internal_transaction": {
+    "id": "nc_stripe_test_aafa336c0da8416a9bcc34c96cae4abe",
+    "amount": 50,
+    "currency": "usd",
+    "status": "SETTLED"
+  },
+  "payment_intent_id": "pi_3UTEXcE5PKlMxr4M1BLslkNm",
+  "charge_id": "ch_3UTEXcE5PKlMxr4M1o0whdoo",
+  "balance_transaction": {
+    "id": "txn_3UTEXcE5PKlMxr4M15dVkqrq",
+    "source_id": "ch_3UTEXcE5PKlMxr4M1o0whdoo",
+    "amount": 79,
+    "fee_amount": 6,
+    "net_amount": 73,
+    "currency": "jpy",
+    "status": "pending",
+    "available_on": 1793232000
+  },
+  "creation_attempts": [
+    {"request_id": "req_furDVEFFjwBWJk", "status": "rejected_accounts_v2_required"},
+    {"request_id": "req_mRVnwRqJTitKta", "status": "rejected_accounts_v2_required"},
+    {"request_id": "req_v2IEgGrLIHPQ6dXnm", "status": "account_creation_liability_unacknowledged"}
+  ],
+  "jp_provider": {"id": null, "status": "not_created"},
+  "transfer": {"id": null, "status": "not_attempted"},
+  "payout": {"id": null, "status": "not_attempted"}
+}

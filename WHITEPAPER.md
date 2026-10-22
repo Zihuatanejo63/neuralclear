@@ -18,6 +18,15 @@ NeuralClear focuses on that settlement surface.
 - Define a simple lifecycle that can support disputes and refunds.
 - Keep the prototype small enough to inspect and test.
 
+## Deployment Boundary
+
+NeuralClear is a clearing-semantics engine plus channel adapters. Custody and
+compliance must be undertaken by licensed partners; internal escrow credits are
+not legally segregated funds. See [custody routes](docs/custody-boundaries.md).
+Signed results and Merkle inclusion authenticate claims, not truthful execution.
+Evidence-bound quorum rules do not replace independent service-quality review.
+The file journal is locally serialized, not a distributed financial database.
+
 ## Non-Goals
 
 - Production custody

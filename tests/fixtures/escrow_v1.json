@@ -1,0 +1,934 @@
+{
+  "profile": "neuralclear-escrow-v1",
+  "key_hex": "636f6e666f726d616e63652d6f6e6c792d6b6579",
+  "cases": [
+    {
+      "name": "normal",
+      "input": {
+        "currency": "CC",
+        "balances": {
+          "buyer": 100,
+          "provider": 0
+        },
+        "terms": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "amount": 50,
+          "fee": 5,
+          "unit": "request",
+          "rate": 1
+        },
+        "operations": [
+          {
+            "target": "QUOTE_ACCEPTED"
+          },
+          {
+            "target": "TASK_SUBMITTED"
+          },
+          {
+            "target": "TASK_RUNNING"
+          },
+          {
+            "meter": {
+              "units": 20,
+              "result_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "meter": {
+              "units": 30,
+              "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          },
+          {
+            "target": "RESULT_DELIVERED"
+          },
+          {
+            "target": "PROOF_VERIFIED"
+          },
+          {
+            "target": "SETTLED",
+            "amount": 50,
+            "fee": 5
+          }
+        ]
+      },
+      "expected": {
+        "snapshot": {
+          "balances": {
+            "buyer": 45,
+            "provider": 50
+          },
+          "fee_pool": 5,
+          "held": 0,
+          "total_supply": 100
+        },
+        "receipt": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "currency": "CC",
+          "budget": 50,
+          "fee_limit": 5,
+          "state": "SETTLED",
+          "amount": 50,
+          "fee": 5,
+          "funded": 55,
+          "refund": 0,
+          "revision": 6,
+          "history": [
+            "QUOTE_REQUESTED",
+            "QUOTE_ACCEPTED",
+            "TASK_SUBMITTED",
+            "TASK_RUNNING",
+            "RESULT_DELIVERED",
+            "PROOF_VERIFIED",
+            "SETTLED"
+          ],
+          "unit": "request",
+          "rate": 1,
+          "profile": "neuralclear-escrow-v1",
+          "chain_length": 2,
+          "chain_head": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5",
+          "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "deltas": {
+            "buyer": -55,
+            "provider": 50,
+            "fee_pool": 5,
+            "escrow": 0
+          },
+          "algorithm": "HMAC-SHA256",
+          "key_id": "test",
+          "signature": "d9c18335c218aa4ed1ab329bb973fbe288f891f92d0670725f99199e50e586d2"
+        },
+        "chain": [
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 0,
+            "previous": "0000000000000000000000000000000000000000000000000000000000000000",
+            "units": 20,
+            "unit": "request",
+            "rate": 1,
+            "amount": 20,
+            "result_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "hash": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d"
+          },
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 1,
+            "previous": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d",
+            "units": 30,
+            "unit": "request",
+            "rate": 1,
+            "amount": 30,
+            "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "hash": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5"
+          }
+        ],
+        "valid": true
+      }
+    },
+    {
+      "name": "partial_dispute",
+      "input": {
+        "currency": "CC",
+        "balances": {
+          "buyer": 100,
+          "provider": 0
+        },
+        "terms": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "amount": 50,
+          "fee": 5,
+          "unit": "request",
+          "rate": 1
+        },
+        "operations": [
+          {
+            "target": "QUOTE_ACCEPTED"
+          },
+          {
+            "target": "TASK_SUBMITTED"
+          },
+          {
+            "target": "TASK_RUNNING"
+          },
+          {
+            "meter": {
+              "units": 20,
+              "result_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "meter": {
+              "units": 30,
+              "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          },
+          {
+            "target": "DISPUTED"
+          },
+          {
+            "target": "SETTLED",
+            "amount": 20,
+            "fee": 2
+          }
+        ]
+      },
+      "expected": {
+        "snapshot": {
+          "balances": {
+            "buyer": 78,
+            "provider": 20
+          },
+          "fee_pool": 2,
+          "held": 0,
+          "total_supply": 100
+        },
+        "receipt": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "currency": "CC",
+          "budget": 50,
+          "fee_limit": 5,
+          "state": "SETTLED",
+          "amount": 20,
+          "fee": 2,
+          "funded": 55,
+          "refund": 33,
+          "revision": 5,
+          "history": [
+            "QUOTE_REQUESTED",
+            "QUOTE_ACCEPTED",
+            "TASK_SUBMITTED",
+            "TASK_RUNNING",
+            "DISPUTED",
+            "SETTLED"
+          ],
+          "unit": "request",
+          "rate": 1,
+          "profile": "neuralclear-escrow-v1",
+          "chain_length": 2,
+          "chain_head": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5",
+          "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "deltas": {
+            "buyer": -22,
+            "provider": 20,
+            "fee_pool": 2,
+            "escrow": 0
+          },
+          "algorithm": "HMAC-SHA256",
+          "key_id": "test",
+          "signature": "e48f95b2d7a3f638cb1602c6cc4c08593f270927ff1d461179818cc331197cd7"
+        },
+        "chain": [
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 0,
+            "previous": "0000000000000000000000000000000000000000000000000000000000000000",
+            "units": 20,
+            "unit": "request",
+            "rate": 1,
+            "amount": 20,
+            "result_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "hash": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d"
+          },
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 1,
+            "previous": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d",
+            "units": 30,
+            "unit": "request",
+            "rate": 1,
+            "amount": 30,
+            "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "hash": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5"
+          }
+        ],
+        "valid": true
+      }
+    },
+    {
+      "name": "refund_after_settlement",
+      "input": {
+        "currency": "CC",
+        "balances": {
+          "buyer": 100,
+          "provider": 0
+        },
+        "terms": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "amount": 50,
+          "fee": 5,
+          "unit": "request",
+          "rate": 1
+        },
+        "operations": [
+          {
+            "target": "QUOTE_ACCEPTED"
+          },
+          {
+            "target": "TASK_SUBMITTED"
+          },
+          {
+            "target": "TASK_RUNNING"
+          },
+          {
+            "meter": {
+              "units": 20,
+              "result_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "meter": {
+              "units": 30,
+              "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          },
+          {
+            "target": "RESULT_DELIVERED"
+          },
+          {
+            "target": "PROOF_VERIFIED"
+          },
+          {
+            "target": "SETTLED",
+            "amount": 50,
+            "fee": 5
+          },
+          {
+            "target": "DISPUTED"
+          },
+          {
+            "target": "REFUNDED"
+          }
+        ]
+      },
+      "expected": {
+        "snapshot": {
+          "balances": {
+            "buyer": 100,
+            "provider": 0
+          },
+          "fee_pool": 0,
+          "held": 0,
+          "total_supply": 100
+        },
+        "receipt": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "currency": "CC",
+          "budget": 50,
+          "fee_limit": 5,
+          "state": "REFUNDED",
+          "amount": 0,
+          "fee": 0,
+          "funded": 55,
+          "refund": 55,
+          "revision": 8,
+          "history": [
+            "QUOTE_REQUESTED",
+            "QUOTE_ACCEPTED",
+            "TASK_SUBMITTED",
+            "TASK_RUNNING",
+            "RESULT_DELIVERED",
+            "PROOF_VERIFIED",
+            "SETTLED",
+            "DISPUTED",
+            "REFUNDED"
+          ],
+          "unit": "request",
+          "rate": 1,
+          "profile": "neuralclear-escrow-v1",
+          "chain_length": 2,
+          "chain_head": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5",
+          "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "deltas": {
+            "buyer": 0,
+            "provider": 0,
+            "fee_pool": 0,
+            "escrow": 0
+          },
+          "algorithm": "HMAC-SHA256",
+          "key_id": "test",
+          "signature": "ca4bcd82f019ca2a5a1e2d9b89d69b9b3d3a1165cc235f20bd7084b714003e07"
+        },
+        "chain": [
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 0,
+            "previous": "0000000000000000000000000000000000000000000000000000000000000000",
+            "units": 20,
+            "unit": "request",
+            "rate": 1,
+            "amount": 20,
+            "result_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "hash": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d"
+          },
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 1,
+            "previous": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d",
+            "units": 30,
+            "unit": "request",
+            "rate": 1,
+            "amount": 30,
+            "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "hash": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5"
+          }
+        ],
+        "valid": true
+      }
+    },
+    {
+      "name": "slash",
+      "input": {
+        "currency": "CC",
+        "balances": {
+          "buyer": 100,
+          "provider": 0
+        },
+        "terms": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "amount": 50,
+          "fee": 5,
+          "unit": "request",
+          "rate": 1
+        },
+        "operations": [
+          {
+            "target": "QUOTE_ACCEPTED"
+          },
+          {
+            "target": "TASK_SUBMITTED"
+          },
+          {
+            "target": "TASK_RUNNING"
+          },
+          {
+            "meter": {
+              "units": 20,
+              "result_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "meter": {
+              "units": 30,
+              "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          },
+          {
+            "target": "DISPUTED"
+          },
+          {
+            "target": "SLASHED",
+            "amount": 10,
+            "fee": 0
+          }
+        ]
+      },
+      "expected": {
+        "snapshot": {
+          "balances": {
+            "buyer": 90,
+            "provider": 10
+          },
+          "fee_pool": 0,
+          "held": 0,
+          "total_supply": 100
+        },
+        "receipt": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "currency": "CC",
+          "budget": 50,
+          "fee_limit": 5,
+          "state": "SLASHED",
+          "amount": 10,
+          "fee": 0,
+          "funded": 55,
+          "refund": 45,
+          "revision": 5,
+          "history": [
+            "QUOTE_REQUESTED",
+            "QUOTE_ACCEPTED",
+            "TASK_SUBMITTED",
+            "TASK_RUNNING",
+            "DISPUTED",
+            "SLASHED"
+          ],
+          "unit": "request",
+          "rate": 1,
+          "profile": "neuralclear-escrow-v1",
+          "chain_length": 2,
+          "chain_head": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5",
+          "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "deltas": {
+            "buyer": -10,
+            "provider": 10,
+            "fee_pool": 0,
+            "escrow": 0
+          },
+          "algorithm": "HMAC-SHA256",
+          "key_id": "test",
+          "signature": "9a7f50ede52e7f672f14595d5986ef9473f62e46d1d04fd56753119014474939"
+        },
+        "chain": [
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 0,
+            "previous": "0000000000000000000000000000000000000000000000000000000000000000",
+            "units": 20,
+            "unit": "request",
+            "rate": 1,
+            "amount": 20,
+            "result_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "hash": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d"
+          },
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 1,
+            "previous": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d",
+            "units": 30,
+            "unit": "request",
+            "rate": 1,
+            "amount": 30,
+            "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "hash": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5"
+          }
+        ],
+        "valid": true
+      }
+    },
+    {
+      "name": "expire",
+      "input": {
+        "currency": "CC",
+        "balances": {
+          "buyer": 100,
+          "provider": 0
+        },
+        "terms": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "amount": 50,
+          "fee": 5,
+          "unit": "request",
+          "rate": 1
+        },
+        "operations": [
+          {
+            "target": "QUOTE_ACCEPTED"
+          },
+          {
+            "target": "EXPIRED"
+          }
+        ]
+      },
+      "expected": {
+        "snapshot": {
+          "balances": {
+            "buyer": 100,
+            "provider": 0
+          },
+          "fee_pool": 0,
+          "held": 0,
+          "total_supply": 100
+        },
+        "receipt": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "currency": "CC",
+          "budget": 50,
+          "fee_limit": 5,
+          "state": "EXPIRED",
+          "amount": 0,
+          "fee": 0,
+          "funded": 55,
+          "refund": 55,
+          "revision": 2,
+          "history": [
+            "QUOTE_REQUESTED",
+            "QUOTE_ACCEPTED",
+            "EXPIRED"
+          ],
+          "unit": "request",
+          "rate": 1,
+          "profile": "neuralclear-escrow-v1",
+          "chain_length": 0,
+          "chain_head": "0000000000000000000000000000000000000000000000000000000000000000",
+          "result_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+          "deltas": {
+            "buyer": 0,
+            "provider": 0,
+            "fee_pool": 0,
+            "escrow": 0
+          },
+          "algorithm": "HMAC-SHA256",
+          "key_id": "test",
+          "signature": "82cbd3d7a9f0cb7192bd216b494b6adea9986c6a933076e144b4d41d3f8a8c20"
+        },
+        "chain": [],
+        "valid": true
+      }
+    },
+    {
+      "name": "tampered_amount",
+      "expected": {
+        "receipt": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "currency": "CC",
+          "budget": 50,
+          "fee_limit": 5,
+          "state": "SETTLED",
+          "amount": 49,
+          "fee": 5,
+          "funded": 55,
+          "refund": 0,
+          "revision": 6,
+          "history": [
+            "QUOTE_REQUESTED",
+            "QUOTE_ACCEPTED",
+            "TASK_SUBMITTED",
+            "TASK_RUNNING",
+            "RESULT_DELIVERED",
+            "PROOF_VERIFIED",
+            "SETTLED"
+          ],
+          "unit": "request",
+          "rate": 1,
+          "profile": "neuralclear-escrow-v1",
+          "chain_length": 2,
+          "chain_head": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5",
+          "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "deltas": {
+            "buyer": -55,
+            "provider": 50,
+            "fee_pool": 5,
+            "escrow": 0
+          },
+          "algorithm": "HMAC-SHA256",
+          "key_id": "test",
+          "signature": "d9c18335c218aa4ed1ab329bb973fbe288f891f92d0670725f99199e50e586d2"
+        },
+        "chain": [
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 0,
+            "previous": "0000000000000000000000000000000000000000000000000000000000000000",
+            "units": 20,
+            "unit": "request",
+            "rate": 1,
+            "amount": 20,
+            "result_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "hash": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d"
+          },
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 1,
+            "previous": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d",
+            "units": 30,
+            "unit": "request",
+            "rate": 1,
+            "amount": 30,
+            "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "hash": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5"
+          }
+        ],
+        "valid": false
+      }
+    },
+    {
+      "name": "truncated_chain",
+      "expected": {
+        "receipt": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "currency": "CC",
+          "budget": 50,
+          "fee_limit": 5,
+          "state": "SETTLED",
+          "amount": 50,
+          "fee": 5,
+          "funded": 55,
+          "refund": 0,
+          "revision": 6,
+          "history": [
+            "QUOTE_REQUESTED",
+            "QUOTE_ACCEPTED",
+            "TASK_SUBMITTED",
+            "TASK_RUNNING",
+            "RESULT_DELIVERED",
+            "PROOF_VERIFIED",
+            "SETTLED"
+          ],
+          "unit": "request",
+          "rate": 1,
+          "profile": "neuralclear-escrow-v1",
+          "chain_length": 2,
+          "chain_head": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5",
+          "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "deltas": {
+            "buyer": -55,
+            "provider": 50,
+            "fee_pool": 5,
+            "escrow": 0
+          },
+          "algorithm": "HMAC-SHA256",
+          "key_id": "test",
+          "signature": "d9c18335c218aa4ed1ab329bb973fbe288f891f92d0670725f99199e50e586d2"
+        },
+        "chain": [
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 0,
+            "previous": "0000000000000000000000000000000000000000000000000000000000000000",
+            "units": 20,
+            "unit": "request",
+            "rate": 1,
+            "amount": 20,
+            "result_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "hash": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d"
+          }
+        ],
+        "valid": false
+      }
+    },
+    {
+      "name": "reordered_chain",
+      "expected": {
+        "receipt": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "currency": "CC",
+          "budget": 50,
+          "fee_limit": 5,
+          "state": "SETTLED",
+          "amount": 50,
+          "fee": 5,
+          "funded": 55,
+          "refund": 0,
+          "revision": 6,
+          "history": [
+            "QUOTE_REQUESTED",
+            "QUOTE_ACCEPTED",
+            "TASK_SUBMITTED",
+            "TASK_RUNNING",
+            "RESULT_DELIVERED",
+            "PROOF_VERIFIED",
+            "SETTLED"
+          ],
+          "unit": "request",
+          "rate": 1,
+          "profile": "neuralclear-escrow-v1",
+          "chain_length": 2,
+          "chain_head": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5",
+          "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "deltas": {
+            "buyer": -55,
+            "provider": 50,
+            "fee_pool": 5,
+            "escrow": 0
+          },
+          "algorithm": "HMAC-SHA256",
+          "key_id": "test",
+          "signature": "d9c18335c218aa4ed1ab329bb973fbe288f891f92d0670725f99199e50e586d2"
+        },
+        "chain": [
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 1,
+            "previous": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d",
+            "units": 30,
+            "unit": "request",
+            "rate": 1,
+            "amount": 30,
+            "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "hash": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5"
+          },
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 0,
+            "previous": "0000000000000000000000000000000000000000000000000000000000000000",
+            "units": 20,
+            "unit": "request",
+            "rate": 1,
+            "amount": 20,
+            "result_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "hash": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d"
+          }
+        ],
+        "valid": false
+      }
+    },
+    {
+      "name": "unknown_algorithm",
+      "expected": {
+        "receipt": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "currency": "CC",
+          "budget": 50,
+          "fee_limit": 5,
+          "state": "SETTLED",
+          "amount": 50,
+          "fee": 5,
+          "funded": 55,
+          "refund": 0,
+          "revision": 6,
+          "history": [
+            "QUOTE_REQUESTED",
+            "QUOTE_ACCEPTED",
+            "TASK_SUBMITTED",
+            "TASK_RUNNING",
+            "RESULT_DELIVERED",
+            "PROOF_VERIFIED",
+            "SETTLED"
+          ],
+          "unit": "request",
+          "rate": 1,
+          "profile": "neuralclear-escrow-v1",
+          "chain_length": 2,
+          "chain_head": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5",
+          "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "deltas": {
+            "buyer": -55,
+            "provider": 50,
+            "fee_pool": 5,
+            "escrow": 0
+          },
+          "algorithm": "NONE",
+          "key_id": "test",
+          "signature": "d9c18335c218aa4ed1ab329bb973fbe288f891f92d0670725f99199e50e586d2"
+        },
+        "chain": [
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 0,
+            "previous": "0000000000000000000000000000000000000000000000000000000000000000",
+            "units": 20,
+            "unit": "request",
+            "rate": 1,
+            "amount": 20,
+            "result_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "hash": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d"
+          },
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 1,
+            "previous": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d",
+            "units": 30,
+            "unit": "request",
+            "rate": 1,
+            "amount": 30,
+            "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "hash": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5"
+          }
+        ],
+        "valid": false
+      }
+    },
+    {
+      "name": "signed_non_zero_sum",
+      "expected": {
+        "receipt": {
+          "transaction_id": "tx",
+          "buyer": "buyer",
+          "provider": "provider",
+          "currency": "CC",
+          "budget": 50,
+          "fee_limit": 5,
+          "state": "SETTLED",
+          "amount": 50,
+          "fee": 5,
+          "funded": 55,
+          "refund": 0,
+          "revision": 6,
+          "history": [
+            "QUOTE_REQUESTED",
+            "QUOTE_ACCEPTED",
+            "TASK_SUBMITTED",
+            "TASK_RUNNING",
+            "RESULT_DELIVERED",
+            "PROOF_VERIFIED",
+            "SETTLED"
+          ],
+          "unit": "request",
+          "rate": 1,
+          "profile": "neuralclear-escrow-v1",
+          "chain_length": 2,
+          "chain_head": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5",
+          "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "deltas": {
+            "buyer": -55,
+            "provider": 49,
+            "fee_pool": 5,
+            "escrow": 0
+          },
+          "algorithm": "HMAC-SHA256",
+          "key_id": "test",
+          "signature": "729e93d829853585724ff296fed88682122a511670af9d1b62bfb4ba2d902e05"
+        },
+        "chain": [
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 0,
+            "previous": "0000000000000000000000000000000000000000000000000000000000000000",
+            "units": 20,
+            "unit": "request",
+            "rate": 1,
+            "amount": 20,
+            "result_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "hash": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d"
+          },
+          {
+            "transaction_id": "tx",
+            "currency": "CC",
+            "seq": 1,
+            "previous": "08d74683a2f143eaec1c6f12d8380cce08c60acbc76bf25f6c3dc5cd08cc747d",
+            "units": 30,
+            "unit": "request",
+            "rate": 1,
+            "amount": 30,
+            "result_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "hash": "2deade3764a8dc4d92304c1b7176499892bc27029526e7f9a6e3b441fa006ab5"
+          }
+        ],
+        "valid": false
+      }
+    }
+  ]
+}
