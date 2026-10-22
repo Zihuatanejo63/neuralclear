@@ -24,8 +24,10 @@ import hmac
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import Protocol
 
 from .core import ProofLevel, ProtocolError
+from .wire import canonical, verify_signature
 
 
 def output_digest(output: object) -> str:
@@ -129,3 +131,34 @@ class SignedResultProof:
             "signed_at": self.signed_at,
             "signature": self.signature,
         }
+
+
+# ---------------------------------------------------------------------------
+# Escrow-v1 result authentication (opt-in profile)
+#
+# Separate from SignedResultProof above. This checks the escrow-v1 wire
+# envelope. TEEVerifier and ZKVerifier are interfaces only; no attestation
+# or zero-knowledge implementation is shipped.
+# ---------------------------------------------------------------------------
+
+
+def verify_result(result, proof, transaction_id, keys):
+    if (
+        set(proof) != {"transaction_id", "result_hash", "algorithm", "key_id", "signature"}
+        or proof["transaction_id"] != transaction_id
+        or proof["result_hash"] != hashlib.sha256(canonical(result)).hexdigest()
+    ):
+        raise ProtocolError("result proof mismatch")
+    return verify_signature(proof, keys, domain="result")
+
+
+class TEEVerifier(Protocol):
+    """Interface only. No attestation implementation is shipped."""
+
+    def verify(self, attestation: dict, expected_result_hash: str) -> bool: ...
+
+
+class ZKVerifier(Protocol):
+    """Interface only. No proof system or verification key is shipped."""
+
+    def verify(self, proof: dict, expected_result_hash: str) -> bool: ...
