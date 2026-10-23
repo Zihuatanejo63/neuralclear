@@ -6,7 +6,7 @@
     <title>NeuralClear | Agent service clearing</title>
     <meta
       name="description"
-      content="Rail-agnostic clearing semantics for agent services. Inspect the prototype and dated test-mode evidence."
+      content="Imagine agents working for each other. Explore NeuralClear, an open clearing protocol for verifiable agent-to-agent commerce."
     />
     <link rel="canonical" href="https://www.neuralclear.org/" />
     <link rel="icon" href="./favicon.ico" />
@@ -26,8 +26,8 @@
         ><small data-i="engine">CLEARING ENGINE FOR AGENT SERVICES</small></a
       >
       <div class="nl">
-        <a href="#loop"><span data-i="s1">Flow</span> →</a
-        ><a href="#stability"><span data-i="s2">Evidence</span> →</a
+        <a href="#possibility"><span data-i="s1">Possibility</span> →</a
+        ><a href="#stability"><span data-i="s2">Built &amp; verified</span> →</a
         ><a href="#api"><span data-i="s3">Developers</span> →</a>
       </div>
       <select id="lang" aria-label="Language / 语言">
@@ -42,11 +42,12 @@
           <h1><span>NeuralClear</span></h1>
           <div class="hero-action">
             <p data-i="s5" class="lead">
-              The clearing layer for agent-to-agent payments.
+              When every agent can hire another, commerce needs a neutral
+              clearing layer.
             </p>
             <div class="ctas">
               <a class="btn pri" href="#partners"
-                ><span data-i="s7">Explore a design partnership</span></a
+                ><span data-i="s7">Build what comes next</span></a
               >
             </div>
           </div>
@@ -56,24 +57,126 @@
           <span data-i="sequence">ESCROW — METER — NET — SETTLE</span
           ><span id="scroll-progress" aria-hidden="true">0%</span>
         </div>
-        <a class="scroll-cue" href="#loop"
+        <a class="scroll-cue" href="#possibility"
           ><span data-i="scroll">Scroll to explore</span
           ><span aria-hidden="true">↓</span></a
         >
       </section>
-      <section class="sec" id="loop">
+      <section class="sec" id="possibility">
         <div class="wrap">
-          <p data-i="s4" class="mk">OPEN PROTOCOL / DEVELOPER PREVIEW</p>
-          <p data-i="s6" class="sub">
-            Reserve credits. Meter work. Settle net. Verify the receipt. A
-            rail-agnostic evidence layer, not another payment rail.
+          <p class="mk" data-i="possLabel">01 / THE POSSIBILITY</p>
+          <h2 data-i="possTitle">
+            An economy of agents. Working for each other.
+          </h2>
+          <p class="sub" data-i="possIntro">
+            Imagine agents that can discover expertise, commission work and
+            settle the outcome. A shared clearing language could make that
+            cooperation composable.
           </p>
-          <p data-i="s9" class="note">
-            Prototype. Internal escrow is a ledger reservation, not legal
-            custody. Licensed partners must handle custody and compliance.
+          <figure class="scene-figure network-figure">
+            <div class="scene-stage">
+              <svg
+                class="scene-fallback"
+                viewBox="0 0 1000 360"
+                aria-hidden="true"
+              >
+                <g fill="none" stroke="currentColor" stroke-width="1">
+                  <path
+                    d="M80 180L220 65L390 210L540 60L730 190L910 80M80 180L250 300L390 210L590 305L730 190L930 290M220 65L540 60M250 300L590 305M540 60L590 305M730 190L930 290"
+                  />
+                </g>
+                <g fill="currentColor">
+                  <circle cx="80" cy="180" r="5" />
+                  <circle cx="220" cy="65" r="5" />
+                  <circle cx="390" cy="210" r="5" />
+                  <circle cx="540" cy="60" r="5" />
+                  <circle cx="730" cy="190" r="5" />
+                  <circle cx="910" cy="80" r="5" />
+                  <circle cx="250" cy="300" r="5" />
+                  <circle cx="590" cy="305" r="5" />
+                  <circle cx="930" cy="290" r="5" />
+                </g></svg
+              ><canvas
+                class="section-scene"
+                data-scene="network"
+                aria-hidden="true"
+              ></canvas>
+            </div>
+            <figcaption class="mk" data-i="illustration">
+              ILLUSTRATION / NOT TRANSACTION DATA
+            </figcaption>
+          </figure>
+          <p class="note" data-i="sceneCaption">
+            An illustration of agents exchanging work, not a live network.
           </p>
-          <p data-i="s10" class="mk">01 / CLEARING FLOW</p>
-          <h2 data-i="s11">From authorized work to auditable settlement.</h2>
+          <div class="possibility-grid">
+            <article class="scenario">
+              <span class="scenario-number" aria-hidden="true">01</span>
+              <p class="mk" data-i="scenarioTag">POSSIBLE SCENARIO</p>
+              <h3 data-i="scenario1">Data meets compute.</h3>
+              <p data-i="scenario1Body">
+                A research agent could buy a specialist dataset and hire compute
+                on demand, with a budget attached to every delegation.
+              </p>
+            </article>
+            <article class="scenario">
+              <span class="scenario-number" aria-hidden="true">02</span>
+              <p class="mk" data-i="scenarioTag">POSSIBLE SCENARIO</p>
+              <h3 data-i="scenario2">A market for every call.</h3>
+              <p data-i="scenario2Body">
+                Independent services could be metered per use, with many small
+                actions reconciled into one net settlement.
+              </p>
+            </article>
+            <article class="scenario">
+              <span class="scenario-number" aria-hidden="true">03</span>
+              <p class="mk" data-i="scenarioTag">POSSIBLE SCENARIO</p>
+              <h3 data-i="scenario3">Commerce without office hours.</h3>
+              <p data-i="scenario3Body">
+                Agents could coordinate services around the clock, within
+                owner-defined limits and with an auditable record.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section class="sec" id="loop">
+        <figure class="scene-figure chain-figure">
+          <div class="scene-stage">
+            <svg
+              class="scene-fallback"
+              viewBox="0 0 1000 360"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <g fill="none" stroke="currentColor" stroke-width="1">
+                <path d="M-40 0 C250 -70 600 80 1040 0" />
+                <path d="M-40 27 C250 -53 600 115 1040 23" />
+                <path d="M-40 54 C250 -36 600 150 1040 46" />
+                <path d="M-40 81 C250 -19 600 185 1040 69" />
+                <path d="M-40 108 C250 -2 600 220 1040 92" />
+                <path d="M-40 135 C250 15 600 255 1040 115" />
+                <path d="M-40 162 C250 32 600 290 1040 138" />
+                <path d="M-40 189 C250 49 600 325 1040 161" />
+                <path d="M-40 216 C250 66 600 360 1040 184" />
+                <path d="M-40 243 C250 83 600 395 1040 207" />
+                <path d="M-40 270 C250 100 600 430 1040 230" />
+                <path d="M-40 297 C250 117 600 465 1040 253" />
+                <path d="M-40 324 C250 134 600 500 1040 276" />
+                <path d="M-40 351 C250 151 600 535 1040 299" />
+                <path d="M-40 378 C250 168 600 570 1040 322" />
+                <path d="M-40 405 C250 185 600 605 1040 345" />
+              </g></svg
+            ><canvas
+              class="section-scene"
+              data-scene="chain"
+              aria-hidden="true"
+            ></canvas>
+          </div>
+        </figure>
+        <div class="wrap">
+          <p data-i="s10" class="mk">02 / HOW IT WORKS</p>
+          <h2 data-i="s11">Work happens in steps. Trust follows the chain.</h2>
           <div class="pipe">
             <svg class="flow-chain" aria-hidden="true">
               <path class="chain-base" />
@@ -108,62 +211,9 @@
             </article>
           </div>
           <p data-i="s20" class="note">
-            Integrity is not truth: signatures and Merkle proofs authenticate
-            records, not service quality. TEE/ZK execution verification is not
-            implemented.
+            Signed receipts and Merkle proofs make the record independently
+            verifiable.
           </p>
-        </div>
-      </section>
-      <section class="sec" id="stability">
-        <span class="outline-word" aria-hidden="true" data-i="verifyWord"
-          >VERIFY</span
-        >
-        <div class="wrap">
-          <p data-i="s21" class="mk">02 / EVIDENCE · 2026-10-22</p>
-          <h2 data-i="s22">What is demonstrated. What is still open.</h2>
-          <p data-i="s23" class="note">
-            This evidence belongs to protocol commit 54bd57f, not yet merged
-            into main. Test mode is not production payment activity.
-          </p>
-          <div class="evidence">
-            <article>
-              <h3 data-i="s24">Strict escrow-v1 / opt-in</h3>
-              <p data-i="s25">
-                State machine, independent verifier, signed mandates and Merkle
-                proofs. Evidence-bound quorum decisions still depend on trusted
-                signers.
-              </p>
-              <a
-                href="https://github.com/Zihuatanejo63/neuralclear/blob/54bd57f9db348d3c8b50f4537a1436b96434b460/docs/protocol-gap-audit.md"
-                ><span data-i="s26">Inspect dated evidence</span> →</a
-              >
-            </article>
-            <article>
-              <h3 data-i="s27">Signed receipt / test mode</h3>
-              <p data-i="s28">
-                Stripe collection → internal escrow → metering → net settlement
-                → signed receipt. Independent verification returned VALID. No
-                customer or volume claims.
-              </p>
-              <a
-                href="https://github.com/Zihuatanejo63/neuralclear/blob/54bd57f9db348d3c8b50f4537a1436b96434b460/docs/p0-live-stripe-run-2026-10-22.md"
-                ><span data-i="s29">Inspect dated evidence</span> →</a
-              >
-            </article>
-            <article>
-              <h3 data-i="s30">Transfer created / payout pending</h3>
-              <p data-i="s31">
-                USD 0.50 became JPY 79 gross − JPY 6 fee = JPY 73 net. A test
-                Transfer exists. Payout was rejected for pending funds.
-                Available_on: 2026-10-29 08:00 UTC+8; not a promise of completed
-                payout.
-              </p>
-              <a
-                href="https://github.com/Zihuatanejo63/neuralclear/blob/54bd57f9db348d3c8b50f4537a1436b96434b460/docs/p0-live-stripe-payout-jp-continuation-2026-10-22.md"
-                ><span data-i="s32">Inspect dated evidence</span> →</a
-              >
-            </article>
-          </div>
         </div>
       </section>
       <section class="sec" id="netting">
@@ -171,16 +221,39 @@
           >NET</span
         >
         <div class="wrap">
-          <p data-i="s33" class="mk">03 / COMPLEMENTARY LAYERS</p>
-          <h2 data-i="s34">
-            Payment execution and clearing evidence are different jobs.
-          </h2>
+          <p data-i="s33" class="mk">03 / MANY ACTIONS. ONE NET RESULT.</p>
+          <h2 data-i="s34">Meter the work. Move the net.</h2>
+          <figure class="scene-figure net-figure">
+            <div class="scene-stage">
+              <svg
+                class="scene-fallback"
+                viewBox="0 0 1000 360"
+                aria-hidden="true"
+              >
+                <g fill="none" stroke="currentColor" stroke-width="1">
+                  <path d="M30 35 C380 35 480 180 650 180" />
+                  <path d="M30 90 C380 90 480 180 650 180" />
+                  <path d="M30 145 C380 145 480 180 650 180" />
+                  <path d="M30 200 C380 200 480 180 650 180" />
+                  <path d="M30 255 C380 255 480 180 650 180" />
+                  <path d="M30 310 C380 310 480 180 650 180" />
+                  <path stroke-width="4" d="M650 180H970" />
+                </g></svg
+              ><canvas
+                class="section-scene"
+                data-scene="net"
+                aria-hidden="true"
+              ></canvas>
+            </div>
+            <figcaption class="mk" data-i="illustration">
+              ILLUSTRATION / NOT TRANSACTION DATA
+            </figcaption>
+          </figure>
           <div class="comparison">
             <div>
               <h3>x402</h3>
               <p data-i="s35">
                 HTTP-native payment requirements and execution around a request.
-                A payment rail can settle the resulting obligation.
               </p>
               <a href="https://www.x402.org/"
                 ><span data-i="s36">x402 documentation</span> →</a
@@ -189,26 +262,136 @@
             <div>
               <h3>NeuralClear</h3>
               <p data-i="s37">
-                Authorized budgets, verifiable metering and a net allocation
-                with signed evidence. Complementary to payment rails, not a
-                replacement.
+                Verifiable metering turns many service actions into a net
+                allocation, with signed evidence. A complementary layer above
+                payment rails.
               </p>
             </div>
           </div>
           <p data-i="s38" class="note">
-            Rail-agnostic is an architecture choice, not a list of completed
-            integrations. Stripe has test evidence; production x402, bank and
-            stablecoin adapters are not claimed here.
+            Rail-agnostic by design: choose the payment rail, keep the clearing
+            evidence.
           </p>
+        </div>
+      </section>
+      <section class="sec" id="why">
+        <div class="wrap">
+          <p class="mk" data-i="whyLabel">04 / WHY NOW</p>
+          <h2 data-i="whyTitle">
+            From answering questions to commissioning work.
+          </h2>
+          <p class="sub" data-i="whyBody">
+            As agents take on actions and delegate to tools and other agents,
+            authorization, metering and settlement need a shared language.
+          </p>
+          <div class="intent-track" aria-hidden="true">
+            <i></i><span data-i="whyA">INTENT</span
+            ><span data-i="whyB">DELEGATION</span
+            ><span data-i="whyC">ACCOUNTABILITY</span>
+          </div>
+          <p class="mk" data-i="illustration">
+            ILLUSTRATION / NOT TRANSACTION DATA
+          </p>
+        </div>
+      </section>
+      <section class="sec" id="stability">
+        <span class="outline-word" aria-hidden="true" data-i="verifyWord"
+          >VERIFY</span
+        >
+        <div class="wrap">
+          <p data-i="s21" class="mk">05 / BUILT &amp; VERIFIED</p>
+          <h2 data-i="s22">
+            An idea you can inspect. Evidence you can verify.
+          </h2>
+          <p data-i="s23" class="note">
+            Published protocol work at commit 54bd57f. The Stripe evidence below
+            is from test mode.
+          </p>
+          <div class="proof-layout">
+            <figure class="receipt-art">
+              <div class="receipt-head">
+                <p class="mk" data-i="receiptLabel">
+                  SIGNED RECEIPT / TEST-MODE RECORD
+                </p>
+                <span class="receipt-mark" aria-hidden="true">NC / 01</span>
+              </div>
+              <h3 data-i="receiptTitle">The outcome carries its evidence.</h3>
+              <dl>
+                <div>
+                  <dt data-i="receiptProtocol">Protocol</dt>
+                  <dd>escrow-v1</dd>
+                </div>
+                <div>
+                  <dt data-i="receiptAmount">Internal settlement</dt>
+                  <dd>USD 0.50</dd>
+                </div>
+                <div>
+                  <dt data-i="receiptSignature">Signature</dt>
+                  <dd>Ed25519</dd>
+                </div>
+                <div>
+                  <dt data-i="receiptCommit">Published implementation</dt>
+                  <dd>54bd57f</dd>
+                </div>
+              </dl>
+              <div class="receipt-seal">
+                <svg viewBox="0 0 48 48" aria-hidden="true">
+                  <circle cx="24" cy="24" r="21" />
+                  <path d="m13 24 8 8 15-17" /></svg
+                ><strong data-i="receiptCheck">VALID</strong>
+              </div>
+              <figcaption data-i="receiptCaption">
+                Independent verification recorded in the linked test report.
+                Visual representation; no verification is running on this page.
+              </figcaption>
+            </figure>
+            <div class="evidence">
+              <article>
+                <h3 data-i="s24">Strict escrow-v1, implemented</h3>
+                <p data-i="s25">
+                  A working state machine, independent verifier, signed mandates
+                  and Merkle proofs. Inspect the published implementation.
+                </p>
+                <a
+                  href="https://github.com/Zihuatanejo63/neuralclear/blob/54bd57f9db348d3c8b50f4537a1436b96434b460/docs/protocol-gap-audit.md"
+                  ><span data-i="s26">Explore the protocol</span> →</a
+                >
+              </article>
+              <article>
+                <h3 data-i="s27">A receipt, independently verified</h3>
+                <p data-i="s28">
+                  Stripe test collection → internal escrow → metering → net
+                  settlement → signed receipt. Independent verification returned
+                  VALID.
+                </p>
+                <a
+                  href="https://github.com/Zihuatanejo63/neuralclear/blob/54bd57f9db348d3c8b50f4537a1436b96434b460/docs/p0-live-stripe-run-2026-10-22.md"
+                  ><span data-i="s29">Read the verification record</span> →</a
+                >
+              </article>
+              <article>
+                <h3 data-i="s30">Stripe test Transfer, created</h3>
+                <p data-i="s31">
+                  USD 0.50 became JPY 79 gross − JPY 6 fee = JPY 73 net. The
+                  test Transfer was created; the payout step follows funds
+                  availability.
+                </p>
+                <a
+                  href="https://github.com/Zihuatanejo63/neuralclear/blob/54bd57f9db348d3c8b50f4537a1436b96434b460/docs/p0-live-stripe-payout-jp-continuation-2026-10-22.md"
+                  ><span data-i="s32">Read the test-chain evidence</span> →</a
+                >
+              </article>
+            </div>
+          </div>
         </div>
       </section>
       <section class="sec" id="api">
         <div class="wrap">
-          <p data-i="s39" class="mk">04 / DEVELOPER ENTRY</p>
-          <h2 data-i="s40">Keep the protocol inspectable.</h2>
+          <p data-i="s39" class="mk">06 / BUILD WITH IT</p>
+          <h2 data-i="s40">An open protocol. A place to start.</h2>
           <p data-i="s41">
-            Retained main-branch gateway examples below are illustrative
-            requests, not live telemetry or a hosted public API.
+            Explore the gateway request examples, read the specification and
+            bring your own agent workflow.
           </p>
           <div class="doclinks">
             <a
@@ -325,29 +508,106 @@ curl -X POST $GW/v1/accounts \
             </div>
           </div>
           <p data-i="s44" class="note">
-            Public API hosting, distributed persistence, legal custody and
-            production TEE/ZK verification remain outside this preview.
+            Request examples from the reference implementation. Run them against
+            your own gateway.
+          </p>
+        </div>
+      </section>
+      <section class="sec" id="next">
+        <div class="wrap">
+          <p class="mk" data-i="nextLabel">07 / NEXT</p>
+          <h2 data-i="nextTitle">
+            From a verified chain to shared infrastructure.
+          </h2>
+          <ol class="roadmap">
+            <li>
+              <p class="mk" data-i="nextDate">2026-10-29 / TARGET</p>
+              <h3 data-i="next1">Close the test payout loop.</h3>
+              <p data-i="next1Body">
+                Funds are scheduled to become available at 08:00 UTC+8. Next:
+                attempt and verify the final test payout. Completion remains
+                subject to Stripe availability and response.
+              </p>
+            </li>
+            <li>
+              <p class="mk" data-i="next2Tag">NEXT / HOSTED GATEWAY</p>
+              <h3 data-i="next2">Make the protocol easier to try.</h3>
+              <p data-i="next2Body">
+                A hosted developer gateway, with durable records and operational
+                controls, is the next infrastructure milestone.
+              </p>
+            </li>
+            <li>
+              <p class="mk" data-i="next3Tag">NEXT / DESIGN PARTNERS</p>
+              <h3 data-i="next3">Connect a real agent workflow.</h3>
+              <p data-i="next3Body">
+                Invite design partners to define a service, its budget policy
+                and a verifiable settlement path.
+              </p>
+            </li>
+          </ol>
+          <p class="note" data-i="nextBoundary">
+            Alongside these milestones: distributed persistence, execution-proof
+            integrations and licensed custody partnerships. Current signatures
+            authenticate records; TEE/ZK execution verification is a future
+            integration.
+          </p>
+          <p class="note" data-i="s9">
+            Internal escrow reserves credits. Licensed partners provide
+            real-world custody and compliance.
           </p>
         </div>
       </section>
       <section class="sec" id="partners">
+        <figure class="scene-figure close-figure">
+          <div class="scene-stage">
+            <svg
+              class="scene-fallback"
+              viewBox="0 0 1000 360"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <g fill="none" stroke="currentColor" stroke-width="1">
+                <path d="M-40 0 C250 -70 600 80 1040 0" />
+                <path d="M-40 27 C250 -53 600 115 1040 23" />
+                <path d="M-40 54 C250 -36 600 150 1040 46" />
+                <path d="M-40 81 C250 -19 600 185 1040 69" />
+                <path d="M-40 108 C250 -2 600 220 1040 92" />
+                <path d="M-40 135 C250 15 600 255 1040 115" />
+                <path d="M-40 162 C250 32 600 290 1040 138" />
+                <path d="M-40 189 C250 49 600 325 1040 161" />
+                <path d="M-40 216 C250 66 600 360 1040 184" />
+                <path d="M-40 243 C250 83 600 395 1040 207" />
+                <path d="M-40 270 C250 100 600 430 1040 230" />
+                <path d="M-40 297 C250 117 600 465 1040 253" />
+                <path d="M-40 324 C250 134 600 500 1040 276" />
+                <path d="M-40 351 C250 151 600 535 1040 299" />
+                <path d="M-40 378 C250 168 600 570 1040 322" />
+                <path d="M-40 405 C250 185 600 605 1040 345" />
+              </g></svg
+            ><canvas
+              class="section-scene"
+              data-scene="close"
+              aria-hidden="true"
+            ></canvas>
+          </div>
+        </figure>
         <div class="wrap">
-          <p data-i="s45" class="mk">05 / DESIGN PARTNERS</p>
-          <h2 data-i="s46">Bring a concrete agent-service transaction.</h2>
+          <p data-i="s45" class="mk">08 / BUILD THE NEXT LAYER</p>
+          <h2 data-i="s46">What could your agents do together?</h2>
           <p data-i="s47" class="sub">
-            For agent-platform and infrastructure founders: explore one
-            capability, one budget policy and one verifiable settlement.
-            Developers and diligence reviewers can inspect the evidence first.
+            For design partners, agent-platform founders and investors: help
+            shape the clearing layer for agent-to-agent commerce. Start with one
+            service, one budget and one verifiable outcome.
           </p>
           <a
             class="btn pri"
             href="https://github.com/Zihuatanejo63/neuralclear/issues/new?title=Design%20partner%20inquiry"
-            ><span data-i="s48">Start a design-partner conversation</span></a
+            ><span data-i="s48">Start a conversation</span></a
           >
           <p data-i="s49" class="note">
-            Opens a public GitHub issue. Share use case and rail requirements,
-            not credentials, personal data or confidential customer information.
-            No SLA or hosted availability is promised.
+            Opens a public GitHub issue. Describe your use case; keep
+            credentials, personal data and customer information private.
           </p>
         </div>
       </section>
@@ -355,7 +615,7 @@ curl -X POST $GW/v1/accounts \
     <footer class="wrap">
       <b>NeuralClear</b>
       <p data-i="s50">
-        Open prototype. Test evidence, not production assurance.
+        Open clearing protocol prototype. Built for the possibilities ahead.
       </p>
       <a href="./robots.txt">robots.txt</a> ·
       <a href="./sitemap.xml">sitemap.xml</a>
