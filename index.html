@@ -10,6 +10,12 @@
     />
     <link rel="canonical" href="https://www.neuralclear.org/" />
     <link rel="icon" href="./favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./site.css" />
   </head>
   <body>
@@ -31,33 +37,34 @@
     </nav>
     <main>
       <section id="hero">
+        <canvas id="flow-field" aria-hidden="true"></canvas>
         <div class="wrap">
-          <p data-i="s4" class="mk">OPEN PROTOCOL / DEVELOPER PREVIEW</p>
           <h1>NeuralClear</h1>
           <p data-i="s5" class="lead">
             The clearing layer for agent-to-agent payments.
           </p>
+          <div class="ctas">
+            <a class="btn pri" href="#partners"
+              ><span data-i="s7">Explore a design partnership</span></a
+            >
+          </div>
+        </div>
+        <a class="scroll-cue" href="#loop"
+          ><span data-i="scroll">Scroll to explore</span
+          ><span aria-hidden="true">↓</span></a
+        >
+      </section>
+      <section class="sec" id="loop">
+        <div class="wrap">
+          <p data-i="s4" class="mk">OPEN PROTOCOL / DEVELOPER PREVIEW</p>
           <p data-i="s6" class="sub">
             Reserve credits. Meter work. Settle net. Verify the receipt. A
             rail-agnostic evidence layer, not another payment rail.
           </p>
-          <div class="ctas">
-            <a class="btn pri" href="#partners"
-              ><span data-i="s7">Explore a design partnership</span></a
-            ><a
-              class="btn"
-              href="https://github.com/Zihuatanejo63/neuralclear/blob/main/SPEC.md"
-              ><span data-i="s8">Read the specification</span></a
-            >
-          </div>
           <p data-i="s9" class="note">
             Prototype. Internal escrow is a ledger reservation, not legal
             custody. Licensed partners must handle custody and compliance.
           </p>
-        </div>
-      </section>
-      <section class="sec" id="loop">
-        <div class="wrap">
           <p data-i="s10" class="mk">01 / CLEARING FLOW</p>
           <h2 data-i="s11">From authorized work to auditable settlement.</h2>
           <div class="pipe">
@@ -97,6 +104,9 @@
         </div>
       </section>
       <section class="sec" id="stability">
+        <span class="outline-word" aria-hidden="true" data-i="verifyWord"
+          >VERIFY</span
+        >
         <div class="wrap">
           <p data-i="s21" class="mk">02 / EVIDENCE · 2026-10-22</p>
           <h2 data-i="s22">What is demonstrated. What is still open.</h2>
@@ -146,6 +156,9 @@
         </div>
       </section>
       <section class="sec" id="netting">
+        <span class="outline-word" aria-hidden="true" data-i="netWord"
+          >NET</span
+        >
         <div class="wrap">
           <p data-i="s33" class="mk">03 / COMPLEMENTARY LAYERS</p>
           <h2 data-i="s34">
@@ -198,8 +211,107 @@
             ><a href="./.well-known/agent-skills">agent-skills</a>
           </div>
           <div class="api">
-            <div class="eps" id="eplist"></div>
-            <pre class="eout" id="epcode" tabindex="0"></pre>
+            <div class="eps" id="eplist">
+              <details>
+                <summary>POST /v1/accounts</summary>
+                <pre class="eout">
+curl -X POST $GW/v1/accounts \
+  -H "X-NeuralClear-Api-Key: $KEY" \
+  -d '{"account":"owner.acme","deposit":200}'
+
+→ {"account":"owner.acme","balance":200}</pre
+                >
+              </details>
+              <details>
+                <summary>POST /v1/clear</summary>
+                <pre class="eout">
+curl -X POST $GW/v1/clear -d '{
+  "buyer_owner": "owner.acme",
+  "provider_url": "http://provider:8001",
+  "capability": "echo.text",
+  "payload": {"msg": "hi"}
+}'
+
+# gateway: quote → escrow hold → remote HTTP
+# execution → proof → release → signed receipt
+→ {"receipt_id":"rcpt_tx_…","amount":10,"fee":1}</pre
+                >
+              </details>
+              <details>
+                <summary>POST /v1/channels</summary>
+                <pre class="eout">
+curl -X POST $GW/v1/channels -d '{
+  "buyer":"owner.acme",
+  "provider":"agent.embedder",
+  "deposit":120}'
+
+→ {"channel_id":"chan_8f58…","spendable":117}</pre
+                >
+              </details>
+              <details>
+                <summary>POST /v1/channels/{id}/meter</summary>
+                <pre class="eout">
+curl -X POST $GW/v1/channels/chan_8f58…/meter -d '{
+  "capability":"embed.text",
+  "amount":1,
+  "payload_hash":"sha256:9f2c…"}'
+
+→ {"sequence":42,
+   "prev_hash":"d31b…",
+   "record_hash":"77af…"}</pre
+                >
+              </details>
+              <details>
+                <summary>POST /v1/channels/{id}/settle</summary>
+                <pre class="eout">
+curl -X POST $GW/v1/channels/chan_8f58…/settle
+
+→ {"tasks_metered":100,
+   "net_to_provider":100,
+   "refunded_to_buyer":17,
+   "protocol_fee":3,
+   "chain_head":"a90c…",
+   "signature":"hmac-sha256:…"}</pre
+                >
+              </details>
+              <details>
+                <summary>POST /v1/disputes</summary>
+                <pre class="eout">
+curl -X POST $GW/v1/disputes -d '{
+  "transaction_id":"tx_d4f0…",
+  "raised_by":"owner.acme",
+  "reason":"report never delivered"}'
+
+# resolutions: refund | slash | split | settle
+# refund moves money BACK — tested, not implied</pre
+                >
+              </details>
+              <details>
+                <summary>GET /v1/ledger</summary>
+                <pre class="eout">
+curl $GW/v1/ledger
+
+→ {"balances":{"owner.acme":356,
+     "agent.research_pro":40,
+     "agent.embedder":100},
+   "fee_pool":4,
+   "escrow_total":0,
+   "total_supply":500}</pre
+                >
+              </details>
+            </div>
+            <div class="output">
+              <p class="mk example-label" data-i="example">
+                EXAMPLE / NOT LIVE
+              </p>
+              <pre class="eout" id="epcode" tabindex="0">
+curl -X POST $GW/v1/accounts \
+  -H "X-NeuralClear-Api-Key: $KEY" \
+  -d '{"account":"owner.acme","deposit":200}'
+
+→ {"account":"owner.acme","balance":200}</pre
+              >
+            </div>
           </div>
           <p data-i="s44" class="note">
             Public API hosting, distributed persistence, legal custody and

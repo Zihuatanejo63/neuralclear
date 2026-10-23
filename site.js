@@ -43,6 +43,10 @@ var EPS = [
   },
 ];
 const EN = {
+    scroll: "Scroll to explore",
+    example: "EXAMPLE / NOT LIVE",
+    verifyWord: "VERIFY",
+    netWord: "NET",
     s1: "Flow",
     s2: "Evidence",
     s3: "Developers",
@@ -95,6 +99,10 @@ const EN = {
     s50: "Open prototype. Test evidence, not production assurance.",
   },
   ZH = {
+    scroll: "向下探索",
+    example: "请求示例 / 非实时数据",
+    verifyWord: "验证",
+    netWord: "净额",
     s1: "流程",
     s2: "证据",
     s3: "开发者",
@@ -157,13 +165,36 @@ const EPZH = [
 ];
 let LANG = "en",
   ec = 0;
-function re() {
+const motion = matchMedia("(prefers-reduced-motion: reduce)");
+let typingTimer = 0;
+function showExample(animate) {
+  clearTimeout(typingTimer);
+  const output = document.getElementById("epcode");
+  const text = EPS[ec].c;
+  if (!animate || motion.matches || document.hidden) {
+    output.textContent = text;
+    return;
+  }
+  let count = 0;
+  const start = performance.now();
+  function type() {
+    count = Math.min(
+      text.length,
+      Math.ceil((performance.now() - start) * 0.65),
+    );
+    output.textContent = text.slice(0, count);
+    if (count < text.length) typingTimer = setTimeout(type, 24);
+  }
+  type();
+}
+function re(animate = false) {
   document.querySelectorAll(".ep").forEach((x, i) => {
     x.classList.toggle("act", i === ec);
     x.setAttribute("aria-pressed", String(i === ec));
   });
-  document.getElementById("epcode").textContent = EPS[ec].c;
+  showExample(animate);
 }
+document.getElementById("eplist").replaceChildren();
 EPS.forEach((e, i) => {
   let b = document.createElement("button");
   b.className = "ep";
@@ -174,7 +205,7 @@ EPS.forEach((e, i) => {
   b.append(p, s);
   b.onclick = () => {
     ec = i;
-    re();
+    re(true);
   };
   document.getElementById("eplist").append(b);
 });
@@ -195,8 +226,266 @@ function setLang(l) {
   re();
 }
 document.getElementById("lang").onchange = (e) => setLang(e.target.value);
+// Keyboard selection/copy never waits for the illustrative typing effect.
+document.getElementById("epcode").addEventListener("focus", () => showExample(false));
 let initial = "en";
 try {
   initial = localStorage.getItem("neuralclear-language") || "en";
 } catch {}
 setLang(initial);
+
+// Atmosphere only. No transaction feed or financial state enters this renderer.
+(function flowField() {
+  const canvas = document.getElementById("flow-field");
+  const ctx = canvas.getContext("2d", { alpha: false });
+  if (!ctx) return;
+  const hero = document.getElementById("hero");
+  const capacity = 6000;
+  const x = new Float32Array(capacity),
+    y = new Float32Array(capacity);
+  const vx = new Float32Array(capacity),
+    vy = new Float32Array(capacity);
+  const lane = new Float32Array(capacity),
+    speed = new Float32Array(capacity);
+  let w = 1,
+    h = 1,
+    count = 3600,
+    raf = 0,
+    last = 0,
+    elapsed = 0;
+  let px = -10000,
+    py = -10000,
+    parallax = 0,
+    visible = true;
+  let slowFrames = 0;
+  function resize() {
+    w = hero.clientWidth;
+    h = hero.clientHeight;
+    const dpr = Math.min(devicePixelRatio || 1, 1.75);
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    count = w <= 768 ? 700 : Math.min(6000, Math.max(3000, Math.round(w * 3)));
+    for (let i = 0; i < capacity; i++) {
+      x[i] = Math.random() * w;
+      lane[i] = (Math.random() - 0.5) * 2;
+      speed[i] = 0.25 + Math.random() * 0.7;
+      y[i] =
+        h * 0.7 +
+        Math.sin((x[i] / w) * 7 + lane[i] * 2) * h * 0.12 +
+        lane[i] * h * 0.14;
+      vx[i] = 0.5;
+      vy[i] = 0;
+    }
+    ctx.fillStyle = "#101313";
+    ctx.fillRect(0, 0, w, h);
+    render(1, 0);
+    schedule();
+  }
+  // Preallocated scalar/TypedArray simulation; no arrays, objects, closures or
+  // color strings are constructed inside the particle/frame loop.
+  function render(dt, t) {
+    ctx.globalAlpha = 0.23;
+    ctx.fillStyle = "#101313";
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalAlpha = 1;
+    const phase = t % 12;
+    const pulse =
+      phase > 8.8 ? Math.pow(Math.sin(((phase - 8.8) / 3.2) * Math.PI), 2) : 0;
+    parallax += (((px < 0 ? 0.5 : px / w) - 0.5) * 12 - parallax) * 0.025 * dt;
+    ctx.strokeStyle = "#99e5bb";
+    ctx.lineWidth = 0.7;
+    ctx.globalAlpha = 0.32 + pulse * 0.38;
+    ctx.beginPath();
+    for (let i = 0; i < count; i++) {
+      const ox = x[i],
+        oy = y[i];
+      const base = h * 0.71 + Math.sin((ox / w) * 6.28 + t * 0.13) * h * 0.07;
+      const spread =
+        Math.sin((ox / w) * 8 + lane[i] * 3 + t * 0.09) * h * 0.1 +
+        lane[i] * h * 0.17;
+      const chain = Math.sin((ox / w) * 60) * h * 0.009;
+      const target = base + spread * (1 - pulse) + chain * pulse + parallax;
+      let ax = (0.55 + speed[i] + pulse * 2 - vx[i]) * 0.035;
+      let ay = (target - oy) * (0.0015 + pulse * 0.009) - vy[i] * 0.045;
+      const dx = ox - px,
+        dy = oy - py,
+        distance = dx * dx + dy * dy;
+      if (distance < 19000 && distance > 1) {
+        const force = (1 - distance / 19000) * 0.004;
+        ax += dx * force;
+        ay += dy * force;
+      }
+      vx[i] += ax * dt;
+      vy[i] += ay * dt;
+      x[i] += vx[i] * dt;
+      y[i] += vy[i] * dt;
+      if (x[i] > w + 10 || x[i] < -20 || y[i] < 0 || y[i] > h) {
+        x[i] = 0;
+        y[i] = target;
+        vx[i] = 0.5;
+        vy[i] = 0;
+      } else {
+        ctx.moveTo(ox, oy);
+        ctx.lineTo(x[i] + 0.7, y[i]);
+      }
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  function frame(now) {
+    raf = 0;
+    if (document.hidden || !visible || motion.matches) {
+      last = 0;
+      return;
+    }
+    const ms = last ? Math.min(now - last, 40) : 8.33;
+    last = now;
+    elapsed += ms / 1000;
+    if (ms > 23) slowFrames++;
+    else slowFrames = Math.max(0, slowFrames - 1);
+    if (slowFrames > 90) {
+      count = Math.max(w <= 768 ? 400 : 3000, count - 500);
+      slowFrames = 0;
+    }
+    render(ms / 16.667, elapsed);
+    raf = requestAnimationFrame(frame);
+  }
+  function schedule() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    last = 0;
+    if (!motion.matches && !document.hidden && visible)
+      raf = requestAnimationFrame(frame);
+  }
+  hero.addEventListener(
+    "pointermove",
+    function (e) {
+      if (e.pointerType === "touch") return;
+      const box = hero.getBoundingClientRect();
+      px = e.clientX - box.left;
+      py = e.clientY - box.top;
+    },
+    { passive: true },
+  );
+  hero.addEventListener("pointerleave", function () {
+    px = py = -10000;
+  });
+  if ("IntersectionObserver" in window)
+    new IntersectionObserver(function (entries) {
+      visible = entries[0].isIntersecting;
+      schedule();
+    }).observe(hero);
+  document.addEventListener("visibilitychange", schedule);
+  motion.addEventListener("change", resize);
+  window.addEventListener("resize", resize, { passive: true });
+  resize();
+})();
+
+(function scrollStory() {
+  if (!("IntersectionObserver" in window)) return;
+  const steps = document.querySelectorAll(".ps");
+  const sections = document.querySelectorAll(".sec:not(#loop) .wrap");
+  const reveal = new IntersectionObserver(
+    function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.remove("pending");
+          reveal.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.08 },
+  );
+  sections.forEach(function (el) {
+    el.classList.add("reveal");
+    if (!motion.matches && el.getBoundingClientRect().top > innerHeight)
+      el.classList.add("pending");
+    reveal.observe(el);
+  });
+  document.getElementById("loop").classList.add("chain-ready");
+  // Distinct observer thresholds stagger the four segments on a shared desktop
+  // row; mobile steps naturally cross the viewport one after another.
+  steps.forEach(function (step, index) {
+    const observer = new IntersectionObserver(
+      function (entries) {
+        if (entries[0].isIntersecting) {
+          step.classList.add("active");
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "0px 0px -" + (10 + index * 8) + "% 0px" },
+    );
+    observer.observe(step);
+  });
+})();
+
+(function cursor() {
+  const eligible = matchMedia("(pointer: fine) and (min-width: 769px)");
+  const dot = document.createElement("div"),
+    ring = document.createElement("div");
+  dot.className = "cursor-dot";
+  ring.className = "cursor-ring";
+  dot.setAttribute("aria-hidden", "true");
+  ring.setAttribute("aria-hidden", "true");
+  document.body.append(dot, ring);
+  let x = 0,
+    y = 0,
+    rx = 0,
+    ry = 0,
+    raf = 0,
+    active = false;
+  function tick() {
+    rx += (x - rx) * 0.16;
+    ry += (y - ry) * 0.16;
+    ring.style.transform =
+      "translate3d(" + (rx - 15) + "px," + (ry - 15) + "px,0)";
+    if (Math.abs(x - rx) + Math.abs(y - ry) > 0.1 && active)
+      raf = requestAnimationFrame(tick);
+    else raf = 0;
+  }
+  function stop() {
+    active = false;
+    cancelAnimationFrame(raf);
+    raf = 0;
+    document.body.classList.remove("cursor-on", "cursor-over");
+  }
+  document.addEventListener(
+    "pointermove",
+    function (e) {
+      if (!eligible.matches || motion.matches || e.pointerType === "touch") {
+        stop();
+        return;
+      }
+      x = e.clientX;
+      y = e.clientY;
+      if (!active) {
+        rx = x;
+        ry = y;
+        active = true;
+      }
+      document.body.classList.add("cursor-on");
+      document.body.classList.toggle(
+        "cursor-over",
+        !!e.target.closest("a,button,select"),
+      );
+      dot.style.transform =
+        "translate3d(" + (x - 2) + "px," + (y - 2) + "px,0)";
+      if (!raf) raf = requestAnimationFrame(tick);
+    },
+    { passive: true },
+  );
+  document.documentElement.addEventListener("pointerleave", stop);
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) {
+      stop();
+      showExample(false);
+    }
+  });
+  document.addEventListener("keydown", stop);
+  eligible.addEventListener("change", stop);
+  motion.addEventListener("change", function () {
+    stop();
+    showExample(false);
+  });
+})();
