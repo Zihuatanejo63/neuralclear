@@ -654,3 +654,330 @@ summary {
   padding: 14px 8px;
   overflow-wrap: anywhere;
 }
+
+/* Full-viewport scene, with fixed type scales at explicit breakpoints. */
+.wrap {
+  width: 94%;
+  max-width: 1560px;
+  padding: 0;
+}
+nav {
+  padding: 26px 3%;
+  align-items: flex-start;
+}
+.logo {
+  position: relative;
+  flex-wrap: wrap;
+  max-width: 360px;
+}
+.logo small {
+  display: block;
+  flex-basis: 100%;
+  font:
+    10px/1.5 "IBM Plex Mono",
+    monospace;
+  margin-top: 6px;
+}
+#hero {
+  height: 96svh;
+  min-height: 720px;
+  padding: 0;
+  align-items: flex-end;
+}
+#flow-field {
+  opacity: 1;
+}
+#hero .wrap {
+  width: 94%;
+  max-width: 1560px;
+  padding: 0 0 110px;
+  margin: 0 auto;
+  position: relative;
+}
+#hero h1 {
+  font-size: 176px;
+  font-weight: 700;
+  line-height: 0.95;
+  margin: 0 0 24px;
+  overflow: hidden;
+  letter-spacing: 0;
+}
+#hero h1 span {
+  display: block;
+  animation: title-in 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes title-in {
+  from {
+    transform: translateY(110%);
+    clip-path: inset(100% 0 0);
+  }
+  to {
+    transform: none;
+    clip-path: inset(0);
+  }
+}
+.hero-action {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+}
+#hero .lead {
+  font-size: 22px;
+  max-width: 530px;
+  margin: 0;
+  text-shadow: 0 2px 12px #101313;
+}
+#hero .ctas {
+  margin: 0;
+}
+.hero-foot {
+  position: absolute;
+  left: 3%;
+  right: 3%;
+  bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #99e5bb45;
+  padding-top: 14px;
+  font:
+    10px/1.6 "IBM Plex Mono",
+    monospace;
+}
+.edge-meta {
+  position: absolute;
+  right: 20px;
+  top: 34%;
+  writing-mode: vertical-rl;
+  font:
+    10px/1.6 "IBM Plex Mono",
+    monospace;
+}
+.scroll-cue {
+  left: auto;
+  right: 3%;
+  bottom: 73px;
+}
+.sec {
+  padding: 110px 0;
+  overflow: hidden;
+}
+h2 {
+  font-size: 72px;
+  line-height: 1.06;
+  max-width: 1080px;
+}
+.outline-word {
+  font-size: 280px;
+  top: 0;
+  right: -30px;
+  -webkit-text-stroke: 1px rgba(153, 229, 187, 0.14);
+  opacity: 1;
+}
+.pipe {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 40px 12%;
+  padding: 50px 0 40px;
+}
+.ps {
+  position: relative;
+  border: 0;
+  padding: 25px 24px 38px 42px;
+  min-height: 260px;
+}
+.ps:nth-of-type(even) {
+  margin-top: 140px;
+}
+.ps::before {
+  font:
+    700 144px/0.9 "Space Grotesk",
+    sans-serif;
+  color: transparent;
+  -webkit-text-stroke: 1px #99e5bb66;
+  display: block;
+  margin-bottom: 24px;
+}
+.ps::after {
+  top: 16px;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transform: none;
+  background: #2d3932;
+  box-shadow: none;
+}
+.ps.active::after {
+  background: #99e5bb;
+  box-shadow: 0 0 22px #99e5bb;
+  transform: none;
+}
+.ps h3 {
+  font-size: 30px;
+}
+.ps.active h3 {
+  color: #99e5bb;
+}
+.flow-chain {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.flow-chain path {
+  fill: none;
+  stroke-width: 2;
+}
+.chain-base {
+  stroke: #99e5bb22;
+}
+.chain-lit {
+  stroke: #99e5bb;
+  filter: drop-shadow(0 0 5px #99e5bb);
+}
+.reveal {
+  transition:
+    opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.pending {
+  opacity: 0;
+  transform: translateY(40px);
+  filter: blur(8px);
+}
+.cursor-ring {
+  width: 36px;
+  height: 36px;
+  mix-blend-mode: difference;
+}
+.cursor-over .cursor-ring {
+  width: 54px;
+  height: 54px;
+  margin: -9px;
+}
+@media (min-width: 1600px) {
+  #hero h1 {
+    font-size: 192px;
+  }
+  .outline-word {
+    font-size: 340px;
+  }
+}
+@media (max-width: 1200px) {
+  #hero h1 {
+    font-size: 136px;
+  }
+  h2 {
+    font-size: 60px;
+  }
+  .hero-action {
+    gap: 24px;
+  }
+}
+@media (max-width: 900px) {
+  #hero h1 {
+    font-size: 104px;
+  }
+  h2 {
+    font-size: 48px;
+  }
+  .hero-action {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (max-width: 768px) {
+  nav {
+    padding: 20px 5%;
+  }
+  .logo {
+    max-width: 265px;
+  }
+  .logo small {
+    font-size: 8px;
+  }
+  .wrap,
+  #hero .wrap {
+    width: 90%;
+  }
+  #hero {
+    height: 96svh;
+    min-height: 700px;
+  }
+  #hero .wrap {
+    padding-bottom: 150px;
+  }
+  #hero h1 {
+    font-size: 64px;
+    overflow: visible;
+    overflow-wrap: normal;
+  }
+  #hero .lead {
+    font-size: 20px;
+  }
+  .hero-action {
+    gap: 24px;
+  }
+  .edge-meta {
+    right: 10px;
+    top: 27%;
+    font-size: 8px;
+  }
+  .hero-foot {
+    left: 5%;
+    right: 5%;
+    font-size: 8px;
+  }
+  .scroll-cue {
+    right: 5%;
+    bottom: 73px;
+  }
+  .sec {
+    padding: 72px 0;
+  }
+  h2 {
+    font-size: 42px;
+  }
+  .pipe {
+    display: block;
+    padding-top: 28px;
+  }
+  .ps {
+    min-height: 0;
+    padding: 24px 0 48px 32px;
+  }
+  .ps:nth-of-type(even) {
+    margin-top: 0;
+  }
+  .ps::before {
+    font-size: 128px;
+  }
+  .ps h3 {
+    font-size: 28px;
+  }
+  .outline-word {
+    display: none;
+  }
+}
+@media (max-width: 380px) {
+  #hero h1 {
+    font-size: 56px;
+  }
+  .logo small {
+    max-width: 210px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal.pending {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  #hero h1 span {
+    animation: none;
+  }
+}

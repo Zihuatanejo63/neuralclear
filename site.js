@@ -43,6 +43,9 @@ var EPS = [
   },
 ];
 const EN = {
+    engine: "CLEARING ENGINE FOR AGENT SERVICES",
+    rail: "RAIL-AGNOSTIC · EST. 2026",
+    sequence: "ESCROW — METER — NET — SETTLE",
     scroll: "Scroll to explore",
     example: "EXAMPLE / NOT LIVE",
     verifyWord: "VERIFY",
@@ -99,6 +102,9 @@ const EN = {
     s50: "Open prototype. Test evidence, not production assurance.",
   },
   ZH = {
+    engine: "面向 AGENT 服务的清算引擎",
+    rail: "轨道无关 · 始于 2026",
+    sequence: "托管 — 计量 — 净额 — 结算",
     scroll: "向下探索",
     example: "请求示例 / 非实时数据",
     verifyWord: "验证",
@@ -227,7 +233,9 @@ function setLang(l) {
 }
 document.getElementById("lang").onchange = (e) => setLang(e.target.value);
 // Keyboard selection/copy never waits for the illustrative typing effect.
-document.getElementById("epcode").addEventListener("focus", () => showExample(false));
+document
+  .getElementById("epcode")
+  .addEventListener("focus", () => showExample(false));
 let initial = "en";
 try {
   initial = localStorage.getItem("neuralclear-language") || "en";
@@ -240,24 +248,26 @@ setLang(initial);
   const ctx = canvas.getContext("2d", { alpha: false });
   if (!ctx) return;
   const hero = document.getElementById("hero");
-  const capacity = 6000;
+  const capacity = 10000;
   const x = new Float32Array(capacity),
     y = new Float32Array(capacity);
   const vx = new Float32Array(capacity),
     vy = new Float32Array(capacity);
-  const lane = new Float32Array(capacity),
-    speed = new Float32Array(capacity);
+  const anchor = new Float32Array(24);
   let w = 1,
     h = 1,
-    count = 3600,
+    count = 10000,
     raf = 0,
     last = 0,
-    elapsed = 0;
-  let px = -10000,
-    py = -10000,
-    parallax = 0,
-    visible = true;
-  let slowFrames = 0;
+    elapsed = 0,
+    slow = 0;
+  let px = 0,
+    py = 0,
+    touched = -100,
+    shiftX = 0,
+    shiftY = 0,
+    visible = true,
+    previousPulse = 0;
   function resize() {
     w = hero.clientWidth;
     h = hero.clientHeight;
@@ -265,73 +275,106 @@ setLang(initial);
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    count = w <= 768 ? 700 : Math.min(6000, Math.max(3000, Math.round(w * 3)));
+    count = w <= 768 ? 800 : capacity;
     for (let i = 0; i < capacity; i++) {
       x[i] = Math.random() * w;
-      lane[i] = (Math.random() - 0.5) * 2;
-      speed[i] = 0.25 + Math.random() * 0.7;
-      y[i] =
-        h * 0.7 +
-        Math.sin((x[i] / w) * 7 + lane[i] * 2) * h * 0.12 +
-        lane[i] * h * 0.14;
-      vx[i] = 0.5;
-      vy[i] = 0;
+      y[i] = Math.random() * h;
+      vx[i] = Math.cos(i) * 1.5;
+      vy[i] = Math.sin(i) * 1.5;
     }
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = 1;
     ctx.fillStyle = "#101313";
     ctx.fillRect(0, 0, w, h);
     render(1, 0);
     schedule();
   }
-  // Preallocated scalar/TypedArray simulation; no arrays, objects, closures or
-  // color strings are constructed inside the particle/frame loop.
+  // All state and chain anchors are allocated once. Two batched paths avoid
+  // per-particle canvas state changes; the flow has no positional band target.
   function render(dt, t) {
-    ctx.globalAlpha = 0.23;
+    const phase = t % 10;
+    const pulse = phase > 8.4 ? Math.sin(((phase - 8.4) / 1.6) * Math.PI) : 0;
+    const released = previousPulse > 0 && pulse === 0;
+    previousPulse = pulse;
+    if (t - touched > 5) {
+      px = w * (0.5 + 0.36 * Math.sin(t * 0.23));
+      py = h * (0.5 + 0.34 * Math.sin(t * 0.31 + 0.8));
+    }
+    shiftX += ((0.5 - px / w) * 28 - shiftX) * 0.035 * dt;
+    shiftY += ((0.5 - py / h) * 28 - shiftY) * 0.035 * dt;
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = 0.16;
     ctx.fillStyle = "#101313";
     ctx.fillRect(0, 0, w, h);
-    ctx.globalAlpha = 1;
-    const phase = t % 12;
-    const pulse =
-      phase > 8.8 ? Math.pow(Math.sin(((phase - 8.8) / 3.2) * Math.PI), 2) : 0;
-    parallax += (((px < 0 ? 0.5 : px / w) - 0.5) * 12 - parallax) * 0.025 * dt;
-    ctx.strokeStyle = "#99e5bb";
-    ctx.lineWidth = 0.7;
-    ctx.globalAlpha = 0.32 + pulse * 0.38;
-    ctx.beginPath();
-    for (let i = 0; i < count; i++) {
-      const ox = x[i],
-        oy = y[i];
-      const base = h * 0.71 + Math.sin((ox / w) * 6.28 + t * 0.13) * h * 0.07;
-      const spread =
-        Math.sin((ox / w) * 8 + lane[i] * 3 + t * 0.09) * h * 0.1 +
-        lane[i] * h * 0.17;
-      const chain = Math.sin((ox / w) * 60) * h * 0.009;
-      const target = base + spread * (1 - pulse) + chain * pulse + parallax;
-      let ax = (0.55 + speed[i] + pulse * 2 - vx[i]) * 0.035;
-      let ay = (target - oy) * (0.0015 + pulse * 0.009) - vy[i] * 0.045;
-      const dx = ox - px,
-        dy = oy - py,
-        distance = dx * dx + dy * dy;
-      if (distance < 19000 && distance > 1) {
-        const force = (1 - distance / 19000) * 0.004;
-        ax += dx * force;
-        ay += dy * force;
+    ctx.globalCompositeOperation = "lighter";
+    for (let j = 0; j < 24; j++)
+      anchor[j] =
+        h * (0.44 + 0.08 * Math.sin(j * 0.43 + t * 0.18) + 0.016 * (j % 2));
+    for (let layer = 0; layer < 2; layer++) {
+      ctx.lineWidth = layer ? 1.65 : 0.65;
+      ctx.strokeStyle = pulse > 0.3 ? "#effff5" : "#99e5bb";
+      ctx.globalAlpha = (layer ? 0.64 : 0.24) + pulse * 0.3;
+      ctx.beginPath();
+      for (let i = layer; i < count; i += 2) {
+        const ox = x[i],
+          oy = y[i];
+        const angle =
+          Math.sin((ox / w) * 6.4 + t * 0.16) * 2.4 +
+          Math.cos((oy / h) * 5.2 - t * 0.19) * 2.1 +
+          Math.sin((ox / w + oy / h) * 4 - t * 0.11);
+        const speed = layer ? 0.72 : 1.8;
+        let ax = (Math.cos(angle) * speed - vx[i]) * 0.045;
+        let ay = (Math.sin(angle) * speed - vy[i]) * 0.045;
+        const dx = ox - px,
+          dy = oy - py,
+          d = dx * dx + dy * dy;
+        if (d < 32400 && d > 1) {
+          const f = (1 - d / 32400) * 0.0025;
+          ax += (dx - dy * 0.85) * f;
+          ay += (dy + dx * 0.85) * f;
+        }
+        if (pulse > 0) {
+          const u = Math.max(0, Math.min(22.999, (ox / w) * 23)),
+            j = u | 0;
+          const target = anchor[j] + (anchor[j + 1] - anchor[j]) * (u - j);
+          ay += (target - oy) * pulse * 0.028 - vy[i] * pulse * 0.12;
+          ax += pulse * 0.12;
+        }
+        if (released) {
+          vx[i] += Math.cos(i * 2.399) * 4;
+          vy[i] += Math.sin(i * 2.399) * 14;
+        }
+        vx[i] += ax * dt;
+        vy[i] += ay * dt;
+        x[i] += vx[i] * dt;
+        y[i] += vy[i] * dt;
+        if (x[i] < 0 || x[i] > w || y[i] < 0 || y[i] > h) {
+          x[i] = (x[i] + w) % w;
+          y[i] = (y[i] + h) % h;
+        } else {
+          ctx.moveTo(ox + shiftX, oy + shiftY);
+          ctx.lineTo(x[i] + shiftX + 0.55, y[i] + shiftY + 0.25);
+        }
       }
-      vx[i] += ax * dt;
-      vy[i] += ay * dt;
-      x[i] += vx[i] * dt;
-      y[i] += vy[i] * dt;
-      if (x[i] > w + 10 || x[i] < -20 || y[i] < 0 || y[i] > h) {
-        x[i] = 0;
-        y[i] = target;
-        vx[i] = 0.5;
-        vy[i] = 0;
-      } else {
-        ctx.moveTo(ox, oy);
-        ctx.lineTo(x[i] + 0.7, y[i]);
-      }
+      ctx.stroke();
     }
-    ctx.stroke();
+    if (pulse > 0) {
+      ctx.beginPath();
+      for (let j = 0; j < 24; j++) {
+        if (j === 0) ctx.moveTo(0, anchor[j] + shiftY);
+        else ctx.lineTo((j * w) / 23, anchor[j] + shiftY);
+      }
+      ctx.strokeStyle = "#99e5bb";
+      ctx.globalAlpha = pulse * 0.16;
+      ctx.lineWidth = 14;
+      ctx.stroke();
+      ctx.globalAlpha = pulse * 0.9;
+      ctx.strokeStyle = "#effff5";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
     ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
   }
   function frame(now) {
     raf = 0;
@@ -339,20 +382,20 @@ setLang(initial);
       last = 0;
       return;
     }
-    const ms = last ? Math.min(now - last, 40) : 8.33;
+    const raw = last ? now - last : 16.667,
+      ms = Math.min(raw, 40);
     last = now;
     elapsed += ms / 1000;
-    if (ms > 23) slowFrames++;
-    else slowFrames = Math.max(0, slowFrames - 1);
-    if (slowFrames > 90) {
-      count = Math.max(w <= 768 ? 400 : 3000, count - 500);
-      slowFrames = 0;
+    slow = raw > 1000 / 45 ? slow + 1 : Math.max(0, slow - 1);
+    if (slow > 90) {
+      count = Math.max(w <= 768 ? 400 : 3000, count - 1000);
+      slow = 0;
     }
     render(ms / 16.667, elapsed);
     raf = requestAnimationFrame(frame);
   }
   function schedule() {
-    if (raf) cancelAnimationFrame(raf);
+    cancelAnimationFrame(raf);
     raf = 0;
     last = 0;
     if (!motion.matches && !document.hidden && visible)
@@ -362,15 +405,13 @@ setLang(initial);
     "pointermove",
     function (e) {
       if (e.pointerType === "touch") return;
-      const box = hero.getBoundingClientRect();
-      px = e.clientX - box.left;
-      py = e.clientY - box.top;
+      const rect = hero.getBoundingClientRect();
+      px = e.clientX - rect.left;
+      py = e.clientY - rect.top;
+      touched = elapsed;
     },
     { passive: true },
   );
-  hero.addEventListener("pointerleave", function () {
-    px = py = -10000;
-  });
   if ("IntersectionObserver" in window)
     new IntersectionObserver(function (entries) {
       visible = entries[0].isIntersecting;
@@ -383,41 +424,78 @@ setLang(initial);
 })();
 
 (function scrollStory() {
-  if (!("IntersectionObserver" in window)) return;
-  const steps = document.querySelectorAll(".ps");
-  const sections = document.querySelectorAll(".sec:not(#loop) .wrap");
-  const reveal = new IntersectionObserver(
-    function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.remove("pending");
-          reveal.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.08 },
-  );
-  sections.forEach(function (el) {
-    el.classList.add("reveal");
-    if (!motion.matches && el.getBoundingClientRect().top > innerHeight)
-      el.classList.add("pending");
-    reveal.observe(el);
-  });
-  document.getElementById("loop").classList.add("chain-ready");
-  // Distinct observer thresholds stagger the four segments on a shared desktop
-  // row; mobile steps naturally cross the viewport one after another.
-  steps.forEach(function (step, index) {
-    const observer = new IntersectionObserver(
+  const pipe = document.querySelector(".pipe"),
+    svg = document.querySelector(".flow-chain");
+  const base = svg.querySelector(".chain-base"),
+    lit = svg.querySelector(".chain-lit");
+  const steps = document.querySelectorAll(".ps"),
+    progress = document.getElementById("scroll-progress");
+  let length = 1,
+    scheduled = false;
+  function layout() {
+    const box = pipe.getBoundingClientRect();
+    let path = "";
+    steps.forEach(function (step, i) {
+      const r = step.getBoundingClientRect();
+      const x = r.left - box.left + 8,
+        y = r.top - box.top + 20;
+      path += (i ? " L " : "M ") + x + " " + y;
+    });
+    svg.setAttribute("viewBox", "0 0 " + box.width + " " + box.height);
+    base.setAttribute("d", path);
+    lit.setAttribute("d", path);
+    length = lit.getTotalLength();
+    lit.style.strokeDasharray = length;
+    update();
+  }
+  function update() {
+    scheduled = false;
+    const box = pipe.getBoundingClientRect();
+    const p = motion.matches
+      ? 1
+      : Math.max(0, Math.min(1, (innerHeight * 0.75 - box.top) / box.height));
+    lit.style.strokeDashoffset = length * (1 - p);
+    steps.forEach(function (step) {
+      step.classList.toggle(
+        "active",
+        motion.matches || step.getBoundingClientRect().top < innerHeight * 0.75,
+      );
+    });
+    const max = document.documentElement.scrollHeight - innerHeight;
+    progress.textContent =
+      Math.round(max > 0 ? (scrollY / max) * 100 : 0) + "%";
+  }
+  function request() {
+    if (!scheduled) {
+      scheduled = true;
+      requestAnimationFrame(update);
+    }
+  }
+  if ("IntersectionObserver" in window) {
+    const reveal = new IntersectionObserver(
       function (entries) {
-        if (entries[0].isIntersecting) {
-          step.classList.add("active");
-          observer.disconnect();
-        }
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.remove("pending");
+            reveal.unobserve(e.target);
+          }
+        });
       },
-      { rootMargin: "0px 0px -" + (10 + index * 8) + "% 0px" },
+      { threshold: 0.08 },
     );
-    observer.observe(step);
-  });
+    document.querySelectorAll(".sec:not(#loop) .wrap").forEach(function (el) {
+      el.classList.add("reveal");
+      if (!motion.matches && el.getBoundingClientRect().top > innerHeight)
+        el.classList.add("pending");
+      reveal.observe(el);
+    });
+  }
+  window.addEventListener("scroll", request, { passive: true });
+  window.addEventListener("resize", layout, { passive: true });
+  document.getElementById("lang").addEventListener("change", layout);
+  motion.addEventListener("change", layout);
+  if (document.fonts) document.fonts.ready.then(layout);
+  layout();
 })();
 
 (function cursor() {
@@ -439,7 +517,7 @@ setLang(initial);
     rx += (x - rx) * 0.16;
     ry += (y - ry) * 0.16;
     ring.style.transform =
-      "translate3d(" + (rx - 15) + "px," + (ry - 15) + "px,0)";
+      "translate3d(" + (rx - 18) + "px," + (ry - 18) + "px,0)";
     if (Math.abs(x - rx) + Math.abs(y - ry) > 0.1 && active)
       raf = requestAnimationFrame(tick);
     else raf = 0;

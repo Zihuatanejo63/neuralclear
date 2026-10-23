@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./site.css" />
@@ -23,7 +23,7 @@
       <a class="logo" href="#hero"
         ><img src="./favicon-32x32.png" width="24" height="24" alt="" /><b
           >NeuralClear</b
-        ></a
+        ><small data-i="engine">CLEARING ENGINE FOR AGENT SERVICES</small></a
       >
       <div class="nl">
         <a href="#loop"><span data-i="s1">Flow</span> →</a
@@ -39,15 +39,22 @@
       <section id="hero">
         <canvas id="flow-field" aria-hidden="true"></canvas>
         <div class="wrap">
-          <h1>NeuralClear</h1>
-          <p data-i="s5" class="lead">
-            The clearing layer for agent-to-agent payments.
-          </p>
-          <div class="ctas">
-            <a class="btn pri" href="#partners"
-              ><span data-i="s7">Explore a design partnership</span></a
-            >
+          <h1><span>NeuralClear</span></h1>
+          <div class="hero-action">
+            <p data-i="s5" class="lead">
+              The clearing layer for agent-to-agent payments.
+            </p>
+            <div class="ctas">
+              <a class="btn pri" href="#partners"
+                ><span data-i="s7">Explore a design partnership</span></a
+              >
+            </div>
           </div>
+        </div>
+        <span class="edge-meta" data-i="rail">RAIL-AGNOSTIC · EST. 2026</span>
+        <div class="hero-foot">
+          <span data-i="sequence">ESCROW — METER — NET — SETTLE</span
+          ><span id="scroll-progress" aria-hidden="true">0%</span>
         </div>
         <a class="scroll-cue" href="#loop"
           ><span data-i="scroll">Scroll to explore</span
@@ -68,6 +75,10 @@
           <p data-i="s10" class="mk">01 / CLEARING FLOW</p>
           <h2 data-i="s11">From authorized work to auditable settlement.</h2>
           <div class="pipe">
+            <svg class="flow-chain" aria-hidden="true">
+              <path class="chain-base" />
+              <path class="chain-lit" />
+            </svg>
             <article class="ps">
               <h3 data-i="s12">Reserve</h3>
               <p data-i="s13">
