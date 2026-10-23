@@ -843,72 +843,9 @@ setLang(initial);
   resize();
 })();
 
-(function cursor() {
-  const eligible = matchMedia("(pointer: fine) and (min-width: 769px)");
-  const dot = document.createElement("div"),
-    ring = document.createElement("div");
-  dot.className = "cursor-dot";
-  ring.className = "cursor-ring";
-  dot.setAttribute("aria-hidden", "true");
-  ring.setAttribute("aria-hidden", "true");
-  document.body.append(dot, ring);
-  let x = 0,
-    y = 0,
-    rx = 0,
-    ry = 0,
-    raf = 0,
-    active = false;
-  function tick() {
-    rx += (x - rx) * 0.16;
-    ry += (y - ry) * 0.16;
-    ring.style.transform =
-      "translate3d(" + (rx - 18) + "px," + (ry - 18) + "px,0)";
-    if (Math.abs(x - rx) + Math.abs(y - ry) > 0.1 && active)
-      raf = requestAnimationFrame(tick);
-    else raf = 0;
-  }
-  function stop() {
-    active = false;
-    cancelAnimationFrame(raf);
-    raf = 0;
-    document.body.classList.remove("cursor-on", "cursor-over");
-  }
-  document.addEventListener(
-    "pointermove",
-    function (e) {
-      if (!eligible.matches || motion.matches || e.pointerType === "touch") {
-        stop();
-        return;
-      }
-      x = e.clientX;
-      y = e.clientY;
-      if (!active) {
-        rx = x;
-        ry = y;
-        active = true;
-      }
-      document.body.classList.add("cursor-on");
-      document.body.classList.toggle(
-        "cursor-over",
-        !!e.target.closest("a,button,select"),
-      );
-      dot.style.transform =
-        "translate3d(" + (x - 2) + "px," + (y - 2) + "px,0)";
-      if (!raf) raf = requestAnimationFrame(tick);
-    },
-    { passive: true },
-  );
-  document.documentElement.addEventListener("pointerleave", stop);
-  document.addEventListener("visibilitychange", function () {
-    if (document.hidden) {
-      stop();
-      showExample(false);
-    }
-  });
-  document.addEventListener("keydown", stop);
-  eligible.addEventListener("change", stop);
-  motion.addEventListener("change", function () {
-    stop();
-    showExample(false);
-  });
-})();
+document.addEventListener("visibilitychange", function () {
+  if (document.hidden) showExample(false);
+});
+motion.addEventListener("change", function () {
+  showExample(false);
+});

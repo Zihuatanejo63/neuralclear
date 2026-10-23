@@ -478,47 +478,6 @@ h2 {
 .eout {
   min-height: 330px;
 }
-.cursor-dot,
-.cursor-ring {
-  display: none;
-  position: fixed;
-  left: 0;
-  top: 0;
-  pointer-events: none;
-  z-index: 100;
-  border-radius: 50%;
-}
-@media (pointer: fine) and (min-width: 769px) and (prefers-reduced-motion: no-preference) {
-  .cursor-on,
-  .cursor-on a,
-  .cursor-on button,
-  .cursor-on select {
-    cursor: none;
-  }
-  .cursor-on .cursor-dot,
-  .cursor-on .cursor-ring {
-    display: block;
-  }
-  .cursor-dot {
-    width: 4px;
-    height: 4px;
-    background: var(--cy);
-  }
-  .cursor-ring {
-    width: 30px;
-    height: 30px;
-    border: 1px solid #99e5bb99;
-    transition:
-      width 0.2s,
-      height 0.2s,
-      margin 0.2s;
-  }
-  .cursor-over .cursor-ring {
-    width: 48px;
-    height: 48px;
-    margin: -9px;
-  }
-}
 @media (max-width: 1100px) {
   h1 {
     font-size: 80px;
@@ -569,10 +528,6 @@ h2 {
   }
   .ps.active::after {
     transform: scaleY(1);
-  }
-  .cursor-dot,
-  .cursor-ring {
-    display: none !important;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -849,16 +804,6 @@ h2 {
   opacity: 0;
   transform: translateY(40px);
   filter: blur(8px);
-}
-.cursor-ring {
-  width: 36px;
-  height: 36px;
-  mix-blend-mode: difference;
-}
-.cursor-over .cursor-ring {
-  width: 54px;
-  height: 54px;
-  margin: -9px;
 }
 @media (min-width: 1600px) {
   #hero h1 {
