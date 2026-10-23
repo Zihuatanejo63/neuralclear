@@ -1,0 +1,23 @@
+# NeuralClear
+
+> Open clearing-semantics engine and channel adapters for agent services.
+> Prototype, not a licensed custodian, production payment network or public API.
+
+Workflow: authorized internal escrow -> hash-chained metering -> net allocation
+-> signed receipt. Rail-agnostic design does not imply every adapter is implemented.
+
+## Implementation and discovery
+- [Main specification](https://github.com/Zihuatanejo63/neuralclear/blob/main/SPEC.md)
+- [Main protocol documents](https://github.com/Zihuatanejo63/neuralclear/tree/main/docs)
+- [Machine-readable project skills](https://www.neuralclear.org/.well-known/agent-skills)
+- [Strict escrow audit, separate unmerged protocol commit](https://github.com/Zihuatanejo63/neuralclear/blob/54bd57f9db348d3c8b50f4537a1436b96434b460/docs/protocol-gap-audit.md)
+
+## Evidence as of 2026-10-22
+Test-mode collection, internal clearing and signed receipt independently verified
+VALID. JPY 73 test Transfer created from the original charge. Payout rejected for
+pending funds; available_on 2026-10-29 08:00 UTC+8 is not completed bank payment.
+- [Stripe test report](https://github.com/Zihuatanejo63/neuralclear/blob/54bd57f9db348d3c8b50f4537a1436b96434b460/docs/p0-live-stripe-payout-jp-continuation-2026-10-22.md)
+
+No claim of production custody, KYC/AML, real customer volume, implemented TEE/ZK,
+or distributed ledger durability. Signatures/Merkle prove integrity, not truth.
+Design-partner inquiries use GitHub issues; never submit secrets or personal data.

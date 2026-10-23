@@ -1,0 +1,290 @@
+:root {
+  --bg: #101313;
+  --txt: #eef2ef;
+  --mut: #aeb9b4;
+  --line: #323b37;
+  --cy: #99e5bb;
+}
+* {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--txt);
+  font:
+    16px/1.65 Arial,
+    "PingFang SC",
+    sans-serif;
+}
+a {
+  color: inherit;
+  text-underline-offset: 4px;
+}
+a:hover {
+  color: var(--cy);
+}
+a:focus-visible,
+button:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--cy);
+  outline-offset: 4px;
+}
+.wrap {
+  max-width: 1120px;
+  margin: auto;
+  padding: 0 28px;
+}
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--line);
+  background: #101313f5;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.nl {
+  display: flex;
+  gap: 24px;
+  margin-left: auto;
+}
+.nl a {
+  font-size: 14px;
+  text-decoration: none;
+}
+select {
+  background: #1d2521;
+  color: var(--txt);
+  padding: 8px;
+  border: 1px solid #64766c;
+}
+#hero {
+  padding: 64px 0 42px;
+  border-bottom: 1px solid var(--line);
+}
+h1 {
+  font-size: 64px;
+  line-height: 1.1;
+  margin: 20px 0;
+}
+h2 {
+  font-size: 30px;
+  line-height: 1.3;
+  max-width: 780px;
+  margin: 10px 0 24px;
+}
+h3 {
+  font-size: 19px;
+  margin: 12px 0;
+}
+p {
+  margin: 10px 0;
+  color: var(--mut);
+}
+.mk {
+  font:
+    12px/1.5 ui-monospace,
+    monospace;
+  color: var(--cy);
+}
+.lead {
+  font-size: 28px;
+  color: var(--txt);
+  max-width: 800px;
+}
+.sub {
+  max-width: 780px;
+  font-size: 18px;
+}
+.ctas {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 26px 0;
+}
+.btn {
+  display: inline-block;
+  padding: 11px 18px;
+  border: 1px solid #63736b;
+  text-decoration: none;
+  font-size: 14px;
+}
+.pri {
+  background: var(--cy);
+  border-color: var(--cy);
+  color: #102219;
+}
+.pri:hover {
+  background: #bef3d4;
+  color: #102219;
+}
+.sec {
+  padding: 52px 0;
+  border-bottom: 1px solid var(--line);
+  scroll-margin-top: 80px;
+}
+.pipe {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px;
+  counter-reset: steps;
+}
+.ps {
+  border-top: 2px solid #677d70;
+  padding-top: 18px;
+}
+.ps:before {
+  counter-increment: steps;
+  content: "0" counter(steps);
+  font: 13px monospace;
+  color: var(--cy);
+}
+.ps p {
+  font-size: 14px;
+}
+.note {
+  font-size: 14px;
+  margin: 22px 0;
+  max-width: 900px;
+}
+.evidence article {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  column-gap: 32px;
+  padding: 26px 0;
+  border-top: 1px solid var(--line);
+}
+.evidence h3 {
+  grid-row: 1/3;
+  font-size: 17px;
+  color: var(--cy);
+}
+.evidence article:last-child h3 {
+  color: #ebc67b;
+}
+.evidence p,
+.evidence a {
+  grid-column: 2;
+}
+.evidence a {
+  font-size: 14px;
+  margin-top: 10px;
+}
+.comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+}
+.doclinks {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+.api {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  border: 1px solid var(--line);
+}
+.eps {
+  padding: 12px;
+}
+.ep {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-left: 3px solid transparent;
+  color: var(--mut);
+  cursor: pointer;
+  font: 12px monospace;
+  overflow-wrap: anywhere;
+}
+.ep.act {
+  border-color: var(--cy);
+  background: #23352a;
+  color: #fff;
+}
+.ep small {
+  display: block;
+  font:
+    13px Arial,
+    sans-serif;
+  margin-top: 5px;
+}
+.eout {
+  margin: 0;
+  padding: 22px;
+  background: #080b09;
+  font: 12px/1.8 monospace;
+  overflow: auto;
+  min-height: 310px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+footer.wrap {
+  padding-top: 28px;
+  padding-bottom: 28px;
+  font-size: 13px;
+}
+#partners .btn {
+  margin-top: 18px;
+}
+@media (max-width: 700px) {
+  nav {
+    padding: 12px 18px;
+    gap: 12px;
+  }
+  .nl {
+    display: none;
+  }
+  select {
+    margin-left: auto;
+  }
+  .wrap {
+    padding: 0 20px;
+  }
+  #hero {
+    padding-top: 38px;
+  }
+  h1 {
+    font-size: 40px;
+  }
+  .lead {
+    font-size: 23px;
+  }
+  h2 {
+    font-size: 25px;
+  }
+  .pipe {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .evidence article,
+  .comparison,
+  .api {
+    display: block;
+  }
+  .comparison > div + div {
+    margin-top: 28px;
+  }
+  .sec {
+    padding: 40px 0;
+  }
+  .btn {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+}

@@ -1,521 +1,242 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>NeuralClear — Clearing Engine for Agent Services</title>
-<meta name="description" content="Chain-free clearing for agent-to-agent services: escrow, hash-chained metering, net settlement, signed receipts. Zero dependencies."/>
-<link rel="canonical" href="https://www.neuralclear.org/"/>
-<meta property="og:type" content="website"/>
-<meta property="og:url" content="https://www.neuralclear.org/"/>
-<meta property="og:title" content="NeuralClear — Clearing Engine for Agent Services"/>
-<meta property="og:description" content="Chain-free clearing for agent-to-agent services: escrow, hash-chained metering, net settlement, signed receipts. Zero dependencies."/>
-<meta property="og:image" content="https://www.neuralclear.org/og.png"/>
-<meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="NeuralClear — Clearing Engine for Agent Services"/>
-<meta name="twitter:description" content="Chain-free clearing for agent-to-agent services. Escrow, net settlement, signed receipts. Zero dependencies."/>
-<meta name="twitter:image" content="https://www.neuralclear.org/og.png"/>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22><rect width=%2216%22 height=%2216%22 fill=%22%23030508%22/><path d=%22M1 8h3l2-5 2 10 2-5 2 0%22 stroke=%22%2300f0ff%22 stroke-width=%221.5%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>"/>
-
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#030508;--bg2:#060a12;--panel:#080d18;
-  --line:rgba(0,240,255,.08);--line2:rgba(0,240,255,.18);
-  --txt:#e6f4ff;--soft:#9fc2dd;--mut:#5d7a96;--dim:#33485e;
-  --cy:#00f0ff;--vi:#7b5cff;--gn:#3dffa0;--am:#ffc24d;--rd:#ff5d7a;
-  --mono:'JetBrains Mono',monospace;--disp:'Space Grotesk',sans-serif;
-}
-html{scroll-behavior:smooth}
-body{font-family:var(--disp);background:var(--bg);color:var(--txt);font-size:15px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-::selection{background:rgba(0,240,255,.3)}
-/* grid + scanline overlays */
-body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
-  background-image:linear-gradient(rgba(0,240,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,.025) 1px,transparent 1px);
-  background-size:56px 56px;mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000 30%,transparent 90%)}
-.scan{position:fixed;left:0;right:0;height:120px;z-index:1;pointer-events:none;opacity:.5;
-  background:linear-gradient(to bottom,transparent,rgba(0,240,255,.035),transparent);animation:scan 9s linear infinite}
-@keyframes scan{0%{top:-140px}100%{top:110vh}}
-#net{position:fixed;inset:0;z-index:0;pointer-events:none}
-section,nav,footer{position:relative;z-index:2}
-.wrap{max-width:1180px;margin:0 auto;padding:0 34px}
-a{color:inherit}
-/* type utils */
-.mk{font-family:var(--mono);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--mut)}
-.mk i{color:var(--cy);font-style:normal}
-/* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:80;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 34px;background:rgba(3,5,8,.84);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
-.logo{display:flex;align-items:center;gap:11px;text-decoration:none}
-.logo-led{width:8px;height:8px;background:var(--cy);box-shadow:0 0 12px var(--cy);animation:led 2.2s infinite}
-@keyframes led{50%{opacity:.25;box-shadow:none}}
-.logo b{font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:.1em}
-.logo span{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.15em}
-.nl{display:flex;gap:0;list-style:none}
-.nl a{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);text-decoration:none;padding:8px 14px;transition:.15s}
-.nl a:hover{color:var(--cy);text-shadow:0 0 12px rgba(0,240,255,.6)}
-.btn{display:inline-flex;align-items:center;gap:9px;padding:10px 22px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;cursor:pointer;transition:.18s;border:1px solid var(--line2);color:var(--soft);background:transparent;position:relative}
-.btn:hover{border-color:var(--cy);color:var(--cy);box-shadow:0 0 24px rgba(0,240,255,.15),inset 0 0 24px rgba(0,240,255,.04)}
-.btn.pri{background:var(--cy);color:#001218;border-color:var(--cy);font-weight:700;box-shadow:0 0 28px rgba(0,240,255,.35)}
-.btn.pri:hover{box-shadow:0 0 44px rgba(0,240,255,.55);transform:translateY(-1px);color:#001218}
-/* HUD corner brackets */
-.hud{position:relative;border:1px solid var(--line);background:rgba(8,13,24,.72);backdrop-filter:blur(8px)}
-.hud::before,.hud::after,.hud .c3,.hud .c4{content:'';position:absolute;width:14px;height:14px;border-color:var(--cy);border-style:solid;opacity:.85}
-.hud::before{top:-1px;left:-1px;border-width:1.5px 0 0 1.5px}
-.hud::after{top:-1px;right:-1px;border-width:1.5px 1.5px 0 0}
-.hud .c3{bottom:-1px;left:-1px;border-width:0 0 1.5px 1.5px}
-.hud .c4{bottom:-1px;right:-1px;border-width:0 1.5px 1.5px 0}
-/* HERO */
-#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:130px 0 40px}
-.hgrid{display:grid;grid-template-columns:1.08fr .92fr;gap:56px;align-items:center}
-.pre{font-family:var(--mono);font-size:10px;letter-spacing:.26em;color:var(--cy);text-transform:uppercase;display:flex;align-items:center;gap:12px;margin-bottom:30px}
-.pre::before{content:'▸';animation:led 1.6s infinite}
-h1{font-weight:300;font-size:clamp(40px,5.2vw,68px);line-height:1.03;letter-spacing:-.02em;margin-bottom:24px}
-h1 b{font-weight:700;display:block;background:linear-gradient(100deg,var(--cy) 10%,var(--vi) 90%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 28px rgba(0,240,255,.25))}
-.sub{font-size:15.5px;color:var(--mut);line-height:1.85;max-width:470px;margin-bottom:36px}
-.sub b{color:var(--soft);font-weight:500}
-.ctas{display:flex;gap:14px;flex-wrap:wrap}
-.cmd{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:18px;display:block}
-.cmd i{color:var(--gn);font-style:normal}
-/* terminal */
-.term{font-family:var(--mono);font-size:11px;line-height:1.8;overflow:hidden}
-.tb{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--line)}
-.tb .l{display:flex;gap:7px;align-items:center}
-.tb .l span{width:9px;height:9px;border:1px solid var(--line2)}
-.tb .r{font-size:9px;color:var(--dim);letter-spacing:.18em}
-.tbody{padding:18px 20px;min-height:300px;color:var(--soft)}
-.tk{color:var(--dim)}.tc{color:var(--cy)}.tg{color:var(--gn)}.ta{color:var(--am)}
-.cur{display:inline-block;width:7px;height:13px;background:var(--cy);animation:led 1s step-end infinite;vertical-align:-2px}
-/* ticker */
-.ticker{border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;background:rgba(6,10,18,.7);padding:11px 0;white-space:nowrap}
-.tape{display:inline-block;animation:tape 38s linear infinite;font-family:var(--mono);font-size:10.5px;color:var(--mut)}
-.tape b{color:var(--gn);font-weight:500}.tape i{color:var(--cy);font-style:normal}.tape s{color:var(--dim);text-decoration:none;margin:0 26px}
-@keyframes tape{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-/* metrics */
-.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:54px 0;border-bottom:1px solid var(--line)}
-.mt{padding:24px 24px 20px}
-.mt b{font-family:var(--mono);font-weight:700;font-size:32px;display:block;line-height:1;margin-bottom:8px}
-.mt b i{color:var(--cy);font-style:normal;font-size:19px}
-.mt span{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
-/* sections */
-.sec{padding:104px 0;border-bottom:1px solid var(--line)}
-.sh{margin-bottom:54px}
-.sh .mk{margin-bottom:16px;display:block}
-h2{font-weight:300;font-size:clamp(28px,3.4vw,46px);line-height:1.1;letter-spacing:-.015em}
-h2 b{font-weight:700;color:var(--cy);text-shadow:0 0 32px rgba(0,240,255,.3)}
-.ss{font-size:14.5px;color:var(--mut);line-height:1.85;max-width:540px;margin-top:16px}
-.rv{opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s}
-.rv.on{opacity:1;transform:none}
-/* pipeline */
-.pipe{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px}
-.ps{padding:22px 16px;cursor:pointer;transition:.2s}
-.ps i{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.16em;display:block;margin-bottom:12px}
-.ps b{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.06em;display:block;margin-bottom:5px}
-.ps span{font-family:var(--mono);font-size:9px;color:var(--dim)}
-.ps.act{border-color:var(--cy);box-shadow:0 0 26px rgba(0,240,255,.12),inset 0 0 26px rgba(0,240,255,.03)}
-.ps.act i,.ps.act b{color:var(--cy)}
-.ppanel{display:grid;grid-template-columns:.9fr 1.1fr;gap:14px}
-.pinfo{padding:30px 32px}
-.pinfo h3{font-size:19px;font-weight:700;margin-bottom:10px}
-.pinfo p{font-size:13px;color:var(--mut);line-height:1.85}
-.pjson{padding:24px 26px;font-family:var(--mono);font-size:10.5px;line-height:1.75;color:var(--soft);overflow-x:auto;background:rgba(3,5,8,.8)}
-.pjson pre{white-space:pre}
-/* netting */
-.ngrid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
-.huge{font-family:var(--mono);font-weight:700;font-size:clamp(86px,12vw,160px);line-height:.92;letter-spacing:-.04em;background:linear-gradient(120deg,var(--cy),var(--vi));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 36px rgba(0,240,255,.2))}
-.np{list-style:none;margin-top:24px}
-.np li{display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--mut);line-height:1.75}
-.np li b{color:var(--soft);font-weight:500}
-.np li::before{content:'>';font-family:var(--mono);color:var(--cy);flex-shrink:0}
-/* api */
-.api{display:grid;grid-template-columns:.92fr 1.08fr;gap:14px}
-.eps{padding:8px}
-.ep{display:flex;gap:12px;align-items:baseline;padding:12px 16px;cursor:pointer;transition:.15s;font-family:var(--mono);font-size:11px;border-left:2px solid transparent}
-.ep:hover{background:rgba(0,240,255,.04)}
-.ep.act{border-left-color:var(--cy);background:rgba(0,240,255,.05)}
-.ep .m{font-weight:700;width:38px;flex-shrink:0}
-.ep .m.post{color:var(--gn)}.ep .m.get{color:var(--cy)}
-.ep .p{color:var(--soft)}
-.ep small{margin-left:auto;font-size:9px;color:var(--dim);font-family:var(--disp)}
-.eout{padding:22px 26px;font-family:var(--mono);font-size:10.5px;line-height:1.75;color:var(--soft);overflow-x:auto;min-height:360px;background:rgba(3,5,8,.8)}
-/* audience + pricing */
-.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.card{padding:32px 30px;transition:.2s}
-.card:hover{box-shadow:0 0 30px rgba(0,240,255,.08)}
-.card i{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--cy);display:block;margin-bottom:16px}
-.card h3{font-size:17px;font-weight:700;margin-bottom:11px;line-height:1.35}
-.card p{font-size:13px;color:var(--mut);line-height:1.8;margin-bottom:16px}
-.card .tag{font-family:var(--mono);font-size:10px;color:var(--gn)}
-.card .amt{font-family:var(--mono);font-weight:700;font-size:30px;margin-bottom:8px}
-.card .amt small{font-size:12px;color:var(--dim);font-weight:400}
-.card ul{list-style:none;margin-bottom:24px}
-.card li{font-family:var(--mono);font-size:11px;color:var(--mut);padding:7px 0;border-bottom:1px solid var(--line);display:flex;gap:9px}
-.card li::before{content:'+';color:var(--cy)}
-.card li:last-child{border:none}
-.card.hot{border-color:var(--line2);box-shadow:0 0 34px rgba(0,240,255,.1)}
-.hotmk{position:absolute;top:-9px;left:24px;font-family:var(--mono);font-size:8.5px;letter-spacing:.2em;background:var(--cy);color:#001218;padding:3px 10px;font-weight:700}
-/* cta band + footer */
-.band{padding:96px 0;text-align:center}
-.band h2{margin-bottom:12px}
-.band .cmd{margin:14px 0 30px;font-size:12px}
-footer{border-top:1px solid var(--line);padding:46px 0}
-.fg{display:flex;justify-content:space-between;flex-wrap:wrap;gap:24px;align-items:flex-start}
-.fn{font-family:var(--mono);font-size:9.5px;color:var(--dim);max-width:430px;line-height:1.9;letter-spacing:.03em}
-.fl{display:flex;gap:24px;list-style:none}
-.fl a{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);text-decoration:none}
-.fl a:hover{color:var(--cy)}
-@media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation:none!important;transition:none!important}
-  .scan{display:none}
-}
-@media(max-width:920px){
-  .wrap{padding:0 18px}nav{padding:0 18px}.nl{display:none}
-  .hgrid,.ngrid,.api,.ppanel{grid-template-columns:1fr}
-  .metrics{grid-template-columns:1fr 1fr}
-  .pipe{grid-template-columns:repeat(3,1fr)}
-  .tri{grid-template-columns:1fr}
-}
-</style>
-</head>
-<body>
-<canvas id="net" aria-hidden="true"></canvas>
-<div class="scan"></div>
-
-<nav>
-  <a class="logo" href="#"><span class="logo-led"></span><b>NEURALCLEAR</b><span>// CLEARING ENGINE v0.4-DEV</span></a>
-  <ul class="nl">
-    <li><a href="#loop" data-i="n1">Pipeline</a></li><li><a href="#netting" data-i="n2">Netting</a></li>
-    <li><a href="#api" data-i="n3">Gateway</a></li><li><a href="#who" data-i="n4">Operators</a></li><li><a href="#stability" data-i="n5b">Verified</a></li><li><a href="#pricing" data-i="n5">Access</a></li>
-  </ul>
-  <div style="display:flex;gap:10px;align-items:center">
-    <select id="lang" aria-label="Language / 语言" onchange="setLang(this.value)" style="background:var(--panel);color:var(--soft);border:1px solid var(--line2);font-family:var(--mono);font-size:10px;padding:7px 9px;cursor:pointer;letter-spacing:.1em">
-      <option value="en">EN</option><option value="zh">中文</option></select>
-    <a class="btn" href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" rel="noopener noreferrer">GitHub</a>
-    <a class="btn pri" href="#pricing" data-i="init">Initialize →</a>
-  </div>
-</nav>
-
-<!-- HERO -->
-<section id="hero"><div class="wrap">
-  <div class="hgrid">
-    <div>
-      <div class="pre" data-i="pre">SYSTEM ONLINE · CHAIN-FREE · STDLIB ONLY</div>
-      <h1><span data-i="h1a">Agents do the work.</span><br/><b id="decode">We clear the money.</b></h1>
-      <p class="sub" data-ih="sub">Escrow, hash-chained metering, net settlement, signed receipts and disputes for agent-to-agent transactions. <b>Zero blockchain. Zero dependencies.</b> Embed it as a library — or run it as the neutral clearing point of your agent network.</p>
-      <div class="ctas">
-        <a class="btn pri" href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" rel="noopener noreferrer">git clone neuralclear</a>
-        <a class="btn" href="#api" data-i="b2">Hosted gateway</a>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>NeuralClear | Agent service clearing</title>
+    <meta
+      name="description"
+      content="Rail-agnostic clearing semantics for agent services. Inspect the prototype and dated test-mode evidence."
+    />
+    <link rel="canonical" href="https://www.neuralclear.org/" />
+    <link rel="icon" href="./favicon.ico" />
+    <link rel="stylesheet" href="./site.css" />
+  </head>
+  <body>
+    <nav>
+      <a class="logo" href="#hero"
+        ><img src="./favicon-32x32.png" width="24" height="24" alt="" /><b
+          >NeuralClear</b
+        ></a
+      >
+      <div class="nl">
+        <a href="#loop"><span data-i="s1">Flow</span> →</a
+        ><a href="#stability"><span data-i="s2">Evidence</span> →</a
+        ><a href="#api"><span data-i="s3">Developers</span> →</a>
       </div>
-      <span class="cmd"><i>$</i> python3 examples/closed_loop_demo.py <span style="color:var(--dim)"><span data-i="cmdn">// the whole economy, one command</span></span></span>
-    </div>
-    <div class="hud term"><span class="c3"></span><span class="c4"></span>
-      <div class="tb"><div class="l"><span></span><span></span><span></span></div><div class="r">CLOSED_LOOP // LIVE OUTPUT</div></div>
-      <div class="tbody" id="term"></div>
-    </div>
-  </div>
-</div></section>
-
-<!-- TICKER -->
-<div class="ticker"><div class="tape" id="tape"></div></div>
-
-<!-- METRICS -->
-<section><div class="wrap"><div class="metrics">
-  <div class="mt hud rv"><span class="c3"></span><span class="c4"></span><b>127<i>/127</i></b><span data-i="m1">tests passing</span></div>
-  <div class="mt hud rv"><span class="c3"></span><span class="c4"></span><b>100<i>×</i></b><span data-i="m2">fewer settlements</span></div>
-  <div class="mt hud rv"><span class="c3"></span><span class="c4"></span><b>0</b><span data-i="m3">third-party deps</span></div>
-  <div class="mt hud rv"><span class="c3"></span><span class="c4"></span><b>1</b><span data-i="m4">file to self-host</span></div>
-</div></div></section>
-
-<!-- PIPELINE -->
-<section class="sec" id="loop"><div class="wrap">
-  <div class="sh rv"><span class="mk"><i>01</i> // CLEARING PIPELINE</span>
-    <h2 data-ih="s1h">One loop. Six stages.<br/><b>Every credit accounted for.</b></h2>
-    <p class="ss" data-i="s1s">Discovery to settled receipt, cross-process over real HTTP. Select a stage — the JSON below is from an actual run, not a mock.</p>
-  </div>
-  <div class="pipe rv" id="pipe"></div>
-  <div class="ppanel rv">
-    <div class="pinfo hud"><span class="c3"></span><span class="c4"></span><h3 id="lt"></h3><p id="ld"></p></div>
-    <div class="pjson hud"><span class="c3"></span><span class="c4"></span><pre id="lj"></pre></div>
-  </div>
-</div></section>
-
-<!-- NETTING -->
-<section class="sec" id="netting"><div class="wrap">
-  <div class="sh rv"><span class="mk"><i>02</i> // NET SETTLEMENT</span>
-    <h2 data-ih="s2h">The micro-payment problem,<br/><b>structurally solved.</b></h2></div>
-  <div class="ngrid">
-    <div class="rv"><div class="huge">100×</div>
-      <p class="mk" style="margin-top:14px" data-i="mk2">SETTLEMENT REDUCTION · MEASURED, NOT PROJECTED</p></div>
-    <div class="rv">
-      <p class="ss" style="max-width:none" data-ih="s2s">When a service costs less per call than the rail's settlement fee, per-request payment inverts the economics. No on-chain design fixes this — gas <em>is</em> the problem. A clearing channel does:</p>
-      <ul class="np">
-        <li data-ih="np1"><b>One deposit</b> held in escrow opens the channel.</li>
-        <li data-ih="np2"><b>Every micro-task</b> appends a tamper-evident record to a hash chain — forge one amount and the chain refuses to settle.</li>
-        <li data-ih="np3"><b>One net transfer</b> closes it: provider takes the metered total, buyer reclaims the rest, fee charged once.</li>
-        <li data-ih="np4"><b>Any rail underneath</b> — credits, Stripe, x402, bank transfer. Same receipt.</li>
-      </ul>
-    </div>
-  </div>
-</div></section>
-
-<!-- GATEWAY -->
-<section class="sec" id="api"><div class="wrap">
-  <div class="sh rv"><span class="mk"><i>03</i> // GATEWAY API</span>
-    <h2 data-ih="s3h">A library when you embed.<br/><b>A gateway when you host.</b></h2>
-    <p class="ss" data-i="s3s">The same engine behind two surfaces: <code style="font-family:var(--mono);color:var(--cy)">import neuralclear</code> in-process, or one neutral HTTP clearing point for your whole network.<span data-i="s3x"></span></p></div>
-  <div class="api rv">
-    <div class="eps hud"><span class="c3"></span><span class="c4"></span><div id="eplist"></div></div>
-    <div class="eout hud"><span class="c3"></span><span class="c4"></span><pre id="epcode"></pre></div>
-  </div>
-</div></section>
-
-<!-- OPERATORS -->
-<section class="sec" id="who"><div class="wrap">
-  <div class="sh rv"><span class="mk"><i>04</i> // OPERATORS</span>
-    <h2 data-ih="s4h">Built for the people<br/><b>moving real money between agents.</b></h2></div>
-  <div class="tri">
-    <div class="card hud rv"><span class="c3"></span><span class="c4"></span>
-      <i data-i="a1i">Agent marketplaces</i><h3 data-i="a1h">A take rate without building a clearing house</h3>
-      <p data-i="a1p">Basis-point fees with per-capability overrides and a minimum floor for micro-tasks. Escrow protects both sides; reputation ranks your supply.</p>
-      <span class="tag">fee_pool += every cleared task</span></div>
-    <div class="card hud rv"><span class="c3"></span><span class="c4"></span>
-      <i data-i="a2i">Enterprises & regulated teams</i><h3 data-i="a2h">Agent spend with bounded authority and an audit trail</h3>
-      <p data-i="a2p">SpendingMandate caps per-task and daily spend with approval thresholds. Every settlement is a signed receipt in SQLite — fully on-prem, no public chain.</p>
-      <span class="tag">self-host: one .py file, one .db file</span></div>
-    <div class="card hud rv"><span class="c3"></span><span class="c4"></span>
-      <i data-i="a3i">Agent platforms · CN & global</i><h3 data-i="a3h">Metering and billing for agent-to-agent calls</h3>
-      <p data-i="a3p">Rail-agnostic: clear in internal credits today, settle through Alipay corporate, Stripe, or x402 adapters tomorrow. The clearing record doesn't change.</p>
-      <span class="tag">works where public chains can't</span></div>
-  </div>
-</div></section>
-
-
-<!-- STABILITY -->
-<section class="sec" id="stability"><div class="wrap">
-  <div class="sh rv"><span class="mk"><i>05</i> // VERIFIED</span>
-    <h2 data-i="svh">Audited under load.<br/><b>The invariant never breaks.</b></h2>
-    <p class="ss" data-i="svs">Money logic is only as good as its worst day. We ran the adversarial cases — concurrency, exhaustion, provider crashes — and turned each into a permanent regression test.</p></div>
-  <div class="tri">
-    <div class="card hud rv"><span class="c3"></span><span class="c4"></span>
-      <i data-i="v1i">Concurrency</i><h3 data-i="v1h">50 parallel clears, zero double-spend</h3>
-      <p data-i="v1p">Escrow mutations run under a re-entrant lock. 50 simultaneous settlements against an exact balance resolve to precise, consistent state — the zero-sum invariant holds at every step.</p>
-      <span class="tag">balances + escrow + fees == supply</span></div>
-    <div class="card hud rv"><span class="c3"></span><span class="c4"></span>
-      <i data-i="v2i">Failure safety</i><h3 data-i="v2h">A provider crash refunds the buyer</h3>
-      <p data-i="v2p">If execution throws mid-task, escrow is released back to the buyer automatically — funds are never stranded. Failed or unsigned proofs auto-refund too. No frozen money, ever.</p>
-      <span class="tag">crash → escrow refunded → invariant intact</span></div>
-    <div class="card hud rv"><span class="c3"></span><span class="c4"></span>
-      <i data-i="v3i">Scale</i><h3 data-i="v3h">1000 micro-tasks, one settlement, 0.04s</h3>
-      <p data-i="v3p">The hash-chained netting channel meters a thousand calls and settles them in a single net transfer in 40 milliseconds — tamper-evident, verifiable, and persisted to SQLite intact.</p>
-      <span class="tag">multi-tenant isolation verified under load</span></div>
-  </div>
-</div></section>
-
-<!-- PRICING -->
-<section class="sec" id="pricing" style="border-bottom:none"><div class="wrap">
-  <div class="sh rv"><span class="mk"><i>06</i> // ACCESS</span>
-    <h2 data-ih="s5h">Open engine. <b>Paid infrastructure.</b></h2>
-    <p class="ss" data-i="s5s">The protocol and library stay open source forever. Revenue comes from running it for you.</p></div>
-  <div class="tri">
-    <div class="card hud rv"><span class="c3"></span><span class="c4"></span>
-      <i>Open source</i><div class="amt">FREE <small>// forever</small></div>
-      <p data-i="p1p">The full engine: escrow, netting, fees, disputes, reputation, signed proofs, persistence, HTTP gateway.</p>
-      <ul><li>127 passing tests</li><li>stdlib only — embed anywhere</li><li>self-host the gateway</li><li>audited: concurrency · crash-safety</li><li>MIT licensed</li></ul>
-      <a class="btn" href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" rel="noopener noreferrer" style="width:100%;justify-content:center" data-i="p1b">Clone repo</a></div>
-    <div class="card hud hot rv"><span class="c3"></span><span class="c4"></span><span class="hotmk">RECOMMENDED</span>
-      <i>Hosted gateway · v0.4</i><div class="amt">EARLY <small>// access</small></div>
-      <p data-i="p2p">We run the neutral clearing point: managed escrow ledger, API keys, dashboards, webhooks. Pay per settlement.</p>
-      <ul><li>managed EscrowLedger + backups</li><li>team workspaces & API keys</li><li>webhook events</li><li>netting channels at scale</li></ul>
-      <a class="btn pri" href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" rel="noopener noreferrer" style="width:100%;justify-content:center" data-i="p2b">Join waitlist</a></div>
-    <div class="card hud rv"><span class="c3"></span><span class="c4"></span>
-      <i>Enterprise</i><div class="amt">CUSTOM</div>
-      <p data-i="p3p">Private deployment inside your network, payment-rail adapters, compliance support, SLAs.</p>
-      <ul><li>on-prem / VPC deployment</li><li>rail adapters: Stripe · x402 · bank</li><li>ed25519 proof infrastructure</li><li>audit & compliance tooling</li></ul>
-      <a class="btn" href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" rel="noopener noreferrer" style="width:100%;justify-content:center" data-i="p3b">Contact</a></div>
-  </div>
-</div></section>
-
-<!-- BAND -->
-<section class="band"><div class="wrap">
-  <h2 data-ih="bandh">The demo <b>is</b> the pitch.</h2>
-  <span class="cmd" style="display:block"><i>$</i> python3 examples/closed_loop_demo.py</span>
-  <a class="btn pri" href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" rel="noopener noreferrer" data-i="bandb">Run the closed loop →</a>
-</div></section>
-
-<footer><div class="wrap"><div class="fg">
-  <div><div class="logo" style="margin-bottom:12px"><span class="logo-led"></span><b>NEURALCLEAR</b></div>
-    <p class="fn" data-i="fn">CLEARING ENGINE PROTOTYPE FOR AGENT-TO-AGENT SERVICE TRANSACTIONS. NOT A PAYMENT SERVICE. DOES NOT CUSTODY FUNDS OR EXECUTE REAL PAYMENTS. SANDBOX CREDITS ONLY — NO REAL VALUE IS TRANSFERRED.</p></div>
-  <ul class="fl">
-    <li><a href="https://github.com/Zihuatanejo63/neuralclear" target="_blank" rel="noopener noreferrer">GitHub</a></li>
-    <li><a href="https://github.com/Zihuatanejo63/neuralclear/blob/main/SPEC.md" target="_blank" rel="noopener noreferrer">Spec</a></li>
-    <li><a href="https://github.com/Zihuatanejo63/neuralclear/blob/main/WHITEPAPER.md" target="_blank" rel="noopener noreferrer">Whitepaper</a></li>
-    <li><a href="https://github.com/Zihuatanejo63/neuralclear/blob/main/ROADMAP.md" target="_blank" rel="noopener noreferrer">Roadmap</a></li>
-  </ul>
-</div></div></footer>
-
-<script>
-var REDUCE=matchMedia('(prefers-reduced-motion:reduce)').matches;
-/* ===== directed flow network: pulses travel between agent nodes ===== */
-var cv=document.getElementById('net'),cx=cv.getContext('2d'),W,H,nodes=[],pulses=[];
-function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;makeNodes()}
-function makeNodes(){nodes=[];var n=Math.min(Math.floor(W/110),14);
- for(var i=0;i<n;i++)nodes.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.16,vy:(Math.random()-.5)*.16,r:1.6+Math.random()*1.6})}
-function spawnPulse(){if(nodes.length<2)return;var a=nodes[Math.random()*nodes.length|0],b=nodes[Math.random()*nodes.length|0];
- if(a===b)return;pulses.push({a:a,b:b,t:0,sp:.004+Math.random()*.007})}
-setInterval(spawnPulse,420);
-function frame(){requestAnimationFrame(frame);cx.clearRect(0,0,W,H);
- // links
- for(var i=0;i<nodes.length;i++){for(var j=i+1;j<nodes.length;j++){
-  var dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.hypot(dx,dy);
-  if(d<260){cx.beginPath();cx.moveTo(nodes[i].x,nodes[i].y);cx.lineTo(nodes[j].x,nodes[j].y);
-   cx.strokeStyle='rgba(0,240,255,'+((1-d/260)*.06)+')';cx.lineWidth=.6;cx.stroke()}}}
- // nodes
- nodes.forEach(function(n){n.x+=n.vx;n.y+=n.vy;
-  if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;
-  cx.beginPath();cx.arc(n.x,n.y,n.r,0,7);cx.fillStyle='rgba(0,240,255,.5)';cx.fill();
-  cx.beginPath();cx.arc(n.x,n.y,n.r+3,0,7);cx.strokeStyle='rgba(0,240,255,.12)';cx.stroke()});
- // pulses (transactions clearing)
- for(var k=pulses.length-1;k>=0;k--){var p=pulses[k];p.t+=p.sp;
-  if(p.t>=1){pulses.splice(k,1);continue}
-  var x=p.a.x+(p.b.x-p.a.x)*p.t,y=p.a.y+(p.b.y-p.a.y)*p.t;
-  var g=cx.createRadialGradient(x,y,0,x,y,7);
-  g.addColorStop(0,'rgba(0,240,255,.9)');g.addColorStop(1,'transparent');
-  cx.fillStyle=g;cx.fillRect(x-7,y-7,14,14)}}
-addEventListener('resize',rs);rs();if(!REDUCE)frame();else{cx&&cx.clearRect(0,0,W,H)}
-
-/* ===== decode effect on hero ===== */
-(function(){var el=document.getElementById('decode'),fin='We clear the money.',gl='01<>/\\#$%&@!?',i=0;
- function step(){var out='';for(var j=0;j<fin.length;j++){
-   out+= j<i ? fin[j] : (fin[j]===' '?' ':gl[Math.random()*gl.length|0]);}
-  el.textContent=out;if(i<=fin.length){i+=.5;setTimeout(step,34)}else el.textContent=fin}
- if(REDUCE){el.textContent=fin}else setTimeout(step,350)})();
-
-/* ===== reveal ===== */
-var ob=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)e.target.classList.add('on')})},{threshold:.1});
-document.querySelectorAll('.rv').forEach(function(el){ob.observe(el)});
-
-/* ===== terminal: real demo output ===== */
-var LINES=[['tk','$ python3 examples/closed_loop_demo.py'],
- ['tc','[1] providers live  research→:42503  embed→:38619'],
- ['tc','[2] discovered via /.well-known over HTTP'],
- ['','    quote 40 CC → mandate ok → escrow held'],
- ['tg','  ✓ receipt rcpt_tx_0aaf…  amount=40 fee=1 sig=valid'],
- ['tc','[4] channel open · deposit 120 CC in escrow'],
- ['','    100 micro-tasks metered · chain verified'],
- ['tg','  ✓ ONE net settlement: +100 provider / 17 refunded'],
- ['ta','    settlements avoided: 99  (100× reduction)'],
- ['tc','[5] dispute → escrow refunded: 325 → 356'],
- ['tc','[6] SQLite reload: state identical = true'],
- ['tg','  zero-sum invariant: TRUE · 127/127 tests']];
-var term=document.getElementById('term'),li=0;
-function typeLine(){if(li>=LINES.length){setTimeout(function(){term.innerHTML='';li=0;typeLine()},5400);return}
- var l=LINES[li],d=document.createElement('div');if(l[0])d.className=l[0];d.textContent=l[1];term.appendChild(d);
- var c=document.createElement('span');c.className='cur';term.appendChild(c);
- setTimeout(function(){c.remove();li++;typeLine()},li===0?650:400)}
-typeLine();
-
-/* ===== ticker ===== */
-var EV=['<b>SETTLED</b> rcpt_tx_0aaf… 40 CC <i>market.research</i>','<b>CHANNEL</b> chan_8f58… deposit 120 CC',
- '<b>METERED</b> seq 042 hash 77af… <i>embed.text</i>','<b>NET-SETTLE</b> +100 CC / 17 refunded / fee 3',
- '<b>REFUND</b> tx_d4f0… escrow → buyer','<b>PROOF</b> hmac-sha256 verified <i>signed_result</i>',
- '<b>ZERO-SUM</b> balances+escrow+fees == supply','<b>REPUTATION</b> agent.research_pro 47.0','<b>STRESS</b> 50 concurrent clears · zero-sum TRUE','<b>SCALE</b> 1000 micro-tasks settled in 0.04s','<b>SECURE</b> crash→refund · lock→no-double-spend'];
-var row=EV.map(function(e){return e+'<s>///</s>'}).join('');
-document.getElementById('tape').innerHTML=row+row;
-
-/* ===== pipeline ===== */
-var ST=[
- {n:'01',t:'DISCOVER',o:'.well-known',h:'Provider publishes a manifest',d:'Identity, endpoint, priced capabilities, reputation — fetched over plain HTTP. A JSON file at a known path is the whole discovery layer. No registry server required.',j:'{\n  "agent_id": "agent.research_pro",\n  "endpoint": "http://127.0.0.1:42503",\n  "capabilities": [{\n    "name": "market.research",\n    "settlement_price": {"amount": 40}\n  }]\n}'},
- {n:'02',t:'QUOTE',o:'Quote',h:'A binding price before any work',d:'The provider commits to capability, resource estimate, settlement price and expiry. Budgets are enforced on real numbers, not estimates after the fact.',j:'{\n  "quote_id": "quote_afbd2a58",\n  "capability": "market.research",\n  "settlement_price": {"amount": 40},\n  "expires_at": 1718102700\n}'},
- {n:'03',t:'MANDATE',o:'SpendingMandate',h:'Bounded authority, checked first',d:'The owner grants a capability allowlist, per-task cap, daily budget and a human-approval threshold. The protocol fee is counted inside the budget check.',j:'{\n  "agent": "buyer.assistant",\n  "allowed": ["market.research"],\n  "max_per_task": 50,\n  "max_daily": 300,\n  "approval_above": 45\n}'},
- {n:'04',t:'ESCROW',o:'EscrowLedger',h:'Funds lock before execution',d:'Buyer credits (price + fee) move into escrow, not to the provider. The zero-sum invariant — balances + escrow + fees = total supply — is checked on every transition.',j:'{\n  "balances": {"owner.acme": 459},\n  "escrow": {"tx_0aaf…": 41},\n  "escrow_total": 41,\n  "zero_sum": true\n}'},
- {n:'05',t:'PROVE',o:'SignedResultProof',h:'Delivery is verified, not assumed',d:'The provider signs a digest of the output. A failed or unbound proof refuses to settle and auto-refunds the escrow. Production swaps HMAC for ed25519 without touching call sites.',j:'{\n  "proof_level": "SIGNED_RESULT",\n  "scheme": "hmac-sha256",\n  "digest": "sha256:9f2c…",\n  "signature": "4ab1…",\n  "verified": true\n}'},
- {n:'06',t:'SETTLE',o:'Receipt',h:'One signed record both sides trust',d:'Escrow releases: provider paid, operator fee collected, receipt signed and persisted to SQLite. The signature survives restarts — hand it to finance.',j:'{\n  "receipt_id": "rcpt_tx_0aaf…",\n  "amount": 40, "fee": 1,\n  "settled_at": "2026-06-11T10:19:18Z",\n  "signature": "hmac-sha256:c41a…"\n}'}];
-var pipe=document.getElementById('pipe'),cur=0;
-ST.forEach(function(s,i){var d=document.createElement('div');d.className='ps hud'+(i===0?' act':'');
- d.innerHTML='<span class="c3"></span><span class="c4"></span><i>'+s.n+'</i><b>'+s.t+'</b><span>'+s.o+'</span>';
- d.onclick=function(){cur=i;rp()};pipe.appendChild(d)});
-function rp(){document.querySelectorAll('.ps').forEach(function(el,i){el.classList.toggle('act',i===cur)});
- var L=(typeof LANG!=='undefined'&&LANG==='zh')?STZH[cur]:ST[cur];document.getElementById('lt').textContent=L.h;document.getElementById('ld').textContent=L.d;
- document.getElementById('lj').textContent=ST[cur].j}
-rp();
-
-/* ===== gateway endpoints ===== */
-var EPS=[
- {m:'POST',p:'/v1/accounts',s:'open account',c:'curl -X POST $GW/v1/accounts \\\n  -H "X-NeuralClear-Api-Key: $KEY" \\\n  -d \'{"account":"owner.acme","deposit":200}\'\n\n→ {"account":"owner.acme","balance":200}'},
- {m:'POST',p:'/v1/clear',s:'full clearing, one call',c:'curl -X POST $GW/v1/clear -d \'{\n  "buyer_owner": "owner.acme",\n  "provider_url": "http://provider:8001",\n  "capability": "echo.text",\n  "payload": {"msg": "hi"}\n}\'\n\n# gateway: quote → escrow hold → remote HTTP\n# execution → proof → release → signed receipt\n→ {"receipt_id":"rcpt_tx_…","amount":10,"fee":1}'},
- {m:'POST',p:'/v1/channels',s:'open netting channel',c:'curl -X POST $GW/v1/channels -d \'{\n  "buyer":"owner.acme",\n  "provider":"agent.embedder",\n  "deposit":120}\'\n\n→ {"channel_id":"chan_8f58…","spendable":117}'},
- {m:'POST',p:'/v1/channels/{id}/meter',s:'hash-chained record',c:'curl -X POST $GW/v1/channels/chan_8f58…/meter -d \'{\n  "capability":"embed.text",\n  "amount":1,\n  "payload_hash":"sha256:9f2c…"}\'\n\n→ {"sequence":42,\n   "prev_hash":"d31b…",\n   "record_hash":"77af…"}'},
- {m:'POST',p:'/v1/channels/{id}/settle',s:'one net transfer',c:'curl -X POST $GW/v1/channels/chan_8f58…/settle\n\n→ {"tasks_metered":100,\n   "net_to_provider":100,\n   "refunded_to_buyer":17,\n   "protocol_fee":3,\n   "chain_head":"a90c…",\n   "signature":"hmac-sha256:…"}'},
- {m:'POST',p:'/v1/disputes',s:'freeze + resolve',c:'curl -X POST $GW/v1/disputes -d \'{\n  "transaction_id":"tx_d4f0…",\n  "raised_by":"owner.acme",\n  "reason":"report never delivered"}\'\n\n# resolutions: refund | slash | split | settle\n# refund moves money BACK — tested, not implied'},
- {m:'GET',p:'/v1/ledger',s:'live balances',c:'curl $GW/v1/ledger\n\n→ {"balances":{"owner.acme":356,\n     "agent.research_pro":40,\n     "agent.embedder":100},\n   "fee_pool":4,\n   "escrow_total":0,\n   "total_supply":500}'}];
-var el2=document.getElementById('eplist'),ec=0;
-EPS.forEach(function(e,i){var d=document.createElement('div');d.className='ep'+(i===0?' act':'');
- d.innerHTML='<span class="m '+e.m.toLowerCase()+'">'+e.m+'</span><span class="p">'+e.p+'</span><small>'+e.s+'</small>';
- d.onclick=function(){ec=i;re()};el2.appendChild(d)});
-function re(){document.querySelectorAll('.ep').forEach(function(x,i){x.classList.toggle('act',i===ec)});
- document.getElementById('epcode').textContent=EPS[ec].c}
-re();
-
-
-/* ===== i18n ===== */
-var EN={},ZH={
- svh:'压力测试下经审计。<br/><b>不变量永不破裂。</b>',
- svs:'资金逻辑的好坏取决于它最糟的那一天。我们跑遍了对抗性场景——并发、资金耗尽、Provider 崩溃——并把每一个都固化成永久回归测试。',
- v1i:'并发',v1h:'50 笔并行清算，零双花',
- v1p:'托管资金的变更在可重入锁下执行。50 笔同时结算针对精确余额，收敛到精确一致的状态——零和不变量在每一步都成立。',
- v2i:'失败安全',v2h:'Provider 崩溃则退款给买方',
- v2p:'若执行中途抛出异常，托管资金自动退还买方——资金永不冻结。验证失败或未签名的证明同样自动退款。绝不卡住任何钱。',
- v3i:'规模',v3h:'1000 笔微任务，一次结算，0.04 秒',
- v3p:'哈希链净额通道计量一千次调用，在 40 毫秒内以单笔净额转账结算——防篡改、可验证，并无损持久化到 SQLite。',
- n5b:'已验证',
- n1:'清算流程',n2:'净额结算',n3:'网关',n4:'适用对象',n5:'获取',init:'开始接入 →',
- pre:'系统在线 · 无链 · 纯标准库',h1a:'Agent 完成工作。',b2:'托管网关',
- cmdn:'// 整个经济体，一条命令',
- sub:'为 Agent 间交易提供托管、哈希链计量、净额结算、签名回执与争议处理。<b>零区块链，零第三方依赖。</b>可作为库嵌入，也可作为你 Agent 网络的中立清算节点运行。',
- m1:'测试通过',m2:'结算次数削减',m3:'第三方依赖',m4:'单文件自托管',
- s1h:'一个闭环，六个阶段。<br/><b>每一笔积分都有账可查。</b>',
- s1s:'从发现到结算回执，跨进程真实 HTTP 运行。点击任一阶段——下方 JSON 来自真实运行，不是 mock。',
- s2h:'微支付的经济性难题，<br/><b>结构性解决。</b>',
- mk2:'结算削减倍数 · 实测数据，非预测',
- s2s:'当单次服务价格低于支付通道的结算手续费时，逐笔支付的经济模型就倒挂了。任何链上方案都无法修复——gas 本身就是问题。清算通道可以：',
- np1:'<b>一笔押金</b>入托管即开通通道。',
- np2:'<b>每笔微任务</b>追加一条防篡改哈希链记录——伪造任何一笔金额，整条链拒绝结算。',
- np3:'<b>一次净额转账</b>关闭通道：提供方拿计量总额，买方收回余款，手续费只收一次。',
- np4:'<b>底层任意支付通道</b>——内部积分、Stripe、x402、银行转账。回执完全一致。',
- s3h:'嵌入时是一个库。<br/><b>托管时是一个网关。</b>',
- s3s:'同一引擎，两种形态：进程内 <code style="font-family:var(--mono);color:var(--cy)">import neuralclear</code>，或为整个网络提供一个中立的 HTTP 清算节点。',
- s4h:'为真正在 Agent 之间<br/><b>转移真金白银的人</b>而建。',
- a1i:'Agent 市场运营方',a1h:'无需自建清算所即可收取佣金',
- a1p:'基点费率 + 按能力差异化定价 + 微任务保底费。托管保护交易双方；信誉系统为你的供给侧排序。',
- a2i:'企业与合规团队',a2h:'有限授权 + 完整审计轨迹的 Agent 支出',
- a2p:'SpendingMandate 限定单任务与每日支出上限并支持人工审批阈值。每笔结算都是 SQLite 中的签名回执——完全私有化部署，不碰公链。',
- a3i:'Agent 平台 · 国内与全球',a3h:'Agent 间调用的计量与计费',
- a3p:'支付通道无关：今天用内部积分清算，明天接支付宝企业付款、Stripe 或 x402 适配器。清算记录保持不变。',
- s5h:'引擎开源。<b>基础设施收费。</b>',
- s5s:'协议与代码库永久开源。收入来自为你运行它。',
- p1p:'完整引擎：托管、净额、费率、争议、信誉、签名证明、持久化、HTTP 网关。',
- p2p:'我们运营中立清算节点：托管账本、API 密钥、仪表盘、Webhook。按结算笔数付费。',
- p3p:'部署在你的内网，支付通道适配器、合规支持、SLA 保障。',
- p1b:'克隆仓库',p2b:'加入候补名单',p3b:'联系我们',
- bandh:'Demo <b>就是</b>路演。',bandb:'运行真实闭环 →',
- fn:'面向 Agent 间服务交易的清算引擎原型。非支付服务，不托管资金，不执行真实支付。仅沙盒积分——不发生真实价值转移。'
-};
-var STZH=[
- {h:'Provider 发布服务清单',d:'身份、端点、定价能力与信誉——通过纯 HTTP 获取。一个放在约定路径的 JSON 文件就是完整的发现层，无需注册中心服务器。'},
- {h:'开工前先有约束力报价',d:'Provider 承诺能力、资源估算、结算价格与有效期。预算基于真实数字执行，而非事后估算。'},
- {h:'先校验有限授权',d:'所有者授予能力白名单、单任务上限、每日预算与人工审批阈值。协议手续费计入预算校验。'},
- {h:'资金先锁定再执行',d:'买方积分（价格+手续费）进入托管而非直接付给提供方。零和不变量——余额+托管+费池=总供给——在每次状态转换时校验。'},
- {h:'交付靠验证，不靠信任',d:'Provider 对输出摘要签名。验证失败或未绑定密钥的证明拒绝结算并自动退还托管。生产将 HMAC 换为 ed25519，调用方代码不变。'},
- {h:'一份双方都信任的签名记录',d:'托管释放：提供方收款、运营方收费、回执签名并持久化到 SQLite。签名跨重启依然有效——可直接交给财务。'}];
-var EPZH=['开户','一次调用完成清算','开通净额通道','哈希链计量记录','一次净额转账','冻结+裁决','实时余额'];
-var LANG='en';
-function i18nKey(el){return el.getAttribute('data-i')||el.getAttribute('data-ih')}
-document.querySelectorAll('[data-i],[data-ih]').forEach(function(el){EN[i18nKey(el)]=el.innerHTML});
-function setLang(l){LANG=l;var D=l==='zh'?ZH:EN;
- document.querySelectorAll('[data-i],[data-ih]').forEach(function(el){var k=i18nKey(el);if(D[k]!==undefined)el.innerHTML=D[k]});
- rp();document.querySelectorAll('.ep small').forEach(function(s,i){s.textContent=l==='zh'?EPZH[i]:EPS[i].s});}
-</script>
-</body>
+      <select id="lang" aria-label="Language / 语言">
+        <option value="en">EN</option>
+        <option value="zh">中文</option>
+      </select>
+    </nav>
+    <main>
+      <section id="hero">
+        <div class="wrap">
+          <p data-i="s4" class="mk">OPEN PROTOCOL / DEVELOPER PREVIEW</p>
+          <h1>NeuralClear</h1>
+          <p data-i="s5" class="lead">
+            The clearing layer for agent-to-agent payments.
+          </p>
+          <p data-i="s6" class="sub">
+            Reserve credits. Meter work. Settle net. Verify the receipt. A
+            rail-agnostic evidence layer, not another payment rail.
+          </p>
+          <div class="ctas">
+            <a class="btn pri" href="#partners"
+              ><span data-i="s7">Explore a design partnership</span></a
+            ><a
+              class="btn"
+              href="https://github.com/Zihuatanejo63/neuralclear/blob/main/SPEC.md"
+              ><span data-i="s8">Read the specification</span></a
+            >
+          </div>
+          <p data-i="s9" class="note">
+            Prototype. Internal escrow is a ledger reservation, not legal
+            custody. Licensed partners must handle custody and compliance.
+          </p>
+        </div>
+      </section>
+      <section class="sec" id="loop">
+        <div class="wrap">
+          <p data-i="s10" class="mk">01 / CLEARING FLOW</p>
+          <h2 data-i="s11">From authorized work to auditable settlement.</h2>
+          <div class="pipe">
+            <article class="ps">
+              <h3 data-i="s12">Reserve</h3>
+              <p data-i="s13">
+                A mandate bounds spending; escrow reserves the agreed internal
+                credits.
+              </p>
+            </article>
+            <article class="ps">
+              <h3 data-i="s14">Meter</h3>
+              <p data-i="s15">
+                Each accepted entry links to its predecessor. Changes break the
+                hash chain.
+              </p>
+            </article>
+            <article class="ps">
+              <h3 data-i="s16">Settle net</h3>
+              <p data-i="s17">
+                Allocate metered charges and fees; return unused credits under
+                the policy.
+              </p>
+            </article>
+            <article class="ps">
+              <h3 data-i="s18">Sign & verify</h3>
+              <p data-i="s19">
+                Verify the receipt and metering chain without running a ledger.
+              </p>
+            </article>
+          </div>
+          <p data-i="s20" class="note">
+            Integrity is not truth: signatures and Merkle proofs authenticate
+            records, not service quality. TEE/ZK execution verification is not
+            implemented.
+          </p>
+        </div>
+      </section>
+      <section class="sec" id="stability">
+        <div class="wrap">
+          <p data-i="s21" class="mk">02 / EVIDENCE · 2026-10-22</p>
+          <h2 data-i="s22">What is demonstrated. What is still open.</h2>
+          <p data-i="s23" class="note">
+            This evidence belongs to protocol commit 54bd57f, not yet merged
+            into main. Test mode is not production payment activity.
+          </p>
+          <div class="evidence">
+            <article>
+              <h3 data-i="s24">Strict escrow-v1 / opt-in</h3>
+              <p data-i="s25">
+                State machine, independent verifier, signed mandates and Merkle
+                proofs. Evidence-bound quorum decisions still depend on trusted
+                signers.
+              </p>
+              <a
+                href="https://github.com/Zihuatanejo63/neuralclear/blob/54bd57f9db348d3c8b50f4537a1436b96434b460/docs/protocol-gap-audit.md"
+                ><span data-i="s26">Inspect dated evidence</span> →</a
+              >
+            </article>
+            <article>
+              <h3 data-i="s27">Signed receipt / test mode</h3>
+              <p data-i="s28">
+                Stripe collection → internal escrow → metering → net settlement
+                → signed receipt. Independent verification returned VALID. No
+                customer or volume claims.
+              </p>
+              <a
+                href="https://github.com/Zihuatanejo63/neuralclear/blob/54bd57f9db348d3c8b50f4537a1436b96434b460/docs/p0-live-stripe-run-2026-10-22.md"
+                ><span data-i="s29">Inspect dated evidence</span> →</a
+              >
+            </article>
+            <article>
+              <h3 data-i="s30">Transfer created / payout pending</h3>
+              <p data-i="s31">
+                USD 0.50 became JPY 79 gross − JPY 6 fee = JPY 73 net. A test
+                Transfer exists. Payout was rejected for pending funds.
+                Available_on: 2026-10-29 08:00 UTC+8; not a promise of completed
+                payout.
+              </p>
+              <a
+                href="https://github.com/Zihuatanejo63/neuralclear/blob/54bd57f9db348d3c8b50f4537a1436b96434b460/docs/p0-live-stripe-payout-jp-continuation-2026-10-22.md"
+                ><span data-i="s32">Inspect dated evidence</span> →</a
+              >
+            </article>
+          </div>
+        </div>
+      </section>
+      <section class="sec" id="netting">
+        <div class="wrap">
+          <p data-i="s33" class="mk">03 / COMPLEMENTARY LAYERS</p>
+          <h2 data-i="s34">
+            Payment execution and clearing evidence are different jobs.
+          </h2>
+          <div class="comparison">
+            <div>
+              <h3>x402</h3>
+              <p data-i="s35">
+                HTTP-native payment requirements and execution around a request.
+                A payment rail can settle the resulting obligation.
+              </p>
+              <a href="https://www.x402.org/"
+                ><span data-i="s36">x402 documentation</span> →</a
+              >
+            </div>
+            <div>
+              <h3>NeuralClear</h3>
+              <p data-i="s37">
+                Authorized budgets, verifiable metering and a net allocation
+                with signed evidence. Complementary to payment rails, not a
+                replacement.
+              </p>
+            </div>
+          </div>
+          <p data-i="s38" class="note">
+            Rail-agnostic is an architecture choice, not a list of completed
+            integrations. Stripe has test evidence; production x402, bank and
+            stablecoin adapters are not claimed here.
+          </p>
+        </div>
+      </section>
+      <section class="sec" id="api">
+        <div class="wrap">
+          <p data-i="s39" class="mk">04 / DEVELOPER ENTRY</p>
+          <h2 data-i="s40">Keep the protocol inspectable.</h2>
+          <p data-i="s41">
+            Retained main-branch gateway examples below are illustrative
+            requests, not live telemetry or a hosted public API.
+          </p>
+          <div class="doclinks">
+            <a
+              href="https://github.com/Zihuatanejo63/neuralclear/blob/main/SPEC.md"
+              ><span data-i="s42">Specification</span> →</a
+            ><a
+              href="https://github.com/Zihuatanejo63/neuralclear/tree/main/docs"
+              ><span data-i="s43">Protocol documents</span> →</a
+            ><a href="https://github.com/Zihuatanejo63/neuralclear">GitHub</a
+            ><a href="./llms.txt">llms.txt</a
+            ><a href="./.well-known/agent-skills">agent-skills</a>
+          </div>
+          <div class="api">
+            <div class="eps" id="eplist"></div>
+            <pre class="eout" id="epcode" tabindex="0"></pre>
+          </div>
+          <p data-i="s44" class="note">
+            Public API hosting, distributed persistence, legal custody and
+            production TEE/ZK verification remain outside this preview.
+          </p>
+        </div>
+      </section>
+      <section class="sec" id="partners">
+        <div class="wrap">
+          <p data-i="s45" class="mk">05 / DESIGN PARTNERS</p>
+          <h2 data-i="s46">Bring a concrete agent-service transaction.</h2>
+          <p data-i="s47" class="sub">
+            For agent-platform and infrastructure founders: explore one
+            capability, one budget policy and one verifiable settlement.
+            Developers and diligence reviewers can inspect the evidence first.
+          </p>
+          <a
+            class="btn pri"
+            href="https://github.com/Zihuatanejo63/neuralclear/issues/new?title=Design%20partner%20inquiry"
+            ><span data-i="s48">Start a design-partner conversation</span></a
+          >
+          <p data-i="s49" class="note">
+            Opens a public GitHub issue. Share use case and rail requirements,
+            not credentials, personal data or confidential customer information.
+            No SLA or hosted availability is promised.
+          </p>
+        </div>
+      </section>
+    </main>
+    <footer class="wrap">
+      <b>NeuralClear</b>
+      <p data-i="s50">
+        Open prototype. Test evidence, not production assurance.
+      </p>
+      <a href="./robots.txt">robots.txt</a> ·
+      <a href="./sitemap.xml">sitemap.xml</a>
+    </footer>
+    <script src="./site.js" defer></script>
+  </body>
 </html>

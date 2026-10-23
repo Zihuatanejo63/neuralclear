@@ -1,0 +1,15 @@
+{
+  "schema_version": "1",
+  "kind": "project-documentation-index",
+  "name": "NeuralClear",
+  "homepage": "https://www.neuralclear.org/",
+  "languages": ["en", "zh-CN"],
+  "status": "prototype",
+  "public_execution_endpoint": null,
+  "skills": [
+    {"id": "inspect-protocol", "url": "https://github.com/Zihuatanejo63/neuralclear/blob/main/SPEC.md"},
+    {"id": "inspect-escrow-evidence", "url": "https://github.com/Zihuatanejo63/neuralclear/blob/54bd57f9db348d3c8b50f4537a1436b96434b460/docs/protocol-gap-audit.md"}
+  ],
+  "limitations": ["Not an executable agent manifest standard", "No public payment endpoint", "No legal custody or compliance implementation", "Test-mode payout not complete"],
+  "as_of": "2026-10-22"
+}
