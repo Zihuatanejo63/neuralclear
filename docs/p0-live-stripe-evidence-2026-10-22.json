@@ -1,0 +1,50 @@
+{
+  "public_key_hex": "33d204352f86720f55838b26758ed39f6f592a41a56664f9630f058d1a6f9d20",
+  "receipt": {
+    "transaction_id": "nc_stripe_test_aafa336c0da8416a9bcc34c96cae4abe",
+    "buyer": "buyer",
+    "provider": "provider",
+    "currency": "usd",
+    "budget": 50,
+    "fee_limit": 0,
+    "state": "SETTLED",
+    "amount": 50,
+    "fee": 0,
+    "funded": 50,
+    "refund": 0,
+    "revision": 6,
+    "history": [
+      "QUOTE_REQUESTED",
+      "QUOTE_ACCEPTED",
+      "TASK_SUBMITTED",
+      "TASK_RUNNING",
+      "RESULT_DELIVERED",
+      "PROOF_VERIFIED",
+      "SETTLED"
+    ],
+    "unit": "request",
+    "rate": 1,
+    "profile": "neuralclear-escrow-v1",
+    "chain_length": 1,
+    "chain_head": "4ace687ba967694281db5cc3e3d76c622c7a5f9ef898cfea325bc6251b959859",
+    "result_hash": "1b116feb2c0cbb33680835b10ad857fac79b556675dcce1d810703929478cdb2",
+    "deltas": {"buyer": -50, "provider": 50, "fee_pool": 0, "escrow": 0},
+    "algorithm": "Ed25519",
+    "key_id": "clearing",
+    "signature": "ca1ae6c1ad6542a299fceabca6d0400bc234dfbb3dcb0cedf01ac71a3aa51898782124758dd908126445d9638fe09c4aea4ef637e22c632c151075c86d95e503"
+  },
+  "chain": [
+    {
+      "transaction_id": "nc_stripe_test_aafa336c0da8416a9bcc34c96cae4abe",
+      "currency": "usd",
+      "seq": 0,
+      "previous": "0000000000000000000000000000000000000000000000000000000000000000",
+      "units": 50,
+      "unit": "request",
+      "rate": 1,
+      "amount": 50,
+      "result_hash": "1b116feb2c0cbb33680835b10ad857fac79b556675dcce1d810703929478cdb2",
+      "hash": "4ace687ba967694281db5cc3e3d76c622c7a5f9ef898cfea325bc6251b959859"
+    }
+  ]
+}

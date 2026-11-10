@@ -241,6 +241,7 @@ class ProtocolTests(unittest.TestCase):
             provider="agent.pdf_summarizer",
             payload={"text": "A PDF document about NeuralClear settlement receipts."},
             mandate=mandate,
+            idempotency_key="task_test_marketplace",
         )
 
         receipt = task["result"]["receipt"]

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import hashlib
 import json
+import os
 from uuid import uuid4
 
 from neuralclear import (
@@ -25,6 +26,12 @@ from .storage import SQLiteStorage
 
 
 class ReferenceClearingService:
+    """Sandbox reference settler. Production settlement is not this MockProof path."""
+
+    @staticmethod
+    def production_proof_name() -> str:
+        """Name of the proof object production submit_task actually verifies."""
+        return "SIGNED_RESULT"
     def __init__(self, platform_fee_bps: int = 1000, storage_path: str | None = None) -> None:
         self.registry = build_default_registry()
         self.ledger = Ledger()
@@ -34,6 +41,7 @@ class ReferenceClearingService:
         self.receipts: dict[str, Receipt] = {}
         self.disputes: dict[str, dict[str, str]] = {}
         self.idempotency_records: dict[tuple[str, str], dict[str, object]] = {}
+        self.idempotency_ttl = 86_400
         self.storage = SQLiteStorage(storage_path) if storage_path else None
         self.ledger.open_account("buyer.research", SettlementCredit(1_000, "CC"))
         self.ledger.open_account("agent.pdf_summarizer", SettlementCredit(0, "CC"))
@@ -57,16 +65,21 @@ class ReferenceClearingService:
         mandate: SpendingMandate,
         idempotency_key: str | None = None,
     ) -> dict[str, object]:
+        if not isinstance(idempotency_key, str) or not idempotency_key.strip():
+            raise ProtocolError("idempotency key required")
         request_hash = self._request_hash(quote_id, buyer, provider, payload)
-        if idempotency_key:
-            existing = self.idempotency_records.get((buyer, idempotency_key))
-            if existing is not None:
-                if existing["request_hash"] != request_hash:
-                    raise ProtocolError("idempotency key conflict")
-                existing_task = existing.get("task") or existing.get("payload")
-                if isinstance(existing_task, dict):
-                    return existing_task
-                return self.get_task(str(existing["task_id"]))
+        now = int(datetime.now(timezone.utc).timestamp())
+        existing = self.idempotency_records.get((buyer, idempotency_key))
+        if existing is not None and int(existing.get("expires_at") or 0) <= now:
+            existing = None
+        if existing is not None:
+            if existing["request_hash"] != request_hash:
+                raise ProtocolError("idempotency key conflict")
+            existing_task = existing.get("task") or existing.get("payload")
+            if isinstance(existing_task, dict):
+                return existing_task
+            return self.get_task(str(existing["task_id"]))
+        self._require_production_mandate(mandate)
         if task_id in self.tasks:
             raise ProtocolError(f"duplicate task_id: {task_id}")
         quote = self._get_quote(quote_id)
@@ -79,6 +92,8 @@ class ReferenceClearingService:
         mandate.assert_daily_budget(spent_today, quote.settlement_price)
 
         summary = self._summarize_pdf_text(str(payload.get("text", "")))
+        production = os.environ.get("NEURALCLEAR_MODE") == "production"
+        proof = self._settlement_proof(production, payload, task_id, summary)
         transaction = Transaction(
             sender=buyer,
             receiver=provider,
@@ -88,6 +103,7 @@ class ReferenceClearingService:
             quote_id=quote.quote_id,
             authorized_agent=mandate.agent,
             state=TransactionState.QUOTE_ACCEPTED,
+            transaction_id=task_id if production else f"tx_{uuid4().hex}",
         )
         transaction.transition(TransactionState.TASK_SUBMITTED)
         transaction.transition(TransactionState.TASK_RUNNING)
@@ -96,11 +112,15 @@ class ReferenceClearingService:
             output={"summary": summary},
             resource_usage=[ResourceUnit(1, "request")],
             settlement_amount=quote.settlement_price,
-            proof=MockProof(statement=f"mock proof for task {task_id}"),
+            proof=proof,
         )
         transaction.transition(TransactionState.RESULT_DELIVERED)
+        if type(result.proof).__name__ == "MockProof" and production:
+            raise ProtocolError("MockProof is not allowed in production")
         if not result.proof.verify():
             raise ProtocolError("proof verification failed")
+        if type(result.proof).__name__ == "MockProof" and production:
+            raise ProtocolError("MockProof is not allowed in production")
         transaction.transition(TransactionState.PROOF_VERIFIED)
         self.ledger.settle(transaction)
         if not self.ledger.verify_zero_sum():
@@ -138,8 +158,7 @@ class ReferenceClearingService:
         )
         self.tasks[task_id] = task
         self._persist_state(transaction, receipt, task)
-        if idempotency_key:
-            self._save_idempotency_record(buyer, idempotency_key, request_hash, task)
+        self._save_idempotency_record(buyer, idempotency_key, request_hash, task, now)
         return task.to_json()
 
     def get_task(self, task_id: str) -> dict[str, object]:
@@ -257,6 +276,9 @@ class ReferenceClearingService:
                 timestamp=str(receipt.get("timestamp", receipt["created_at"])),
                 result_hash=str(receipt.get("result_hash", "")),
                 signature=str(receipt.get("signature", "")),
+                key_id=str(receipt.get("key_id", "")),
+                nonce=str(receipt.get("nonce", "")),
+                signed_at=int(receipt.get("signed_at") or 0),
                 state=str(receipt["state"]),
                 created_at=str(receipt["created_at"]),
             )
@@ -277,17 +299,61 @@ class ReferenceClearingService:
             return "No PDF text supplied."
         return cleaned[:220] + ("..." if len(cleaned) > 220 else "")
 
+    def _settlement_proof(self, production: bool, payload: dict[str, object], task_id: str, summary: str):
+        if not production:
+            return MockProof(statement=f"mock proof for task {task_id}")
+        envelope = payload.get("result_proof")
+        if not isinstance(envelope, dict) or envelope.get("algorithm") != "Ed25519":
+            raise ProtocolError("MockProof is not allowed in production")
+        from neuralclear.kms import get_process_kms
+        from neuralclear.wire import verify_signature
+
+        kms = get_process_kms()
+        if kms is None or not getattr(kms, "persistent", False):
+            raise ProtocolError("production KMS is not configured")
+        expected = result_hash({"summary": summary})
+        if envelope.get("transaction_id") != task_id or envelope.get("result_hash") != expected:
+            raise ProtocolError("result proof mismatch")
+
+        class _KmsResultProof:
+            def __init__(self, body, signer) -> None:
+                self.body = body
+                self.signer = signer
+
+            def verify(self) -> bool:
+                verify_signature(self.body, {}, domain="result", signer=self.signer)
+                return True
+
+            def to_json(self) -> dict[str, object]:
+                return {"proof_level": "SIGNED_RESULT", **self.body}
+
+        return _KmsResultProof(envelope, kms)
+
+    def _require_production_mandate(self, mandate: SpendingMandate) -> None:
+        if os.environ.get("NEURALCLEAR_MODE") != "production":
+            return
+        from neuralclear.kms import get_process_kms
+        from neuralclear.mandate_auth import verify_spending_mandate
+
+        kms = get_process_kms()
+        if kms is None:
+            raise ProtocolError("production KMS is not configured")
+        verify_spending_mandate(mandate, kms, now=int(datetime.now(timezone.utc).timestamp()))
+
     def _save_idempotency_record(
         self,
         buyer: str,
         idempotency_key: str,
         request_hash: str,
         task: StoredTask,
+        now: int,
     ) -> None:
+        expires_at = now + self.idempotency_ttl
         record = {
             "request_hash": request_hash,
             "task_id": task.task_id,
             "task": task.to_json(),
+            "expires_at": expires_at,
         }
         self.idempotency_records[(buyer, idempotency_key)] = record
         if self.storage is not None:
@@ -297,6 +363,7 @@ class ReferenceClearingService:
                 request_hash,
                 task.task_id,
                 task.to_json(),
+                expires_at,
             )
 
     @staticmethod

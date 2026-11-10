@@ -27,7 +27,7 @@ def main() -> None:
     pprint(quote)
 
     print("\n3. Submit task with mandate")
-    task = service.submit_task(
+    task = service.submit_task(  # idempotency key is required for every submit
         task_id=f"task_{uuid4().hex}",
         quote_id=str(quote["quote_id"]),
         buyer=buyer,
@@ -41,6 +41,7 @@ def main() -> None:
             ),
         },
         mandate=research_buyer_mandate(),
+        idempotency_key=f"idem_{uuid4().hex}",
     )
     pprint(task)
 

@@ -16,7 +16,7 @@ class HTTPReferenceServerTests(unittest.TestCase):
     def setUp(self):
         app_module.service = ReferenceClearingService()
         self.client = TestClient(app_module.app)
-        self.headers = {"X-NeuralClear-API-Key": "dev_neuralclear_key"}
+        self.headers = {"X-NeuralClear-API-Key": "test-api-key"}
 
     def _quote(self):
         response = self.client.post(
@@ -59,7 +59,7 @@ class HTTPReferenceServerTests(unittest.TestCase):
                 },
                 "mandate": mandate or self._mandate(),
             },
-            headers=self.headers,
+            headers={**self.headers, "Idempotency-Key": task_id},
         )
 
     def test_get_manifest(self):

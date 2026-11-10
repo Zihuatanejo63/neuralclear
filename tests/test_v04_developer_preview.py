@@ -16,8 +16,8 @@ except ModuleNotFoundError:  # pragma: no cover - exercised when HTTP deps are a
 
 
 ROOT = Path(__file__).resolve().parents[1]
-API_KEY = "dev_neuralclear_key"
-READ_KEY = "dev_neuralclear_read_key"
+API_KEY = "test-api-key"
+READ_KEY = "test-read-key"
 
 
 @unittest.skipIf(TestClient is None, "FastAPI/httpx test dependencies are not installed")
@@ -58,7 +58,7 @@ class APIKeyAuthTests(unittest.TestCase):
                 "quote_id": quote.json()["quote_id"],
                 "payload": {"text": "V0.4 authorized task."},
             },
-            headers=headers,
+            headers={**headers, "Idempotency-Key": "v04-authorized"},
         )
 
         self.assertEqual(quote.status_code, 200)
@@ -175,7 +175,7 @@ class V04SandboxFlowTests(unittest.TestCase):
                 "quote_id": quote.json()["quote_id"],
                 "payload": {"text": "Hosted sandbox developer preview flow."},
             },
-            headers=self.headers,
+            headers={**self.headers, "Idempotency-Key": "v04-sandbox-flow"},
         )
         receipt_id = task.json()["result"]["receipt"]["receipt_id"]
         receipt = self.client.get(f"/neuralclear/receipts/{receipt_id}")

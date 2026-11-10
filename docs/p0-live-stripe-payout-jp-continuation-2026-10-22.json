@@ -1,0 +1,53 @@
+{
+  "observed_at": "2026-10-22T13:06:03.122731+00:00",
+  "status": "transfer_created_payout_blocked_pending_balance",
+  "provider": {
+    "id": "acct_1UTLeyE5PKAPsCly",
+    "livemode": false,
+    "transfers_status": "active",
+    "payouts_enabled": true,
+    "requirements_status": "none_currently_due"
+  },
+  "bank": {"id": "ba_1UTLg5E5PKAPsClylUgrIuJ5", "currency": "jpy", "status": "new"},
+  "transfer": {
+    "id": "tr_3UTEXcE5PKlMxr4M1dCS9D9S",
+    "amount": 73,
+    "currency": "jpy",
+    "livemode": false,
+    "reversed": false,
+    "created": 1792674323,
+    "source_transaction_id": "ch_3UTEXcE5PKlMxr4M1o0whdoo",
+    "destination_id": "acct_1UTLeyE5PKAPsCly",
+    "destination_payment_id": "py_1UTLgNE5PKAPsClyYZgB0IQU",
+    "balance_transaction_id": "txn_3UTEXcE5PKlMxr4M14tVp07r"
+  },
+  "provider_balance_transaction": {
+    "id": "txn_1UTLgOE5PKAPsClyeBzYf3n0",
+    "source_id": "py_1UTLgNE5PKAPsClyYZgB0IQU",
+    "amount": 73,
+    "fee_amount": 0,
+    "net_amount": 73,
+    "currency": "jpy",
+    "status": "pending",
+    "available_on": 1793232000
+  },
+  "provider_balance": {
+    "livemode": false,
+    "available_amount": 0,
+    "pending_amount": 73,
+    "currency": "jpy"
+  },
+  "payout": {
+    "id": null,
+    "status": "creation_rejected_balance_insufficient",
+    "request_id": "req_gfmYixkrgXnQVa",
+    "requested_amount": 73,
+    "currency": "jpy"
+  },
+  "internal_transaction": {
+    "id": "nc_stripe_test_aafa336c0da8416a9bcc34c96cae4abe",
+    "amount": 50,
+    "currency": "usd",
+    "status": "SETTLED"
+  }
+}

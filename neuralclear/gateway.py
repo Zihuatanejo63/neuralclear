@@ -1,9 +1,10 @@
 """Clearing gateway: the hosted product surface, stdlib only.
 
 `ClearingGateway` exposes a `ClearingService` + `NettingService` over HTTP.
-This is the V0.4 shape: buyers and providers anywhere on the network, one
-neutral clearing point that holds escrow, meters channels, signs receipts,
-and persists to SQLite. API-key write protection included.
+It moves sandbox credits (CC) only. It is not the commercial fiat path and
+it refuses a `neuralclear.escrow` ledger or a `StripeChannel`. Fiat attachment
+is `server.escrow_api` plus `neuralclear.escrow_channel`. See
+`docs/ledger-boundary.md`.
 
     POST /v1/accounts                 {account, deposit}
     POST /v1/clear                    {buyer_owner, buyer_agent, provider_url,
@@ -45,6 +46,15 @@ class ClearingGateway:
         host: str = "127.0.0.1",
         port: int = 0,
     ) -> None:
+        if clearing is not None:
+            from .escrow import EscrowLedger as FiatLedger
+            from .stripe_channel import StripeChannel
+
+            if isinstance(clearing, (FiatLedger, StripeChannel)):
+                raise ProtocolError(
+                    "ClearingGateway is the CC sandbox and cannot attach the fiat "
+                    "escrow ledger or Stripe channel"
+                )
         self.clearing = clearing or ClearingService()
         self.netting = NettingService(self.clearing)
         self.store = store

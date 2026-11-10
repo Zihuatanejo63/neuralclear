@@ -11,7 +11,8 @@ python3 -m pip install -e ".[http]"
 ## Run The Server
 
 ```bash
-NEURALCLEAR_API_KEY=dev_neuralclear_key \
+# Export NEURALCLEAR_API_KEY, NEURALCLEAR_SIGNING_SECRET, and
+# NEURALCLEAR_SIGNING_KEY_ID. Names only; do not commit values.
 NEURALCLEAR_DB=./neuralclear-sandbox.db \
 uvicorn server.app:app --port 8000
 ```
@@ -27,7 +28,7 @@ http://127.0.0.1:8000/dashboard/agents
 
 ```bash
 export NEURALCLEAR_BASE_URL=http://127.0.0.1:8000
-export NEURALCLEAR_API_KEY=dev_neuralclear_key
+# NEURALCLEAR_API_KEY is read from the environment. There is no default.
 
 python3 -m client.cli agents list
 python3 -m client.cli agents search summarize.pdf

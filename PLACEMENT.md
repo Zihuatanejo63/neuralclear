@@ -49,7 +49,7 @@ cd ~/neuralclear
 python3 -m unittest discover
 ```
 
-看到最后一行 `Ran 127 tests ... OK` 就说明一切正常,可以推送。
+看到最后一行 `OK` 就说明一切正常,可以推送。测试数量会随协议测试增加，不要把某一次的条数当成门槛。
 
 ## 推送
 

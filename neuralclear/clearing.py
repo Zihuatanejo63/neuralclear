@@ -1,8 +1,9 @@
-"""Commercial clearing layer: escrow, protocol fees, disputes, events.
+"""Sandbox credit clearing: escrow of protocol credits, fees, disputes, events.
 
-This module turns the protocol sketch into an economically real clearing
-flow. The base `Ledger.settle()` moves credits instantly and `refund()`
-only changes state — money never moves back. Real clearing requires:
+This module moves ``CC`` balances only. It is not the commercial fiat ledger
+and it does not convert credits to or from fiat. See ``docs/ledger-boundary.md``.
+The base `Ledger.settle()` moves credits instantly and `refund()` only changes
+state. Credit clearing requires:
 
     hold     buyer credits locked in escrow when the task is submitted
     release  escrow -> provider (minus protocol fee) after proof verifies
@@ -24,6 +25,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -40,6 +42,7 @@ from .core import (
     Transaction,
     TransactionState,
 )
+from .ledger_boundary import require_credit_currency
 
 # ---------------------------------------------------------------------------
 # Fee engine
@@ -64,6 +67,7 @@ class FeePolicy:
             raise ProtocolError("fee components must be non-negative")
         if self.bps > 10_000:
             raise ProtocolError("fee bps cannot exceed 10000 (100%)")
+        require_credit_currency(self.currency)
 
     def fee_for(self, amount: SettlementCredit) -> SettlementCredit:
         if amount.currency != self.currency:
@@ -288,7 +292,11 @@ class EventBus:
 
 
 class ReceiptSigner:
+    """Sandbox HMAC signer. Production must use neuralclear.kms Ed25519."""
+
     def __init__(self, secret: str = "dev_neuralclear_signing_secret") -> None:
+        if os.environ.get("NEURALCLEAR_MODE") == "production":
+            raise ProtocolError("HMAC ReceiptSigner is not a production authenticator")
         self._secret = secret.encode("utf-8")
 
     def _digest(self, receipt: dict[str, object]) -> str:

@@ -6,7 +6,9 @@ The reference server can run directly with Uvicorn or through Docker Compose.
 
 ```bash
 python3 -m pip install -e ".[http]"
-NEURALCLEAR_API_KEY=dev_neuralclear_key \
+# Export NEURALCLEAR_API_KEY, NEURALCLEAR_SIGNING_SECRET, and
+# NEURALCLEAR_SIGNING_KEY_ID yourself. The image and Compose file do not
+# bake in a key.
 NEURALCLEAR_DB=./neuralclear-sandbox.db \
 uvicorn server.app:app --host 0.0.0.0 --port 8000
 ```

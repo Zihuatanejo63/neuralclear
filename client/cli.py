@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import sys
+from uuid import uuid4
 
 from .http_client import NeuralClearHTTPClient
 
@@ -74,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
                 "quote_id": args.quote_id,
                 "payload": {"text": args.text},
             },
-            idempotency_key=args.idempotency_key,
+            idempotency_key=args.idempotency_key or f"cli_{uuid4().hex}",
         )
     elif args.resource == "receipts" and args.action == "list":
         output = client.list_receipts()

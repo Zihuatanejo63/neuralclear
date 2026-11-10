@@ -82,6 +82,7 @@ class SQLitePersistenceTests(unittest.TestCase):
             provider="agent.pdf_summarizer",
             payload={"text": "Persistent receipt test."},
             mandate=pdf_mandate(),
+            idempotency_key="task_persistent",
         )
 
     def test_sqlite_persistence_after_restart(self):
@@ -153,7 +154,7 @@ class DashboardAndRegistryHTTPTests(unittest.TestCase):
     def setUp(self):
         app_module.service = ReferenceClearingService()
         self.client = TestClient(app_module.app)
-        self.headers = {"X-NeuralClear-API-Key": "dev_neuralclear_key"}
+        self.headers = {"X-NeuralClear-API-Key": "test-api-key"}
 
     def test_registry_http_register_and_search(self):
         response = self.client.post(
@@ -193,10 +194,10 @@ class CLITests(unittest.TestCase):
 
         self.assertEqual(quote_code, 0)
         self.assertEqual(task_code, 0)
-        client_type.assert_called_with("http://127.0.0.1:8000", api_key=None)
+        client_type.assert_called_with("http://127.0.0.1:8000", api_key="test-api-key")
         client.request_quote.assert_called_once()
         client.submit_task.assert_called_once()
-        self.assertIsNone(client.submit_task.call_args.kwargs["idempotency_key"])
+        self.assertTrue(client.submit_task.call_args.kwargs["idempotency_key"])
 
 
 @unittest.skipIf(TestClient is None, "FastAPI/httpx test dependencies are not installed")
@@ -214,7 +215,7 @@ class ProcessE2ETests(unittest.TestCase):
                 stderr=subprocess.DEVNULL,
             )
             try:
-                client = NeuralClearHTTPClient(base_url, api_key="dev_neuralclear_key")
+                client = NeuralClearHTTPClient(base_url, api_key="test-api-key")
                 for _ in range(50):
                     try:
                         manifest = client.get_manifest()
@@ -234,7 +235,8 @@ class ProcessE2ETests(unittest.TestCase):
                         "provider": "agent.pdf_summarizer",
                         "quote_id": quote["quote_id"],
                         "payload": {"text": "Process E2E PDF summary."},
-                    }
+                    },
+                    idempotency_key="process-e2e",
                 )
                 receipt = client.get_receipt(task["result"]["receipt"]["receipt_id"])
                 balances = client.balances()
