@@ -16,6 +16,7 @@ class SignedReceiptTests(unittest.TestCase):
             provider="agent.pdf_summarizer",
             payload={"text": "Signed receipt test."},
             mandate=pdf_mandate(),
+            idempotency_key="task_signed_receipt",
         )
         return task
 

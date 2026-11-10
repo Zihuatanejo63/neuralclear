@@ -270,7 +270,7 @@ Limitations of the legacy prototype described in sections 0–14:
 - no real custody
 - no production payment execution (internal credits only on this profile)
 - commercial and legacy receipts use symmetric HMAC-SHA256; this profile does not verify Ed25519
-- replay protection on task submission is limited to idempotency keys
+- task submission requires an idempotency key with a TTL; signed-message nonce replay is a separate control (`neuralclear.replay`) and is not a claim that live keys are approved
 - no production dispute resolution
 - no real TEE attestation
 - no real ZK proof verification

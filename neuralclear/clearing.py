@@ -25,6 +25,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -291,7 +292,11 @@ class EventBus:
 
 
 class ReceiptSigner:
+    """Sandbox HMAC signer. Production must use neuralclear.kms Ed25519."""
+
     def __init__(self, secret: str = "dev_neuralclear_signing_secret") -> None:
+        if os.environ.get("NEURALCLEAR_MODE") == "production":
+            raise ProtocolError("HMAC ReceiptSigner is not a production authenticator")
         self._secret = secret.encode("utf-8")
 
     def _digest(self, receipt: dict[str, object]) -> str:

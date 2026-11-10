@@ -112,7 +112,7 @@ Storage: the process environment, or a secret-manager reference that the process
 
 The live flag is an explicit operator switch, default off. Name it `NEURALCLEAR_STRIPE_MODE` with values `test` (default) and `live`. `live` without a successfully checked signature path and without the corridor allowlist below must refuse to start. Unset means `test`.
 
-Verify `Stripe-Signature` with `STRIPE_WEBHOOK_SECRET` before parsing the event. Then GET the object by id with `STRIPE_SECRET_KEY`. The event payload is a hint, not a posting. Handle only:
+Webhooks are not implemented in this tree. When they are, verify `Stripe-Signature` with `STRIPE_WEBHOOK_SECRET` before parsing the event, rotate that secret independently of `STRIPE_SECRET_KEY`, and reject stale timestamps and replayed event ids. Never trust the callback body without that verification. Then GET the object by id with `STRIPE_SECRET_KEY`. The event payload is a hint, not a posting. Handle only:
 
 - `payment_intent.succeeded` and `payment_intent.payment_failed` — GET the PaymentIntent, then the existing `confirm_deposit` checks. `payment_failed` does not credit.
 - `charge.refunded` and `refund.updated` — GET the Refund. Post to the fiat ledger only through the refund reservation rules above.

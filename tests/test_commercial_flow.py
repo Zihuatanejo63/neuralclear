@@ -31,6 +31,7 @@ class CommercialFlowTests(unittest.TestCase):
             provider="agent.pdf_summarizer",
             payload={"text": "NeuralClear commercial flow test."},
             mandate=mandate,
+            idempotency_key=task_id,
         )
 
     def test_platform_fee_provider_amount_and_total_supply(self):
@@ -57,6 +58,7 @@ class CommercialFlowTests(unittest.TestCase):
                 provider="agent.pdf_summarizer",
                 payload={"text": "should not settle"},
                 mandate=make_mandate(capabilities=["summarize.pdf"]),
+                idempotency_key="task_failed",
             )
 
         self.assertEqual(service.balances_snapshot(), before)
@@ -80,6 +82,7 @@ class CommercialFlowTests(unittest.TestCase):
                     max_daily=1_000,
                     capabilities=["summarize.pdf"],
                 ),
+                idempotency_key="task_duplicate_again",
             )
 
         self.assertEqual(service.balances_snapshot(), after_first)

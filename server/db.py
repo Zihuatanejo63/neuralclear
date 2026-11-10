@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS idempotency_keys (
   request_hash TEXT NOT NULL,
   task_id TEXT NOT NULL,
   payload TEXT NOT NULL,
+  expires_at INTEGER,
   PRIMARY KEY (buyer, idempotency_key)
 );
 """
@@ -51,5 +52,8 @@ def connect(path: str | Path) -> sqlite3.Connection:
     connection = sqlite3.connect(path, check_same_thread=False)
     connection.row_factory = sqlite3.Row
     connection.executescript(SCHEMA)
+    columns = {row[1] for row in connection.execute("PRAGMA table_info(idempotency_keys)")}
+    if "expires_at" not in columns:
+        connection.execute("ALTER TABLE idempotency_keys ADD COLUMN expires_at INTEGER")
     connection.commit()
     return connection

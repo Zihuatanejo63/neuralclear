@@ -16,14 +16,14 @@ Public read endpoints:
 Protected write endpoints require:
 
 ```text
-X-NeuralClear-API-Key: dev_neuralclear_key
+X-NeuralClear-API-Key: <NEURALCLEAR_API_KEY>
 ```
 
 Protected endpoints:
 
 - `POST /registry/agents`
 - `POST /neuralclear/quote`
-- `POST /neuralclear/tasks`
+- `POST /neuralclear/tasks` (also requires `Idempotency-Key`)
 - `POST /neuralclear/disputes`
 
-The default development key is `dev_neuralclear_key`. Override it with `NEURALCLEAR_API_KEY`.
+The server does not ship a default API key. Set `NEURALCLEAR_API_KEY` in the environment. In production mode, reads of tasks and receipts require the same header. Production mode refuses to start while the reference server still uses MockProof, and live keys must not be used until a security engineer re-reviews.

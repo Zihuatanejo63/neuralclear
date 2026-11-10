@@ -118,7 +118,8 @@ python3 -m pip install -e ".[http]"
 Run the reference server:
 
 ```bash
-NEURALCLEAR_API_KEY=dev_neuralclear_key \
+# Set NEURALCLEAR_API_KEY, NEURALCLEAR_SIGNING_SECRET, and NEURALCLEAR_SIGNING_KEY_ID
+# in the environment. Do not commit the values.
 NEURALCLEAR_DB=./neuralclear-sandbox.db \
 uvicorn server.app:app --port 8000
 ```
@@ -127,7 +128,7 @@ Use the CLI from another terminal:
 
 ```bash
 export NEURALCLEAR_BASE_URL=http://127.0.0.1:8000
-export NEURALCLEAR_API_KEY=dev_neuralclear_key
+# NEURALCLEAR_API_KEY must already be set. The server has no built-in key.
 
 python3 -m client.cli agents list
 python3 -m client.cli agents search summarize.pdf
@@ -141,8 +142,10 @@ python3 -m client.cli balances
 Protected write endpoints require:
 
 ```text
-X-NeuralClear-API-Key: dev_neuralclear_key
+X-NeuralClear-API-Key: <NEURALCLEAR_API_KEY>
 ```
+
+There is no built-in API key. `POST /neuralclear/tasks` requires an `Idempotency-Key` header.
 
 The sandbox dashboard is available at:
 
@@ -305,7 +308,7 @@ NeuralClear is intended to compose with these protocols, not replace them.
 
 Current stage: V0.4 developer preview. Prototype only. Not production ready.
 
-In this tree, and covered by the unit test suite (207 tests):
+In this tree, and covered by the unit test suite (218 tests):
 
 - Sandbox credit clearing (`neuralclear.clearing`), the credit gateway, netting channels, multi-tenant workspaces, and API-key auth. These move `CC` and sign with HMAC-SHA256. They do not convert to fiat.
 - Opt-in `neuralclear-escrow-v1`: strict escrow, Ed25519 mandates and receipts, an append-only journal, an independent verifier, and a Stripe Connect channel (`neuralclear.escrow_channel`) whose minor units are the fiat record. Historical Stripe test-mode records live under `docs/p0-live-stripe-*`. They are not a license to charge real money and they do not show a completed bank payout. Live settlement is a design only: [stripe-live-settlement-design.md](docs/stripe-live-settlement-design.md).

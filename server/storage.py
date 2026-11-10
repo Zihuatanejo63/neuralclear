@@ -60,35 +60,41 @@ class SQLiteStorage:
         request_hash: str,
         task_id: str,
         payload: dict[str, object],
+        expires_at: int = 0,
     ) -> None:
         with self.connection:
             self.connection.execute(
                 "INSERT INTO idempotency_keys"
-                "(buyer, idempotency_key, request_hash, task_id, payload) "
-                "VALUES (?, ?, ?, ?, ?) "
+                "(buyer, idempotency_key, request_hash, task_id, payload, expires_at) "
+                "VALUES (?, ?, ?, ?, ?, ?) "
                 "ON CONFLICT(buyer, idempotency_key) DO UPDATE SET "
-                "request_hash=excluded.request_hash, task_id=excluded.task_id, payload=excluded.payload",
+                "request_hash=excluded.request_hash, task_id=excluded.task_id, "
+                "payload=excluded.payload, expires_at=excluded.expires_at",
                 (
                     buyer,
                     idempotency_key,
                     request_hash,
                     task_id,
                     json.dumps(payload, sort_keys=True),
+                    expires_at,
                 ),
             )
 
     def load_idempotency_records(self) -> dict[tuple[str, str], dict[str, object]]:
         rows = self.connection.execute(
-            "SELECT buyer, idempotency_key, request_hash, task_id, payload FROM idempotency_keys"
+            "SELECT buyer, idempotency_key, request_hash, task_id, payload, expires_at "
+            "FROM idempotency_keys"
         ).fetchall()
-        return {
-            (str(row["buyer"]), str(row["idempotency_key"])): {
+        loaded = {}
+        for row in rows:
+            payload = json.loads(row["payload"])
+            loaded[(str(row["buyer"]), str(row["idempotency_key"]))] = {
                 "request_hash": str(row["request_hash"]),
                 "task_id": str(row["task_id"]),
-                "payload": json.loads(row["payload"]),
+                "payload": payload,
+                "expires_at": int(row["expires_at"] or payload.get("expires_at") or 0),
             }
-            for row in rows
-        }
+        return loaded
 
     def save_balances(self, balances: dict[str, int], fee_pool: int, total_supply: int) -> None:
         with self.connection:

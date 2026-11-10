@@ -3,7 +3,12 @@
 Python bigint operations are NOT constant-time. Do not use this reference signer
 for production secrets exposed to timing/side-channel attackers. Verification
 uses canonical encodings, S < L and non-identity prime-subgroup points.
+
+Production signing must use neuralclear.kms (cryptography Ed25519). This module
+sets REFERENCE_IMPLEMENTATION so production startup can refuse it.
 """
+
+REFERENCE_IMPLEMENTATION = True
 
 from hashlib import sha512
 

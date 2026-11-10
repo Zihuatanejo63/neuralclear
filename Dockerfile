@@ -11,7 +11,7 @@ COPY server ./server
 RUN python -m pip install --no-cache-dir -e ".[http]"
 
 ENV NEURALCLEAR_DB=/data/neuralclear.db
-ENV NEURALCLEAR_API_KEY=dev_neuralclear_key
+ENV NEURALCLEAR_MODE=sandbox
 
 EXPOSE 8000
 

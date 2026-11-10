@@ -10,6 +10,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from neuralclear.core import ProtocolError
+from neuralclear.production_guard import assert_escrow_app_ready
+from neuralclear.secretcmp import const_equal
 from neuralclear.wire import PROFILE, load_json
 from neuralclear.escrow_channel import EscrowWorkflow
 
@@ -43,10 +45,20 @@ def error_code(message):
     return next((code for fragment, code in mappings if fragment in message), "INVALID_REQUEST")
 
 
-def create_escrow_app(ledger, *, write_key, receipt_key, receipt_key_id, algorithm="Ed25519"):
+def create_escrow_app(
+    ledger,
+    *,
+    write_key,
+    receipt_key,
+    receipt_key_id,
+    algorithm="Ed25519",
+    mode=None,
+    signer=None,
+):
     from neuralclear.clearing import ClearingService
     from neuralclear.clearing import EscrowLedger as CreditLedger
     from neuralclear.escrow import EscrowLedger as FiatLedger
+    import os
 
     if isinstance(ledger, (CreditLedger, ClearingService)) or not isinstance(ledger, FiatLedger):
         raise ProtocolError(
@@ -54,6 +66,9 @@ def create_escrow_app(ledger, *, write_key, receipt_key, receipt_key_id, algorit
         )
     if not write_key:
         raise ValueError("explicit write key required")
+    resolved_mode = mode or os.environ.get("NEURALCLEAR_MODE", "sandbox")
+    if resolved_mode == "production":
+        assert_escrow_app_ready(write_key=write_key, signer=signer, algorithm=algorithm)
     app = FastAPI(title="NeuralClear escrow-v1", version=VERSION)
     workflow = EscrowWorkflow(ledger)
 
@@ -72,7 +87,9 @@ def create_escrow_app(ledger, *, write_key, receipt_key, receipt_key_id, algorit
                 or request.headers.get("X-NeuralClear-Version") != VERSION
             ):
                 return failure("UNSUPPORTED_VERSION", 406)
-        if request.method != "GET" and request.headers.get("X-NeuralClear-API-Key") != write_key:
+        provided_key = request.headers.get("X-NeuralClear-API-Key")
+        needs_key = resolved_mode == "production" or request.method != "GET"
+        if needs_key and not const_equal(provided_key, write_key):
             return failure("UNAUTHORIZED", 401)
         if request.method == "POST":
             try:

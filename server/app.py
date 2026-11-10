@@ -6,6 +6,9 @@ from uuid import uuid4
 
 from neuralclear import SettlementCredit, SpendingMandate
 from neuralclear.core import ProtocolError
+from neuralclear.kms import get_process_kms
+from neuralclear.production_guard import assert_reference_server_ready
+from neuralclear.secretcmp import const_equal
 
 from .dashboard import register_dashboard_routes
 from .ledger_store import ReferenceClearingService
@@ -47,41 +50,47 @@ def _handle_error(exc: ProtocolError) -> None:
     raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+def _production() -> bool:
+    return os.environ.get("NEURALCLEAR_MODE") == "production"
+
+
 def _read_api_key() -> str:
-    return os.environ.get(
-        "NEURALCLEAR_READ_API_KEY",
-        os.environ.get("NEURALCLEAR_API_KEY", "dev_neuralclear_read_key"),
-    )
+    return os.environ.get("NEURALCLEAR_READ_API_KEY") or os.environ.get("NEURALCLEAR_API_KEY") or ""
 
 
 def _write_api_key() -> str:
-    return os.environ.get(
-        "NEURALCLEAR_WRITE_API_KEY",
-        os.environ.get("NEURALCLEAR_API_KEY", "dev_neuralclear_key"),
-    )
+    return os.environ.get("NEURALCLEAR_WRITE_API_KEY") or os.environ.get("NEURALCLEAR_API_KEY") or ""
+
+
+def _unauthorized() -> None:
+    if HTTPException is None:
+        raise ProtocolError("invalid or missing API key")
+    raise HTTPException(status_code=401, detail="invalid or missing API key")
+
+
+def _authorize_read(provided: str | None) -> None:
+    if const_equal(provided, _read_api_key()) or const_equal(provided, _write_api_key()):
+        return
+    _unauthorized()
+
+
+def _authorize_write(provided: str | None) -> None:
+    if const_equal(provided, _write_api_key()):
+        return
+    if const_equal(provided, _read_api_key()) and _read_api_key() != _write_api_key():
+        if HTTPException is None:
+            raise ProtocolError("write API key required")
+        raise HTTPException(status_code=403, detail="write API key required")
+    _unauthorized()
 
 
 if FastAPI is not None:
 
     def _require_read_key(x_neuralclear_api_key: str | None = Header(default=None)) -> None:
-        if x_neuralclear_api_key not in {_read_api_key(), _write_api_key()}:
-            if HTTPException is None:
-                raise ProtocolError("invalid or missing API key")
-            raise HTTPException(status_code=401, detail="invalid or missing API key")
+        _authorize_read(x_neuralclear_api_key)
 
     def _require_write_key(x_neuralclear_api_key: str | None = Header(default=None)) -> None:
-        if x_neuralclear_api_key is None:
-            if HTTPException is None:
-                raise ProtocolError("invalid or missing API key")
-            raise HTTPException(status_code=401, detail="invalid or missing API key")
-        if x_neuralclear_api_key == _read_api_key():
-            if HTTPException is None:
-                raise ProtocolError("write API key required")
-            raise HTTPException(status_code=403, detail="write API key required")
-        if x_neuralclear_api_key != _write_api_key():
-            if HTTPException is None:
-                raise ProtocolError("invalid or missing API key")
-            raise HTTPException(status_code=401, detail="invalid or missing API key")
+        _authorize_write(x_neuralclear_api_key)
 
 
 if app is not None:
@@ -131,6 +140,8 @@ if app is not None:
         idempotency_key: str | None = Header(default=None),
     ) -> dict[str, object]:
         try:
+            if not idempotency_key:
+                raise ProtocolError("idempotency key required")
             mandate_body = body.get("mandate")
             mandate = _default_mandate()
             if isinstance(mandate_body, dict):
@@ -161,7 +172,12 @@ if app is not None:
             _handle_error(ProtocolError(str(exc)))
 
     @app.get("/neuralclear/tasks/{task_id}")
-    def get_task(task_id: str) -> dict[str, object]:
+    def get_task(
+        task_id: str,
+        x_neuralclear_api_key: str | None = Header(default=None),
+    ) -> dict[str, object]:
+        if _production():
+            _authorize_read(x_neuralclear_api_key)
         try:
             return service.get_task(task_id)
         except ProtocolError as exc:
@@ -186,14 +202,23 @@ if app is not None:
             _handle_error(ProtocolError(str(exc)))
 
     @app.get("/neuralclear/receipts/{receipt_id}")
-    def get_receipt(receipt_id: str) -> dict[str, object]:
+    def get_receipt(
+        receipt_id: str,
+        x_neuralclear_api_key: str | None = Header(default=None),
+    ) -> dict[str, object]:
+        if _production():
+            _authorize_read(x_neuralclear_api_key)
         try:
             return service.get_receipt(receipt_id)
         except ProtocolError as exc:
             _handle_error(exc)
 
     @app.get("/neuralclear/receipts")
-    def list_receipts() -> list[dict[str, object]]:
+    def list_receipts(
+        x_neuralclear_api_key: str | None = Header(default=None),
+    ) -> list[dict[str, object]]:
+        if _production():
+            _authorize_read(x_neuralclear_api_key)
         return service.list_receipts()
 
     @app.get("/neuralclear/balances")
@@ -202,3 +227,10 @@ if app is not None:
 
     register_registry_routes(app, registry_store, _handle_error, write_protected)
     register_dashboard_routes(app, service, registry_store)
+
+    if _production():
+        assert_reference_server_ready(
+            api_keys=[_read_api_key(), _write_api_key()],
+            signer=get_process_kms(),
+            proof_name="MockProof",
+        )
