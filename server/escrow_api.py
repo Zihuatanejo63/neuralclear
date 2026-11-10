@@ -1,7 +1,9 @@
 """Explicit escrow-v1 app factory. Legacy server.app routes remain unchanged.
 
-Deploy separately or mount under /escrow. Operator supplies keys, ledger and
-provider configuration; this module never supplies a default production key.
+Deploy separately or mount under /escrow. The ledger must be
+neuralclear.escrow (including ClearingLedger). The credit ledger is rejected.
+This module does not call Stripe. Operator supplies keys, ledger and provider
+configuration; this module never supplies a default production key.
 """
 
 from fastapi import FastAPI, Request
@@ -42,6 +44,14 @@ def error_code(message):
 
 
 def create_escrow_app(ledger, *, write_key, receipt_key, receipt_key_id, algorithm="Ed25519"):
+    from neuralclear.clearing import ClearingService
+    from neuralclear.clearing import EscrowLedger as CreditLedger
+    from neuralclear.escrow import EscrowLedger as FiatLedger
+
+    if isinstance(ledger, (CreditLedger, ClearingService)) or not isinstance(ledger, FiatLedger):
+        raise ProtocolError(
+            "escrow HTTP app requires neuralclear.escrow; it cannot attach the credit ledger"
+        )
     if not write_key:
         raise ValueError("explicit write key required")
     app = FastAPI(title="NeuralClear escrow-v1", version=VERSION)

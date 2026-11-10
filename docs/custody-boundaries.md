@@ -16,9 +16,13 @@ contract or regulatory approval:
    and reconciles signed partner statements. Disputes require an enforceable
    partner release/refund policy, including insolvency and chargeback treatment.
 2. Licensed marketplace payment partner manages connected providers and funds
-   flows. Stripe Connect is a potential channel, not automatically legal escrow.
-   Account onboarding, country/currency compatibility and external payout must
-   be proven independently. Current platform Connect activation is blocked.
+   flows. This is the chosen first fiat path: Stripe Connect, with NeuralClear
+   keeping the ledger record and Stripe moving the money. It is not in-house
+   custody and it is not automatically legal escrow. Account onboarding,
+   country/currency compatibility, and external payout must be proven
+   independently. A Japan platform transferring USD to a US account is an open
+   corridor problem. Historical test-mode notes record a charge and a JPY
+   Transfer; a bank payout was not achieved.
 3. Licensed stablecoin custody/payment partner manages wallets, identity checks,
    redemption and chain-finality risk. A token contract alone is not compliance.
    `neuralclear/stablecoin_channel.py` is only a port specification, no adapter.

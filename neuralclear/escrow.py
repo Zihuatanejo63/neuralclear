@@ -1,8 +1,13 @@
 """Opt-in escrow clearing profile; legacy Ledger/SDK behavior is unchanged.
 
-One instance is one currency and a single-process reference ledger. Dispute
-resolutions are submitted by a trusted caller (arbitrator authorization is an
-application responsibility). Monetary state changes are validated before commit.
+One instance is one currency and a single-process reference ledger. When the
+currency is a lowercase ISO code, integer balances are fiat minor units and
+this module is the commercial funds record. A ``CC`` label here is still this
+profile's own integer unit, not a ``neuralclear.clearing`` balance, and it is
+not convertible. Dispute resolutions are submitted by a trusted caller
+(arbitrator authorization is an application responsibility). Monetary state
+changes are validated before commit. Buyer refunds in this module move these
+internal balances only; they are not card refunds.
 """
 
 from __future__ import annotations

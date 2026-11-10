@@ -9,6 +9,14 @@ Opt-in `StrictEscrowLedger` adds signed-delivery metering, evidence-bound quorum
 decisions and deterministic refunds; it does not prove service quality. Merkle
 inclusion proves integrity, not execution. TEE/ZK remain unimplemented.
 
+Commercial fiat uses `neuralclear.escrow` and `neuralclear.escrow_channel` as the
+funds record, on Stripe Connect, with no in-house custody. `neuralclear.clearing`
+holds sandbox credits (`CC`) only. The two ledgers do not convert. See
+[ledger boundary](docs/ledger-boundary.md). Live charges, payouts, and card
+refunds are specified in
+[stripe-live-settlement-design.md](docs/stripe-live-settlement-design.md) and are
+not enabled.
+
 NeuralClear is an open clearing and trust protocol prototype for AI agent-to-agent service transactions.
 
 It standardizes how agents quote, authorize, execute, verify, settle, and dispute service transactions. NeuralClear does not issue money, custody funds, or replace payment rails; it defines the transaction semantics around agent services.
@@ -24,7 +32,7 @@ Agent ecosystems need more than message passing. A buyer agent needs to know:
 - how balances move after settlement
 - how disputes, refunds, slashing, and expiration are represented
 
-NeuralClear is a small Python protocol prototype for those clearing semantics. Internal credits settle inside the prototype. An opt-in Stripe channel adapter exists for test-mode processor calls. Stablecoin and x402 adapters are not implemented.
+NeuralClear is a small Python protocol prototype for those clearing semantics. Sandbox credits (`CC`) settle inside `neuralclear.clearing`. Commercial fiat minor units settle inside `neuralclear.escrow` / `neuralclear.escrow_channel` and are not converted to or from `CC`. An opt-in Stripe Connect adapter exists for test-mode processor calls. Stablecoin and x402 adapters are not implemented.
 
 ## Core Flow
 
@@ -190,9 +198,9 @@ buyer.connect_remote("http://provider.example.com")  # fetches manifest, ready t
 
 ## Commercial Clearing Layer
 
-`neuralclear.clearing` upgrades the protocol sketch to an economically real flow:
+`neuralclear.clearing` is the sandbox credit ledger. It is not the fiat source of truth. Refunds here return `CC`, not a card refund.
 
-- `EscrowLedger` — buyer funds are **held** on task submission, **released** to the provider on proof verification, **refunded** on buyer-favored disputes, **slashed** on provider bad faith, or **split** for partial resolutions. Refunds move money, not just state. Zero-sum invariant covers balances + escrow + fee pool.
+- `EscrowLedger` — buyer credits are **held** on task submission, **released** to the provider on proof verification, **refunded** on buyer-favored disputes, **slashed** on provider bad faith, or **split** for partial resolutions. Those movements stay inside the credit ledger. Zero-sum invariant covers balances + escrow + fee pool.
 - `FeePolicy` / `FeeSchedule` — the protocol revenue engine: basis-point fee + flat + minimum, with per-capability overrides. Every released transaction pays the fee into `ledger.fee_pool`.
 - `Dispute` + `ClearingService.open_dispute() / resolve_dispute()` — evidence-carrying disputes with four resolutions: `refund`, `slash`, `split`, `settle`.
 - `EventBus` — `transaction.held`, `receipt.created`, `dispute.opened`, `dispute.resolved`. A hosted deployment swaps handlers for webhook delivery.
@@ -210,7 +218,7 @@ python3 examples/commercial_demo.py
 
 ## Self-Hosted Clearing Gateway
 
-`neuralclear.gateway` serves the same engine over HTTP — stdlib only, no framework. One neutral clearing point holds escrow, meters channels, signs receipts, and persists to SQLite:
+`neuralclear.gateway` serves the credit engine over HTTP — stdlib only, no framework. It refuses a fiat escrow ledger and a `StripeChannel`. Do not point these routes at card payments:
 
 ```python
 from neuralclear.gateway import ClearingGateway
@@ -231,7 +239,22 @@ GET  /v1/ledger                   live balances, escrow, fee pool
 GET  /v1/receipts/{id}            signed receipt lookup
 ```
 
-Write endpoints require `X-NeuralClear-Api-Key`. A single `POST /v1/clear` runs the whole loop: quote → mandate → escrow hold → remote HTTP execution → proof → release → signed receipt. `neuralclear.tenancy` adds isolated multi-tenant workspaces with per-tenant API keys and usage metering on top.
+Write endpoints require `X-NeuralClear-Api-Key`. A single `POST /v1/clear` runs the credit loop: quote → mandate → credit hold → remote HTTP execution → proof → release → signed receipt. `neuralclear.tenancy` adds isolated multi-tenant workspaces with per-tenant API keys and usage metering on top. None of these routes create a Stripe charge.
+
+## Fiat profile HTTP
+
+Opt-in `neuralclear-escrow-v1` uses a separate app, `server.escrow_api.create_escrow_app`. Pass an `neuralclear.escrow.EscrowLedger` or `neuralclear.escrow_channel.ClearingLedger`. The factory rejects `neuralclear.clearing`. Stripe calls are not inside these routes; an operator binds `StripeChannel` to that same fiat ledger.
+
+```text
+GET  /.well-known/neuralclear/agent.json
+POST /neuralclear/quote
+POST /neuralclear/tasks
+GET  /neuralclear/tasks/{task_id}
+POST /neuralclear/disputes
+GET  /neuralclear/receipts/{receipt_id}
+```
+
+Versioned routes require `X-NeuralClear-Profile: neuralclear-escrow-v1` and `X-NeuralClear-Version: 1`. Writes require `X-NeuralClear-API-Key`. Mount this app on its own, or under `/escrow`. Do not register it on the credit gateway. Details: [ledger boundary](docs/ledger-boundary.md).
 
 ## Protocol Objects
 
@@ -241,7 +264,7 @@ Write endpoints require `X-NeuralClear-Api-Key`. A single `POST /v1/clear` runs 
 { "amount": 8000, "unit": "tokens" }
 ```
 
-`SettlementCredit` is the value used for clearing.
+`SettlementCredit` is the sandbox credit (`CC` only). It is not a fiat amount.
 
 ```json
 { "amount": 25, "currency": "CC" }
@@ -282,10 +305,10 @@ NeuralClear is intended to compose with these protocols, not replace them.
 
 Current stage: V0.4 developer preview. Prototype only. Not production ready.
 
-In this tree, and covered by the unit test suite (200 tests):
+In this tree, and covered by the unit test suite (207 tests):
 
-- Commercial credit clearing (`neuralclear.clearing`), the clearing gateway, netting channels, multi-tenant workspaces, and API-key auth. These move internal credits and sign with HMAC-SHA256.
-- Opt-in `neuralclear-escrow-v1`: strict escrow, Ed25519 mandates and receipts, an append-only journal, an independent verifier, and a Stripe channel adapter (`neuralclear.escrow_channel`). Historical Stripe test-mode records live under `docs/p0-live-stripe-*`. They are not a license to charge real money and they do not show a completed Connect payout.
+- Sandbox credit clearing (`neuralclear.clearing`), the credit gateway, netting channels, multi-tenant workspaces, and API-key auth. These move `CC` and sign with HMAC-SHA256. They do not convert to fiat.
+- Opt-in `neuralclear-escrow-v1`: strict escrow, Ed25519 mandates and receipts, an append-only journal, an independent verifier, and a Stripe Connect channel (`neuralclear.escrow_channel`) whose minor units are the fiat record. Historical Stripe test-mode records live under `docs/p0-live-stripe-*`. They are not a license to charge real money and they do not show a completed bank payout. Live settlement is a design only: [stripe-live-settlement-design.md](docs/stripe-live-settlement-design.md).
 
 Not in this tree:
 

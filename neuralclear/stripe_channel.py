@@ -2,9 +2,10 @@
 
 The current core Ledger has no escrow or withdrawal API. Applications must supply
 ChannelLedger with atomic, durable implementations before using this with money.
-No automatic conversion from CC to fiat is implied: the ledger owns that mapping.
-Task metering, netting, fees and receipt signing remain entirely in the ledger.
-Stripe is a payment processor, not a legal escrow service.
+Amounts are fiat minor units on the escrow ledger only. This module does not
+convert protocol credits (CC) to fiat or fiat to credits, and it must not be
+bound to neuralclear.clearing. Stripe is a payment processor, not a legal
+escrow service, and this adapter has no card-refund method.
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from .core import ProtocolError
+from .ledger_boundary import require_fiat_currency
 
 
 @dataclass(frozen=True)
@@ -108,8 +110,7 @@ def _id(value: str, prefix: str) -> str:
 def _money(amount: int, currency: str) -> None:
     if type(amount) is not int or amount <= 0:
         raise ProtocolError("amount must be a positive integer in minor units")
-    if not isinstance(currency, str) or not re.fullmatch(r"[a-z]{3}", currency):
-        raise ProtocolError("currency must be an explicit lowercase ISO code")
+    require_fiat_currency(currency)
 
 
 def _key(*parts: str) -> str:
@@ -120,6 +121,11 @@ def _key(*parts: str) -> str:
 
 class StripeChannel:
     def __init__(self, ledger: ChannelLedger, http: StripeHTTP) -> None:
+        from .clearing import ClearingService
+        from .clearing import EscrowLedger as CreditLedger
+
+        if isinstance(ledger, (CreditLedger, ClearingService)):
+            raise ProtocolError("StripeChannel cannot bind the credit ledger")
         self.ledger = ledger
         self.http = http
 

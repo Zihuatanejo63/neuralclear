@@ -30,6 +30,7 @@ from .core import (
     SettlementCredit,
     TaskResult,
 )
+from .ledger_boundary import require_credit_currency
 
 TaskHandler = Callable[[object], object]
 
@@ -60,7 +61,7 @@ class ProviderAgent:
         self.name = name or agent_id
         self.endpoint = endpoint
         self.public_key = public_key
-        self.currency = currency
+        self.currency = require_credit_currency(currency)
         self._capabilities: dict[str, _RegisteredCapability] = {}
         self._issued_quotes: dict[str, Quote] = {}
 

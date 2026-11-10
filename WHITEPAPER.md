@@ -22,7 +22,11 @@ NeuralClear focuses on that settlement surface.
 
 NeuralClear is a clearing-semantics engine plus channel adapters. Custody and
 compliance must be undertaken by licensed partners; internal escrow credits are
-not legally segregated funds. See [custody routes](docs/custody-boundaries.md).
+not legally segregated funds. Commercial fiat, when used, is Stripe Connect
+recorded on `neuralclear.escrow` / `neuralclear.escrow_channel`, not on the
+sandbox credit ledger, and the two are not converted. See
+[custody routes](docs/custody-boundaries.md) and
+[ledger boundary](docs/ledger-boundary.md).
 Signed results and Merkle inclusion authenticate claims, not truthful execution.
 Evidence-bound quorum rules do not replace independent service-quality review.
 The file journal is locally serialized, not a distributed financial database.

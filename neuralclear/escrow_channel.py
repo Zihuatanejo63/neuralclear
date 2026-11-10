@@ -1,6 +1,7 @@
 """Opt-in escrow orchestration and a ledger-owned Stripe channel boundary.
 
-All fiat amounts are integer minor units, without CC conversion. Provider account
+All fiat amounts are integer minor units of one ISO currency. This ledger does
+not accept protocol credits (CC) and does not convert them. Provider account
 bindings and mandate verification keys must come from trusted operator config.
 Pending/unknown payouts fail closed: reconcile rather than automatically re-POST.
 
@@ -17,6 +18,7 @@ import re
 from .core import ProtocolError
 from .escrow import EscrowLedger, identifier, integer
 from .journal import mutation
+from .ledger_boundary import require_fiat_currency
 from .stripe_channel import Funding, NetSettlement
 from .wire import canonical, sign
 from .proofs import verify_result
@@ -26,6 +28,7 @@ class ClearingLedger(EscrowLedger):
     _state_fields = EscrowLedger._state_fields + ("_funding", "_deposits", "_outbox", "_paid_out")
 
     def __init__(self, currency="usd", *, provider_accounts, **kwargs):
+        currency = require_fiat_currency(currency)
         self._funding, self._deposits, self._outbox, self._paid_out = {}, {}, {}, 0
         self._provider_accounts = dict(provider_accounts)
         kwargs.setdefault("mandate_keys", {})

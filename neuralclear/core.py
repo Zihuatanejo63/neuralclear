@@ -38,8 +38,9 @@ class SettlementCredit:
     def __post_init__(self) -> None:
         if self.amount < 0:
             raise ProtocolError("settlement credit amount must be non-negative")
-        if not self.currency:
-            raise ProtocolError("settlement currency must be set")
+        from .ledger_boundary import require_credit_currency
+
+        require_credit_currency(self.currency)
 
     def to_json(self) -> dict[str, int | str]:
         return {"amount": self.amount, "currency": self.currency}

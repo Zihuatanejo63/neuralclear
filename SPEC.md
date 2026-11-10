@@ -300,7 +300,7 @@ This appendix is normative for `neuralclear-escrow-v1` only. Sections 0-14 descr
 the legacy prototype; its SDK and HTTP API do not negotiate or implement this new
 profile. Implementations MUST explicitly select this profile. `EscrowLedger` is
 the reference implementation, not a replacement for the legacy `Ledger`.
-Escrow here means reserved internal credits, not legal custody or Stripe escrow.
+Escrow here means reserved balances inside this profile, not legal custody and not Stripe's own escrow product. Commercial fiat minor units, when a deployment binds this profile to Stripe Connect, are recorded only on `neuralclear.escrow` / `neuralclear.escrow_channel`. They are not `neuralclear.clearing` credits (`CC`), and this profile does not convert between those ledgers. The credit HTTP gateway is not this profile. See `docs/ledger-boundary.md`. Card refunds are not specified by the current adapter; a future live design is in `docs/stripe-live-settlement-design.md` and is not part of this appendix's implemented surface.
 
 ### A.1 Encoding and trust
 

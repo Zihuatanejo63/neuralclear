@@ -12,11 +12,13 @@ It does not replace MCP, A2A, AP2, or x402. It composes with them:
 
 ## Prototype status
 
-This repository is a prototype. It is not production ready and it does not custody funds.
+This repository is a prototype. It is not production ready and it does not custody funds. The first fiat path is Stripe Connect. There is no in-house custody product.
+
+Ledger rule: commercial fiat uses `neuralclear.escrow` / `neuralclear.escrow_channel` as the funds source of truth. `neuralclear.clearing` credits (`CC`) are only for protocol semantics and the sandbox. Nothing converts credits to fiat or fiat to credits. The credit gateway (`/v1/*`) must not be attached to the fiat ledger. The fiat HTTP app is `server.escrow_api`. See [docs/ledger-boundary.md](docs/ledger-boundary.md).
 
 On the opt-in `neuralclear-escrow-v1` profile:
 
-- Stripe channel adapter (`ClearingLedger` in `neuralclear.escrow_channel`, `StripeChannel`). It submits test-mode processor calls. Stripe is not legal escrow. The checked-in `docs/p0-live-stripe-*` notes are historical records: a test-mode charge and a JPY Transfer were created, and the bank payout (`po_`) was not. They are not a production certification.
+- Stripe Connect channel adapter (`ClearingLedger` in `neuralclear.escrow_channel`, `StripeChannel`). It submits test-mode processor calls. Stripe is not legal escrow. The checked-in `docs/p0-live-stripe-*` notes are historical records: a test-mode charge and a JPY Transfer were created, and the bank payout (`po_`) was not. A Japan platform transferring USD to a US account is an open corridor problem. Live settlement is designed in [docs/stripe-live-settlement-design.md](docs/stripe-live-settlement-design.md) and is not implemented.
 - Ed25519 signatures (pure Python, RFC 8032) for that profile's mandates, result proofs, and receipts. The implementation is not constant-time and is not a production signer.
 - Strict escrow, an append-only journal, and an independent verifier.
 
@@ -60,7 +62,7 @@ The default commercial path (`neuralclear.clearing`, the gateway, and netting) s
 ## V0.4: Payment Adapters
 
 - Internal credits — present as prototype ledger balances and commercial credit holds. Not legal escrow.
-- Stripe adapter — present only on the opt-in `neuralclear-escrow-v1` profile. Not production custody.
+- Stripe adapter — present only on the opt-in `neuralclear-escrow-v1` profile, as Stripe Connect against the fiat escrow ledger. Not production custody. Live mode is not enabled. The JP-platform to US-account USD corridor is unsolved.
 - x402 adapter — not started
 - Stablecoin adapter — not started. The port specification does not move tokens.
 
