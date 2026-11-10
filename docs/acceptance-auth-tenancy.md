@@ -151,6 +151,14 @@ The old key is 401. The new key returns A's ledger, including `owner.a`,
 and still does not return B's accounts. Restart is not required. The
 gateway reads the current key hash from SQLite on each request.
 
+## Production signer, replay, and MockProof
+
+These checks apply when `NEURALCLEAR_MODE=production`. Fiat settlement is still not live. Do not set `NEURALCLEAR_KMS_ENV=live` and do not load a live signing key. The in-tree KMS is a test-environment file, not an HSM.
+
+`POST /v1/clear` against a provider that returns `MockProof` is HTTP 400, the body contains `MockProof is not allowed in production`, and the buyer's protocol-credit balance is unchanged after the refund.
+
+A channel settlement receipt has `signature` starting with `ed25519:` and a `key_id`. Verifying that receipt a second time fails with `replayed nonce`. After `retire_key` on that `kid`, verification fails with `revoked key`. The old tenant API key is a separate rotation; retiring a signing kid does not by itself revoke API keys.
+
 Unset the shell variables when you are done:
 
 ```bash

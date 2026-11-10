@@ -43,7 +43,7 @@ which is the process-down signal.
 
 `neuralclear_gateway_ready` is 1 only when the readiness check passes.
 
-`neuralclear_gateway_info{version="0.4.0.dev0",fiat_settlement="not_live"}` is 1.
+`neuralclear_gateway_info{version="0.4.0.dev0",fiat_settlement="not_live",signing="persistent-kms"}` is 1 on the production gateway. The sandbox demo signer is labeled `sandbox-hmac`. `persistent-kms` means the in-tree test-environment Ed25519 adapter. It is not a certified HSM and it is not a live key. Production startup refuses `NEURALCLEAR_KMS_ENV=live`.
 
 `neuralclear_http_requests_total{method,route,status,tenant_id}` counts
 requests. `route` is a template such as `/v1/receipts/{id}`, not the raw

@@ -50,10 +50,13 @@ from urllib.parse import urlsplit
 from .accesslog import configure_access_log
 from .clearing import ClearingService
 from .core import ProtocolError, SettlementCredit
+from .gateway_signer import KmsReceiptSigner
 from .httpwire import RemoteProvider
+from .kms import install_persistent_kms
 from .metrics import GatewayMetrics
 from .netting import NettingService
-from .runtime_config import GatewaySettings, GatewayStartupError, load_settings, secret_problem
+from .production_guard import assert_production_proof, assert_production_signer, assert_replay_store_configured
+from .runtime_config import GatewaySettings, GatewayStartupError, load_settings
 from .store import ClearingStore
 from .tenancy import Tenant, TenantHub
 
@@ -140,13 +143,22 @@ class ClearingGateway:
         if production:
             if hub is None or hub.store is None:
                 raise GatewayStartupError("production mode requires a persisted TenantHub")
-            if secret_problem(hub.receipt_secret, min_length=32):
-                raise GatewayStartupError(
-                    "production receipt signing secret is missing or still a placeholder"
-                )
             if hub.tenant_count() < 1:
                 raise GatewayStartupError("production mode requires at least one tenant API key")
-        self.clearing = clearing or ClearingService()
+            kms = getattr(getattr(hub, "_signer", None), "kms", None)
+            if kms is None:
+                raise GatewayStartupError("production requires a persistent KMS signer")
+            try:
+                assert_production_signer(kms)
+                assert_replay_store_configured()
+            except ProtocolError as exc:
+                raise GatewayStartupError(str(exc)) from exc
+        if clearing is not None:
+            self.clearing = clearing
+        elif hub is not None:
+            self.clearing = ClearingService(signer=hub._signer)
+        else:
+            self.clearing = ClearingService()
         self.netting = NettingService(self.clearing)
         self.store = store
         self.api_key = api_key
@@ -387,7 +399,8 @@ class ClearingGateway:
             return 200
         if route == "/metrics":
             ready, _body = self.readiness()
-            payload = self.metrics.render(ready=ready == 200).encode("utf-8")
+            signing = "persistent-kms" if self.production else "sandbox-hmac"
+            payload = self.metrics.render(ready=ready == 200, signing=signing).encode("utf-8")
             handler._send_bytes(  # type: ignore[attr-defined]
                 200,
                 payload,
@@ -531,11 +544,19 @@ class ClearingGateway:
             remote = RemoteProvider(provider_url)
             self._providers[provider_url] = remote
         quote = remote.handle_quote(str(body["capability"]))
+        payload = body.get("payload")
+
+        def run() -> object:
+            result = remote.handle_task(quote, payload)
+            if self.production:
+                assert_production_proof(type(result.proof).__name__)
+            return result
+
         receipt = clearing.clear(
             buyer_owner=str(body["buyer_owner"]),
             buyer_agent=str(body.get("buyer_agent", body["buyer_owner"])),
             quote=quote,
-            run=lambda: remote.handle_task(quote, body.get("payload")),
+            run=run,
         )
         return receipt
 
@@ -587,8 +608,45 @@ def _ping_sqlite(path: str) -> bool:
         return False
 
 
+def _apply_production_env(settings: GatewaySettings) -> None:
+    os.environ["NEURALCLEAR_MODE"] = "production"
+    os.environ["NEURALCLEAR_KMS_PATH"] = settings.kms_path or ""
+    os.environ["NEURALCLEAR_KMS_ENV"] = settings.kms_env or ""
+    os.environ["NEURALCLEAR_REPLAY_STORE"] = settings.replay_store or ""
+    os.environ["NEURALCLEAR_SIGNING_KEY_ID"] = settings.signing_key_id or ""
+
+
+def prepare_production_signer(settings: GatewaySettings) -> KmsReceiptSigner:
+    """Install PersistentKms and require the receipt kid. Refuses live keys."""
+    if not settings.production or not settings.kms_path or not settings.signing_key_id:
+        raise GatewayStartupError("production KMS settings are incomplete")
+    _apply_production_env(settings)
+    try:
+        kms = install_persistent_kms(settings.kms_path)
+        assert_production_signer(kms)
+        assert_replay_store_configured()
+        kms.public_record(settings.signing_key_id, now=int(time.time()))
+    except ProtocolError as exc:
+        message = str(exc)
+        if message == "unknown key":
+            raise GatewayStartupError(
+                "production signing key id is not present in the KMS; run kms-init"
+            ) from exc
+        raise GatewayStartupError(message) from exc
+    return KmsReceiptSigner(kms, settings.signing_key_id)
+
+
+def _hub_for(settings: GatewaySettings) -> TenantHub:
+    signer = prepare_production_signer(settings) if settings.production else None
+    return TenantHub(
+        store_path=settings.db_path,
+        receipt_secret=None if settings.production else settings.receipt_secret,
+        signer=signer,
+    )
+
+
 def assemble_gateway(settings: GatewaySettings) -> ClearingGateway:
-    hub = TenantHub(store_path=settings.db_path, receipt_secret=settings.receipt_secret)
+    hub = _hub_for(settings)
     if settings.bootstrap_api_key:
         hub.ensure_bootstrap(settings.bootstrap_tenant_name, settings.bootstrap_api_key)
     return ClearingGateway(
@@ -640,13 +698,14 @@ def serve(settings: GatewaySettings) -> None:
 
 
 def _open_hub(settings: GatewaySettings) -> TenantHub:
-    return TenantHub(store_path=settings.db_path, receipt_secret=settings.receipt_secret)
+    return _hub_for(settings)
 
 
 def main(argv: list[str] | None = None, environ: Mapping[str, str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="neuralclear.gateway")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("serve", help="run the clearing gateway")
+    sub.add_parser("kms-init", help="create the test-environment receipt key if it is absent")
     create = sub.add_parser("tenant-create", help="issue a tenant API key")
     create.add_argument("--name", required=True)
     rotate = sub.add_parser("tenant-rotate", help="rotate a tenant API key")
@@ -658,12 +717,51 @@ def main(argv: list[str] | None = None, environ: Mapping[str, str] | None = None
         if args.command == "serve":
             serve(settings)
             return 0
+        if args.command == "kms-init":
+            return _kms_init(settings)
         if args.command == "tenant-create":
             return _tenant_create(settings, str(args.name))
         return _tenant_rotate(settings, str(args.tenant_id))
     except GatewayStartupError as exc:
         print(str(exc), file=sys.stderr)
         return 1
+
+
+def _kms_init(settings: GatewaySettings) -> int:
+    if not settings.production or not settings.kms_path or not settings.signing_key_id:
+        raise GatewayStartupError("kms-init requires the production gateway settings")
+    if settings.kms_env == "live":
+        raise GatewayStartupError("in-tree PersistentKms cannot hold live signing keys")
+    _apply_production_env(settings)
+    try:
+        kms = install_persistent_kms(settings.kms_path)
+        assert_production_signer(kms)
+    except ProtocolError as exc:
+        raise GatewayStartupError(str(exc)) from exc
+    now = int(time.time())
+    try:
+        kms.public_record(settings.signing_key_id, now=now)
+        created = False
+    except ProtocolError as exc:
+        if str(exc) != "unknown key":
+            raise GatewayStartupError(str(exc)) from exc
+        kms.generate(
+            purpose="receipt",
+            kid=settings.signing_key_id,
+            not_before=now,
+            roles={"receipt"},
+        )
+        created = True
+    print(f"kid={settings.signing_key_id}")
+    print(
+        "Test-environment receipt key is present. Live keys are refused. "
+        "The private key stays in the KMS file and is not printed."
+        if not created
+        else "Created a test-environment receipt key. Live keys are refused. "
+        "The private key stays in the KMS file and is not printed.",
+        file=sys.stderr,
+    )
+    return 0
 
 
 def _tenant_create(settings: GatewaySettings, name: str) -> int:

@@ -17,18 +17,24 @@ x-logging: &json-logs
 services:
   gateway:
     build: .
-    command: ["python", "-m", "neuralclear.gateway", "serve"]
+    command:
+      - sh
+      - -c
+      - python -m neuralclear.gateway kms-init && exec python -m neuralclear.gateway serve
     environment:
       NEURALCLEAR_ENV: production
+      NEURALCLEAR_MODE: production
       NEURALCLEAR_GATEWAY_HOST: 0.0.0.0
       NEURALCLEAR_GATEWAY_PORT: "8080"
       NEURALCLEAR_DB: /data/neuralclear-gateway.db
+      NEURALCLEAR_KMS_PATH: /data/gateway-kms.db
+      NEURALCLEAR_KMS_ENV: test
+      NEURALCLEAR_REPLAY_STORE: /data/gateway-replay.db
+      NEURALCLEAR_SIGNING_KEY_ID: gateway-receipt
       NEURALCLEAR_TLS_MODE: terminator
-      NEURALCLEAR_RECEIPT_SECRET_FILE: /run/secrets/receipt_secret
       NEURALCLEAR_BOOTSTRAP_API_KEY_FILE: /run/secrets/bootstrap_api_key
       NEURALCLEAR_BOOTSTRAP_TENANT_NAME: ${NEURALCLEAR_BOOTSTRAP_TENANT_NAME:-primary}
     secrets:
-      - receipt_secret
       - bootstrap_api_key
     volumes:
       - gateway-data:/data
@@ -100,8 +106,6 @@ services:
     logging: *json-logs
 
 secrets:
-  receipt_secret:
-    file: ${NEURALCLEAR_RECEIPT_SECRET_FILE:?set NEURALCLEAR_RECEIPT_SECRET_FILE to a file outside the repository}
   bootstrap_api_key:
     file: ${NEURALCLEAR_BOOTSTRAP_API_KEY_FILE:?set NEURALCLEAR_BOOTSTRAP_API_KEY_FILE to a file outside the repository}
 

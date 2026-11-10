@@ -40,10 +40,16 @@ hash of each API key.
 ```bash
 umask 077
 sudo mkdir -p /var/lib/neuralclear/secrets
-sudo python3 -c 'import secrets; open("/var/lib/neuralclear/secrets/receipt_secret","w").write(secrets.token_urlsafe(48))'
 sudo python3 -c 'import secrets; open("/var/lib/neuralclear/secrets/bootstrap_api_key","w").write("nck_"+secrets.token_hex(32))'
-sudo chmod 600 /var/lib/neuralclear/secrets/receipt_secret /var/lib/neuralclear/secrets/bootstrap_api_key
+sudo chmod 600 /var/lib/neuralclear/secrets/bootstrap_api_key
 ```
+
+There is no HMAC receipt secret in this deployment. Production receipts are
+Ed25519 signatures from the in-tree `PersistentKms`. That adapter is not a
+certified HSM. Its environment must be `test`. It refuses `live`, and live
+signing keys must not be placed in the KMS file or in the environment.
+`kms-init` creates the receipt key id inside the gateway volume if it is
+absent. It prints the key id only. It does not print private key bytes.
 
 Export paths and the public name. Use your own DNS name and contact address.
 `gateway.example.com` and `ops@example.com` are placeholders and will not
@@ -53,9 +59,12 @@ obtain a certificate.
 export NEURALCLEAR_DOMAIN=gateway.example.com
 export NEURALCLEAR_ACME_EMAIL=ops@example.com
 export NEURALCLEAR_ACME_CA=https://acme-v02.api.letsencrypt.org/directory
-export NEURALCLEAR_RECEIPT_SECRET_FILE=/var/lib/neuralclear/secrets/receipt_secret
 export NEURALCLEAR_BOOTSTRAP_API_KEY_FILE=/var/lib/neuralclear/secrets/bootstrap_api_key
 export NEURALCLEAR_BOOTSTRAP_TENANT_NAME=primary
+export NEURALCLEAR_MODE=production
+export NEURALCLEAR_ENV=production
+export NEURALCLEAR_KMS_ENV=test
+export NEURALCLEAR_SIGNING_KEY_ID=gateway-receipt
 ```
 
 For a first rehearsal, point `NEURALCLEAR_ACME_CA` at the Let's Encrypt
@@ -69,15 +78,18 @@ Switch it back to the production directory before real traffic. Staging
 certificates are not trusted by browsers. The `caddy-data` volume remembers
 the account, so change directories only with that in mind.
 
-The process rejects empty values, the sandbox key `dev_neuralclear_key`, the
-dev receipt secret, and the placeholders in `.env.example`. Production also
-refuses to start if `NEURALCLEAR_API_KEY` is set: that variable belongs to
-the sandbox, not this gateway.
+The process rejects empty values, the sandbox key `dev_neuralclear_key`, and
+a `NEURALCLEAR_KMS_ENV` of `live`. Production also refuses to start if
+`NEURALCLEAR_API_KEY` or `NEURALCLEAR_SIGNING_SECRET` is set: those belong
+to the sandbox HMAC path, not this gateway. `NEURALCLEAR_MODE` must be
+`production` together with `NEURALCLEAR_ENV=production`.
 
-`NEURALCLEAR_RECEIPT_SECRET` signs protocol receipts. Set it before the first
-settlement and keep the same value across restarts. Receipts already signed
-with another secret will not verify. The value is never written to the
-database or to request logs.
+`NEURALCLEAR_REPLAY_STORE` is required. A signed receipt nonce is remembered
+there. Verifying the same receipt twice is a replay. Revoking the receipt
+`kid` makes later verification fail with `revoked key`. See
+[key rotation](key-rotation-runbook.md). `POST /v1/clear` refuses `MockProof`
+in this mode and refunds the protocol-credit hold, so a sandbox provider
+proof does not settle.
 
 The bootstrap file creates the first tenant when the database has no matching
 key. Later starts with the same file reuse that tenant. They do not print
@@ -95,9 +107,10 @@ docker compose -f docker-compose.production.yml ps
 ```
 
 Compose will refuse to start if `NEURALCLEAR_DOMAIN`, `NEURALCLEAR_ACME_EMAIL`,
-or either secret-file path is missing. The gateway process then refuses to
-serve if the secret file is empty, still a placeholder, or if no tenant
-exists.
+or the bootstrap API-key file path is missing. The gateway process then
+refuses to serve if the KMS environment is `live`, the replay store or
+signing key id is missing, or no tenant exists. The image default
+`NEURALCLEAR_MODE` is `sandbox`; this Compose file sets `production`.
 
 Readiness:
 

@@ -17,6 +17,8 @@ from pathlib import Path
 from neuralclear.accesslog import JsonFormatter
 from neuralclear.core import ProtocolError
 from neuralclear.gateway import ClearingGateway, assemble_gateway, main
+from neuralclear.httpwire import ProviderHTTPServer
+from neuralclear.provider import ProviderAgent
 from neuralclear.runtime_config import DEV_RECEIPT_SECRET, GatewayStartupError, load_settings
 from neuralclear.tenancy import TenantHub
 
@@ -303,15 +305,28 @@ class TenantIsolationHttpTests(unittest.TestCase):
 
 class ProductionStartupTests(unittest.TestCase):
     def setUp(self) -> None:
+        self._saved_env = os.environ.copy()
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
+        self.addCleanup(self._restore_env)
         self.db = os.path.join(self.tmp.name, "gateway.db")
+
+    def _restore_env(self) -> None:
+        os.environ.clear()
+        os.environ.update(self._saved_env)
+        from neuralclear.kms import set_process_kms
+
+        set_process_kms(None)
 
     def _production(self, **extra: str) -> dict[str, str]:
         env = {
             "NEURALCLEAR_ENV": "production",
+            "NEURALCLEAR_MODE": "production",
             "NEURALCLEAR_DB": self.db,
-            "NEURALCLEAR_RECEIPT_SECRET": "p" * 40,
+            "NEURALCLEAR_KMS_PATH": os.path.join(self.tmp.name, "kms.db"),
+            "NEURALCLEAR_KMS_ENV": "test",
+            "NEURALCLEAR_REPLAY_STORE": os.path.join(self.tmp.name, "replay.db"),
+            "NEURALCLEAR_SIGNING_KEY_ID": "gateway-receipt",
             "NEURALCLEAR_TLS_MODE": "terminator",
             "NEURALCLEAR_GATEWAY_HOST": "127.0.0.1",
             "NEURALCLEAR_GATEWAY_PORT": "0",
@@ -323,10 +338,17 @@ class ProductionStartupTests(unittest.TestCase):
         with self.assertRaises(GatewayStartupError):
             load_settings({"NEURALCLEAR_ENV": "production", "NEURALCLEAR_DB": self.db}, command="serve")
         with self.assertRaises(GatewayStartupError):
-            load_settings(self._production(NEURALCLEAR_RECEIPT_SECRET="replace-me"), command="serve")
+            load_settings(self._production(NEURALCLEAR_KMS_ENV="live"), command="serve")
+        with self.assertRaises(GatewayStartupError):
+            load_settings(self._production(NEURALCLEAR_REPLAY_STORE=""), command="serve")
         with self.assertRaises(GatewayStartupError):
             load_settings(
                 self._production(NEURALCLEAR_RECEIPT_SECRET=DEV_RECEIPT_SECRET),
+                command="serve",
+            )
+        with self.assertRaises(GatewayStartupError):
+            load_settings(
+                self._production(NEURALCLEAR_SIGNING_SECRET="sandbox-hmac-secret-value"),
                 command="serve",
             )
         with self.assertRaises(GatewayStartupError):
@@ -339,38 +361,40 @@ class ProductionStartupTests(unittest.TestCase):
         with self.assertRaises(GatewayStartupError):
             load_settings(self._production(NEURALCLEAR_TLS_MODE="direct"), command="serve")
 
-        secret_file = os.path.join(self.tmp.name, "receipt")
         key_file = os.path.join(self.tmp.name, "bootstrap")
-        Path(secret_file).write_text(("s" * 40) + "\n", encoding="utf-8")
         Path(key_file).write_text("nck_" + ("ab" * 16) + "\n", encoding="utf-8")
         both = self._production(
-            NEURALCLEAR_RECEIPT_SECRET_FILE=secret_file,
+            NEURALCLEAR_RECEIPT_SECRET_FILE=os.path.join(self.tmp.name, "receipt"),
             NEURALCLEAR_BOOTSTRAP_API_KEY_FILE=key_file,
         )
         with self.assertRaises(GatewayStartupError):
             load_settings(both, command="serve")
-        del both["NEURALCLEAR_RECEIPT_SECRET"]
+        del both["NEURALCLEAR_RECEIPT_SECRET_FILE"]
         settings = load_settings(both, command="serve")
-        self.assertEqual(settings.receipt_secret, "s" * 40)
+        self.assertIsNone(settings.receipt_secret)
+        self.assertEqual(settings.kms_env, "test")
         self.assertEqual(settings.bootstrap_api_key, "nck_" + ("ab" * 16))
 
     def test_production_refuses_to_serve_without_a_tenant(self) -> None:
-        settings = load_settings(self._production(), command="serve")
-        with self.assertRaises(GatewayStartupError):
+        env = self._production()
+        self.assertEqual(main(["kms-init"], env), 0)
+        settings = load_settings(env, command="serve")
+        with self.assertRaises(GatewayStartupError) as caught:
             assemble_gateway(settings)
+        self.assertIn("tenant", str(caught.exception).lower())
 
     def test_production_serves_when_secrets_and_a_tenant_exist(self) -> None:
         bootstrap = "nck_" + ("cd" * 16)
-        settings = load_settings(
-            self._production(
-                NEURALCLEAR_BOOTSTRAP_API_KEY=bootstrap,
-                NEURALCLEAR_BOOTSTRAP_TENANT_NAME="primary",
-            ),
-            command="serve",
+        env = self._production(
+            NEURALCLEAR_BOOTSTRAP_API_KEY=bootstrap,
+            NEURALCLEAR_BOOTSTRAP_TENANT_NAME="primary",
         )
+        self.assertEqual(main(["kms-init"], env), 0)
+        settings = load_settings(env, command="serve")
         gateway = assemble_gateway(settings).start()
         self.addCleanup(gateway.stop)
         self.assertTrue(settings.production)
+        self.assertIsNone(settings.receipt_secret)
         ready = http_json("GET", f"{gateway.url}/health/ready")
         self.assertEqual(ready.get("_status"), 200)
         self.assertEqual(ready.get("fiat_settlement"), "not_live")
@@ -380,10 +404,10 @@ class ProductionStartupTests(unittest.TestCase):
         self.assertEqual(missing.get("_status"), 401)
         status, metrics = http_text(f"{gateway.url}/metrics")
         self.assertEqual(status, 200)
+        self.assertIn('signing="persistent-kms"', metrics)
         self.assertNotIn(bootstrap, metrics)
         blob = Path(self.db).read_bytes()
         self.assertNotIn(bootstrap.encode(), blob)
-        self.assertNotIn(settings.receipt_secret.encode(), blob)
 
     def test_cli_issues_a_key_once_and_rotation_rejects_it(self) -> None:
         env = {
@@ -421,10 +445,13 @@ class ProductionStartupTests(unittest.TestCase):
     def test_main_serve_fails_closed_without_printing_a_secret(self) -> None:
         err = io.StringIO()
         with redirect_stderr(err):
-            code = main(["serve"], self._production(NEURALCLEAR_RECEIPT_SECRET="replace-me"))
+            code = main(
+                ["serve"],
+                self._production(NEURALCLEAR_RECEIPT_SECRET="replace-me-not-a-signing-secret"),
+            )
         self.assertEqual(code, 1)
-        self.assertNotIn("replace-me", err.getvalue())
-        self.assertIn("placeholder", err.getvalue())
+        self.assertNotIn("replace-me-not-a-signing-secret", err.getvalue())
+        self.assertIn("authenticator", err.getvalue())
 
 
 class LegacyGatewayTests(unittest.TestCase):
@@ -476,6 +503,10 @@ class ProductionArtifactTests(unittest.TestCase):
         self.assertNotIn("sk_live", compose)
         self.assertIn("neuralclear.gateway", compose)
         self.assertIn("caddy:2.11-alpine", compose)
+        self.assertIn("NEURALCLEAR_MODE: production", compose)
+        self.assertIn("NEURALCLEAR_KMS_ENV: test", compose)
+        self.assertNotIn("NEURALCLEAR_KMS_ENV: live", compose)
+        self.assertIn("NEURALCLEAR_REPLAY_STORE", compose)
         self.assertIn("127.0.0.1:9090:9090", compose)
         self.assertIn("reverse_proxy gateway:8080", caddy)
         self.assertIn("admin off", caddy)
@@ -489,9 +520,127 @@ class ProductionArtifactTests(unittest.TestCase):
         ):
             self.assertIn(name, alerts)
         gateway_source = (ROOT / "neuralclear" / "gateway.py").read_text(encoding="utf-8")
-        self.assertNotIn("stripe", gateway_source.lower())
-        self.assertNotIn("escrow_channel", gateway_source)
+        self.assertIn("cannot attach the fiat", gateway_source)
+        self.assertNotIn("sk_live", gateway_source)
+        self.assertNotIn("stripe.api", gateway_source.lower())
         self.assertIn("compare_digest", gateway_source)
+
+
+class ProductionSignerPathTests(ProductionStartupTests):
+    def _started(self) -> tuple[ClearingGateway, str]:
+        bootstrap = "nck_" + ("ef" * 16)
+        env = self._production(
+            NEURALCLEAR_BOOTSTRAP_API_KEY=bootstrap,
+            NEURALCLEAR_BOOTSTRAP_TENANT_NAME="primary",
+        )
+        self.assertEqual(main(["kms-init"], env), 0)
+        gateway = assemble_gateway(load_settings(env, command="serve")).start()
+        self.addCleanup(gateway.stop)
+        return gateway, bootstrap
+
+    def test_mockproof_is_refused_and_credits_are_refunded(self) -> None:
+        provider = ProviderAgent("agent.echo")
+
+        @provider.capability("echo.text", price=10, resource_estimate=1, resource_unit="calls")
+        def echo(payload: object) -> object:
+            return {"echo": payload}
+
+        server = ProviderHTTPServer(provider).start()
+        self.addCleanup(server.stop)
+        gateway, key = self._started()
+        opened = http_json(
+            "POST",
+            f"{gateway.url}/v1/accounts",
+            {"account": "owner.a", "deposit": 200},
+            key,
+        )
+        self.assertEqual(opened.get("_status"), 200)
+        http_json(
+            "POST",
+            f"{gateway.url}/v1/accounts",
+            {"account": "agent.echo", "deposit": 0},
+            key,
+        )
+        refused = http_json(
+            "POST",
+            f"{gateway.url}/v1/clear",
+            {
+                "buyer_owner": "owner.a",
+                "provider_url": server.url,
+                "capability": "echo.text",
+                "payload": {"msg": "hi"},
+            },
+            key,
+        )
+        self.assertEqual(refused.get("_status"), 400)
+        self.assertIn("MockProof is not allowed in production", str(refused.get("error")))
+        ledger = http_json("GET", f"{gateway.url}/v1/ledger", api_key=key)
+        self.assertEqual(ledger["balances"].get("owner.a"), 200)
+        self.assertEqual(ledger.get("escrow_total", 0), 0)
+
+    def test_receipt_replay_and_kid_revocation(self) -> None:
+        gateway, key = self._started()
+        http_json(
+            "POST",
+            f"{gateway.url}/v1/accounts",
+            {"account": "owner.a", "deposit": 100},
+            key,
+        )
+        http_json(
+            "POST",
+            f"{gateway.url}/v1/accounts",
+            {"account": "agent.a", "deposit": 0},
+            key,
+        )
+        channel = http_json(
+            "POST",
+            f"{gateway.url}/v1/channels",
+            {"buyer": "owner.a", "provider": "agent.a", "deposit": 20},
+            key,
+        )
+        http_json(
+            "POST",
+            f"{gateway.url}/v1/channels/{channel['channel_id']}/meter",
+            {"capability": "echo", "amount": 1, "payload_hash": "sha256:1"},
+            key,
+        )
+        receipt = http_json(
+            "POST",
+            f"{gateway.url}/v1/channels/{channel['channel_id']}/settle",
+            {},
+            key,
+        )
+        self.assertEqual(receipt.get("_status"), 200)
+        self.assertTrue(str(receipt.get("signature", "")).startswith("ed25519:"))
+        self.assertEqual(receipt.get("key_id"), "gateway-receipt")
+        receipt.pop("_status", None)
+        signer = gateway.hub._signer  # type: ignore[union-attr]
+        self.assertTrue(signer.verify(dict(receipt)))
+        with self.assertRaisesRegex(ProtocolError, "replayed nonce"):
+            signer.verify(dict(receipt))
+
+        channel_b = http_json(
+            "POST",
+            f"{gateway.url}/v1/channels",
+            {"buyer": "owner.a", "provider": "agent.a", "deposit": 10},
+            key,
+        )
+        later = http_json(
+            "POST",
+            f"{gateway.url}/v1/channels/{channel_b['channel_id']}/settle",
+            {},
+            key,
+        )
+        later.pop("_status", None)
+        signer.kms.revoke("gateway-receipt")
+        with self.assertRaisesRegex(ProtocolError, "revoked key"):
+            signer.verify(dict(later))
+
+    def test_hmac_hub_is_not_a_production_gateway(self) -> None:
+        hub = TenantHub(store_path=self.db, receipt_secret="unit-test-receipt-secret-value-32")
+        hub.create_tenant("Acme")
+        with self.assertRaises(GatewayStartupError):
+            ClearingGateway(hub=hub, production=True)
 
 
 if __name__ == "__main__":

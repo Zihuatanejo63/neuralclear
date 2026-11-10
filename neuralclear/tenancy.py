@@ -61,11 +61,16 @@ class TenantHub:
         fees: FeeSchedule | None = None,
         store_path: str | Path | None = None,
         receipt_secret: str | None = None,
+        signer: object | None = None,
     ) -> None:
         self.price_per_settlement_cents = price_per_settlement_cents
         self._fees = fees
-        self.receipt_secret = receipt_secret if receipt_secret is not None else DEV_RECEIPT_SECRET
-        self._signer = ReceiptSigner(self.receipt_secret)
+        if signer is not None:
+            self._signer = signer
+            self.receipt_secret = ""
+        else:
+            self.receipt_secret = receipt_secret if receipt_secret is not None else DEV_RECEIPT_SECRET
+            self._signer = ReceiptSigner(self.receipt_secret)
         self._tenants: dict[str, Tenant] = {}
         self._by_hash: dict[str, Tenant] = {}
         self.usage: dict[str, dict[str, int]] = {}

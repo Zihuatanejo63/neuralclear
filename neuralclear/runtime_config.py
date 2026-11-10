@@ -47,12 +47,16 @@ class GatewaySettings:
     host: str
     port: int
     db_path: str
-    receipt_secret: str
+    receipt_secret: str | None
     bootstrap_api_key: str | None
     bootstrap_tenant_name: str
     tls_mode: str
     tls_certfile: str | None
     tls_keyfile: str | None
+    kms_path: str | None = None
+    kms_env: str | None = None
+    replay_store: str | None = None
+    signing_key_id: str | None = None
 
 
 def secret_problem(value: str | None, *, min_length: int) -> str | None:
@@ -114,19 +118,49 @@ def load_settings(env: Mapping[str, str], *, command: str) -> GatewaySettings:
     if not db_path:
         raise GatewayStartupError("NEURALCLEAR_DB is required")
 
-    receipt = read_config_value(env, "NEURALCLEAR_RECEIPT_SECRET")
+    protocol_mode = env.get("NEURALCLEAR_MODE", "").strip().lower()
+    kms_path: str | None = None
+    kms_env: str | None = None
+    replay_store: str | None = None
+    signing_key_id: str | None = None
     if production:
-        if secret_problem(receipt, min_length=32):
+        if protocol_mode != "production":
+            raise GatewayStartupError("production gateway requires NEURALCLEAR_MODE=production")
+        if env.get("NEURALCLEAR_RECEIPT_SECRET", "").strip() or env.get(
+            "NEURALCLEAR_RECEIPT_SECRET_FILE", ""
+        ).strip():
             raise GatewayStartupError(
-                "NEURALCLEAR_RECEIPT_SECRET is missing, too short, or still a placeholder"
+                "HMAC receipt secret is not a production authenticator; unset NEURALCLEAR_RECEIPT_SECRET"
             )
-    elif receipt is None:
-        receipt = DEV_RECEIPT_SECRET
-    elif secret_problem(receipt, min_length=32):
-        raise GatewayStartupError(
-            "NEURALCLEAR_RECEIPT_SECRET is too short or still a placeholder"
-        )
-    assert receipt is not None
+        if env.get("NEURALCLEAR_SIGNING_SECRET", "").strip():
+            raise GatewayStartupError(
+                "NEURALCLEAR_SIGNING_SECRET is not a production authenticator; unset it"
+            )
+        kms_env = env.get("NEURALCLEAR_KMS_ENV", "").strip()
+        if kms_env == "live":
+            raise GatewayStartupError("in-tree PersistentKms cannot hold live signing keys")
+        if kms_env != "test":
+            raise GatewayStartupError("NEURALCLEAR_KMS_ENV must be test; live keys are refused")
+        kms_path = env.get("NEURALCLEAR_KMS_PATH", "").strip()
+        replay_store = env.get("NEURALCLEAR_REPLAY_STORE", "").strip()
+        signing_key_id = env.get("NEURALCLEAR_SIGNING_KEY_ID", "").strip()
+        if not kms_path:
+            raise GatewayStartupError("NEURALCLEAR_KMS_PATH is required")
+        if not replay_store:
+            raise GatewayStartupError("production requires NEURALCLEAR_REPLAY_STORE")
+        if secret_problem(signing_key_id, min_length=8):
+            raise GatewayStartupError("NEURALCLEAR_SIGNING_KEY_ID is missing or is a placeholder")
+        receipt = None
+    else:
+        if protocol_mode == "production":
+            raise GatewayStartupError("NEURALCLEAR_MODE=production requires NEURALCLEAR_ENV=production")
+        receipt = read_config_value(env, "NEURALCLEAR_RECEIPT_SECRET")
+        if receipt is None:
+            receipt = DEV_RECEIPT_SECRET
+        elif secret_problem(receipt, min_length=32):
+            raise GatewayStartupError(
+                "NEURALCLEAR_RECEIPT_SECRET is too short or still a placeholder"
+            )
 
     bootstrap = read_config_value(env, "NEURALCLEAR_BOOTSTRAP_API_KEY")
     if bootstrap is not None and secret_problem(bootstrap, min_length=24):
@@ -171,4 +205,8 @@ def load_settings(env: Mapping[str, str], *, command: str) -> GatewaySettings:
         tls_mode=tls_mode,
         tls_certfile=certfile,
         tls_keyfile=keyfile,
+        kms_path=kms_path,
+        kms_env=kms_env,
+        replay_store=replay_store,
+        signing_key_id=signing_key_id,
     )

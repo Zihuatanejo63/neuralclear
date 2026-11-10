@@ -58,7 +58,7 @@ class GatewayMetrics:
         with self._lock:
             self._auth[reason] = self._auth.get(reason, 0) + 1
 
-    def render(self, *, ready: bool) -> str:
+    def render(self, *, ready: bool, signing: str = "sandbox-hmac") -> str:
         with self._lock:
             requests = dict(self._requests)
             auth = dict(self._auth)
@@ -77,7 +77,9 @@ class GatewayMetrics:
             f"neuralclear_gateway_start_time_seconds {self.started:.3f}",
             "# HELP neuralclear_gateway_info Process info. fiat_settlement stays not_live in this build.",
             "# TYPE neuralclear_gateway_info gauge",
-            'neuralclear_gateway_info{version="0.4.0.dev0",fiat_settlement="not_live"} 1',
+            'neuralclear_gateway_info{version="0.4.0.dev0",fiat_settlement="not_live",signing="'
+            + _escape(signing)
+            + '"} 1',
             "# HELP neuralclear_http_requests_total HTTP requests by method, route template, status, and tenant.",
             "# TYPE neuralclear_http_requests_total counter",
         ]
