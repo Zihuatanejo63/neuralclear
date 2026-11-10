@@ -1,3 +1,5 @@
+# Developer sandbox. This is not the production clearing gateway.
+# Production: docker compose -f docker-compose.production.yml up --build
 services:
   neuralclear:
     build: .

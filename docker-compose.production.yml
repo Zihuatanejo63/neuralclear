@@ -1,0 +1,116 @@
+# Single-host production gateway.
+# Caddy terminates TLS with Let's Encrypt. The gateway speaks HTTP only on
+# the Compose network. No API keys, signing secrets, or certificates are
+# stored in this file. A later Kubernetes migration would be a separate change.
+#
+# Fiat settlement is not live. This stack does not run the FastAPI sandbox
+# and does not connect to Stripe, escrow, or escrow_channel.
+
+name: neuralclear-production
+
+x-logging: &json-logs
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+services:
+  gateway:
+    build: .
+    command:
+      - sh
+      - -c
+      - python -m neuralclear.gateway kms-init && exec python -m neuralclear.gateway serve
+    environment:
+      NEURALCLEAR_ENV: production
+      NEURALCLEAR_MODE: production
+      NEURALCLEAR_GATEWAY_HOST: 0.0.0.0
+      NEURALCLEAR_GATEWAY_PORT: "8080"
+      NEURALCLEAR_DB: /data/neuralclear-gateway.db
+      NEURALCLEAR_KMS_PATH: /data/gateway-kms.db
+      NEURALCLEAR_KMS_ENV: test
+      NEURALCLEAR_REPLAY_STORE: /data/gateway-replay.db
+      NEURALCLEAR_SIGNING_KEY_ID: gateway-receipt
+      NEURALCLEAR_TLS_MODE: terminator
+      NEURALCLEAR_BOOTSTRAP_API_KEY_FILE: /run/secrets/bootstrap_api_key
+      NEURALCLEAR_BOOTSTRAP_TENANT_NAME: ${NEURALCLEAR_BOOTSTRAP_TENANT_NAME:-primary}
+    secrets:
+      - bootstrap_api_key
+    volumes:
+      - gateway-data:/data
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen("http://127.0.0.1:8080/health/ready", timeout=3)
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    logging: *json-logs
+
+  caddy:
+    image: caddy:2.11-alpine
+    depends_on:
+      gateway:
+        condition: service_healthy
+    environment:
+      NEURALCLEAR_DOMAIN: ${NEURALCLEAR_DOMAIN:?set NEURALCLEAR_DOMAIN to a DNS name that points at this host}
+      NEURALCLEAR_ACME_EMAIL: ${NEURALCLEAR_ACME_EMAIL:?set NEURALCLEAR_ACME_EMAIL to a contact address for Let's Encrypt}
+      NEURALCLEAR_ACME_CA: ${NEURALCLEAR_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    restart: unless-stopped
+    logging: *json-logs
+
+  blackbox:
+    image: prom/blackbox-exporter:v0.25.0
+    environment:
+      NEURALCLEAR_DOMAIN: ${NEURALCLEAR_DOMAIN:?set NEURALCLEAR_DOMAIN to a DNS name that points at this host}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        sed "s|NEURALCLEAR_DOMAIN_PLACEHOLDER|$$NEURALCLEAR_DOMAIN|g" /etc/blackbox/blackbox.yml.template > /tmp/blackbox.yml
+        exec /bin/blackbox_exporter --config.file=/tmp/blackbox.yml --web.listen-address=:9115
+    volumes:
+      - ./deploy/blackbox/blackbox.yml.template:/etc/blackbox/blackbox.yml.template:ro
+    restart: unless-stopped
+    logging: *json-logs
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    depends_on:
+      - gateway
+      - caddy
+      - blackbox
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --web.listen-address=:9090
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./deploy/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+    logging: *json-logs
+
+secrets:
+  bootstrap_api_key:
+    file: ${NEURALCLEAR_BOOTSTRAP_API_KEY_FILE:?set NEURALCLEAR_BOOTSTRAP_API_KEY_FILE to a file outside the repository}
+
+volumes:
+  gateway-data:
+  caddy-data:
+  caddy-config:
+  prometheus-data:

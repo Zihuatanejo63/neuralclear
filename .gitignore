@@ -4,5 +4,8 @@ __pycache__/
 .env
 .env.local
 stripe.env
+/secrets/
+/backups/
+*.backup
 .pytest_cache/
 neuralclear.egg-info/

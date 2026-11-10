@@ -1,0 +1,32 @@
+# TLS terminator for a single host. Caddy obtains and renews Let's Encrypt
+# certificates into the caddy-data volume. No certificate or account key is
+# stored in this repository.
+#
+# /metrics on the public name is refused. Prometheus scrapes the gateway
+# directly, and Caddy's own metrics on :9080, inside the Compose network.
+{
+	email {$NEURALCLEAR_ACME_EMAIL}
+	acme_ca {$NEURALCLEAR_ACME_CA}
+	admin off
+	metrics
+}
+
+{$NEURALCLEAR_DOMAIN} {
+	log {
+		output stdout
+		format filter {
+			request>headers>X-NeuralClear-Api-Key delete
+			request>headers>X-Neuralclear-Api-Key delete
+			request>uri regexp nck_[A-Za-z0-9_-]+ REDACTED
+		}
+	}
+
+	@metrics path /metrics
+	respond @metrics 404
+
+	reverse_proxy gateway:8080
+}
+
+:9080 {
+	metrics /metrics
+}
