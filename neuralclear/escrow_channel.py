@@ -170,8 +170,9 @@ class ClearingLedger(EscrowLedger):
 
 
 class EscrowWorkflow:
-    def __init__(self, ledger):
+    def __init__(self, ledger, signer=None):
         self.ledger = ledger
+        self.signer = signer
 
     def prepare(self, quote, mandate, agent, capability):
         self.ledger.prepare_authorized(quote, mandate, agent, capability)
@@ -199,8 +200,9 @@ class EscrowWorkflow:
             provider_key_id,
             algorithm,
             domain="result",
+            signer=self.signer,
         )
-        verify_result(result, proof, transaction_id, provider_keys)
+        verify_result(result, proof, transaction_id, provider_keys, signer=self.signer)
         ledger.meter(transaction_id, units, result_hash)
         ledger.transition(transaction_id, "RESULT_DELIVERED")
         ledger.transition(transaction_id, "PROOF_VERIFIED")

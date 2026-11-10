@@ -410,7 +410,7 @@ class EscrowLedger:
             return deepcopy(self._chains[transaction_id])
 
     def receipt(
-        self, transaction_id: str, *, key: bytes, key_id: str, algorithm="HMAC-SHA256"
+        self, transaction_id: str, *, key: bytes, key_id: str, algorithm="HMAC-SHA256", signer=None
     ) -> dict:
         identifier(key_id)
         with self._lock:
@@ -433,7 +433,7 @@ class EscrowLedger:
                     "escrow": 0,
                 },
             )
-            return sign(body, key, key_id, algorithm)
+            return sign(body, key, key_id, algorithm, signer=signer)
 
     def snapshot(self) -> dict:
         with self._lock:

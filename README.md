@@ -308,7 +308,7 @@ NeuralClear is intended to compose with these protocols, not replace them.
 
 Current stage: V0.4 developer preview. Prototype only. Not production ready.
 
-In this tree, and covered by the unit test suite (218 tests):
+In this tree, and covered by the unit test suite (225 tests):
 
 - Sandbox credit clearing (`neuralclear.clearing`), the credit gateway, netting channels, multi-tenant workspaces, and API-key auth. These move `CC` and sign with HMAC-SHA256. They do not convert to fiat.
 - Opt-in `neuralclear-escrow-v1`: strict escrow, Ed25519 mandates and receipts, an append-only journal, an independent verifier, and a Stripe Connect channel (`neuralclear.escrow_channel`) whose minor units are the fiat record. Historical Stripe test-mode records live under `docs/p0-live-stripe-*`. They are not a license to charge real money and they do not show a completed bank payout. Live settlement is a design only: [stripe-live-settlement-design.md](docs/stripe-live-settlement-design.md).

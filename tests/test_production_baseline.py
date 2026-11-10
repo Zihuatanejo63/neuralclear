@@ -70,7 +70,7 @@ class ProductionFailClosedTests(unittest.TestCase):
                 environment="test",
             )
         sandbox = LocalKms(environment="test")
-        with self.assertRaisesRegex(ProtocolError, "live environment"):
+        with self.assertRaisesRegex(ProtocolError, "persistent KMS"):
             assert_production_signer(sandbox)
 
     def test_images_and_env_example_do_not_bake_keys(self):

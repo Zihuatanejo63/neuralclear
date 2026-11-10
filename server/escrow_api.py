@@ -67,10 +67,17 @@ def create_escrow_app(
     if not write_key:
         raise ValueError("explicit write key required")
     resolved_mode = mode or os.environ.get("NEURALCLEAR_MODE", "sandbox")
+    if resolved_mode not in {"sandbox", "production"}:
+        raise ProtocolError("unknown NEURALCLEAR_MODE")
     if resolved_mode == "production":
-        assert_escrow_app_ready(write_key=write_key, signer=signer, algorithm=algorithm)
+        assert_escrow_app_ready(
+            write_key=write_key,
+            signer=signer,
+            algorithm=algorithm,
+            receipt_key=receipt_key,
+        )
     app = FastAPI(title="NeuralClear escrow-v1", version=VERSION)
-    workflow = EscrowWorkflow(ledger)
+    workflow = EscrowWorkflow(ledger, signer=signer)
 
     def failure(code, status=400):
         return JSONResponse(
@@ -162,7 +169,11 @@ def create_escrow_app(
     def receipt(receipt_id: str):
         return {
             "receipt": ledger.receipt(
-                receipt_id, key=receipt_key, key_id=receipt_key_id, algorithm=algorithm
+                receipt_id,
+                key=b"" if signer is not None else receipt_key,
+                key_id=receipt_key_id,
+                algorithm="Ed25519" if signer is not None else algorithm,
+                signer=signer,
             ),
             "chain": ledger.chain(receipt_id),
         }

@@ -22,6 +22,7 @@ class Receipt:
     receiver: str | None = None
     key_id: str = ""
     nonce: str = ""
+    signed_at: int = 0
 
     def to_json(self) -> dict[str, object]:
         return asdict(self)

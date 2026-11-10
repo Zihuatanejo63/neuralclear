@@ -9,19 +9,22 @@ FIELDS = set(
 )
 
 
-def issue_mandate(body, key, key_id, algorithm="HMAC-SHA256"):
-    return sign(dict(body, profile=PROFILE), key, key_id, algorithm, domain="mandate")
+def issue_mandate(body, key, key_id, algorithm="HMAC-SHA256", *, signer=None):
+    return sign(dict(body, profile=PROFILE), key, key_id, algorithm, domain="mandate", signer=signer)
 
 
-def validate_mandate(mandate, trusted_keys):
+def validate_mandate(mandate, trusted_keys, *, signer=None):
     """trusted_keys[key_id] = (owner, algorithm, public-or-shared-key)."""
     try:
-        if set(mandate) != FIELDS or mandate["profile"] != PROFILE:
+        present = set(mandate)
+        if not FIELDS <= present <= FIELDS | {"nonce", "signed_at"} or mandate["profile"] != PROFILE:
             raise ProtocolError("invalid mandate fields")
         owner, algorithm, key = trusted_keys[mandate["key_id"]]
         if owner != mandate["owner"]:
             raise ProtocolError("mandate owner/key mismatch")
-        verify_signature(mandate, {mandate["key_id"]: (algorithm, key)}, domain="mandate")
+        verify_signature(
+            mandate, {mandate["key_id"]: (algorithm, key)}, domain="mandate", signer=signer
+        )
         for name in ("mandate_id", "owner", "agent", "currency"):
             if not isinstance(mandate[name], str) or not mandate[name]:
                 raise ProtocolError("invalid mandate identifier")

@@ -28,6 +28,13 @@ def assert_operator_secret(value: object, label: str) -> None:
         raise ProtocolError(f"{label} is missing or is a development default")
 
 
+def require_known_mode() -> str:
+    mode = os.environ.get("NEURALCLEAR_MODE", "sandbox")
+    if mode not in {"sandbox", "production"}:
+        raise ProtocolError("unknown NEURALCLEAR_MODE")
+    return mode
+
+
 def assert_production_signer(signer: object) -> None:
     if signer is None:
         raise ProtocolError("production requires an explicit KMS signer")
@@ -38,9 +45,13 @@ def assert_production_signer(signer: object) -> None:
         or getattr(signer, "REFERENCE_IMPLEMENTATION", False)
     ):
         raise ProtocolError("reference Ed25519 signer is not allowed in production")
+    if type(signer).__name__ == "LocalKms" or not getattr(signer, "persistent", False):
+        raise ProtocolError("production requires a persistent KMS, not an in-process LocalKms")
     algorithm = getattr(signer, "algorithm", None)
     if algorithm != "Ed25519":
         raise ProtocolError("HMAC is not a production receipt authenticator")
+    if os.environ.get("NEURALCLEAR_KMS_ENV") != "live":
+        raise ProtocolError("NEURALCLEAR_KMS_ENV must be live")
     if getattr(signer, "environment", None) != "live":
         raise ProtocolError("production KMS must be the live environment")
 
@@ -51,7 +62,9 @@ def assert_production_proof(proof_name: str) -> None:
 
 
 def assert_replay_store_configured() -> None:
-    if not os.environ.get("NEURALCLEAR_REPLAY_STORE"):
+    from .replay import open_replay_store
+
+    if open_replay_store() is None:
         raise ProtocolError("production requires NEURALCLEAR_REPLAY_STORE")
 
 
@@ -60,15 +73,24 @@ def assert_reference_server_ready(*, api_keys: list[str], signer: object, proof_
         raise ProtocolError("API key is missing or is a development default")
     for index, key in enumerate(api_keys):
         assert_operator_secret(key, f"API key {index}")
-    assert_production_signer(signer)
     assert_production_proof(proof_name)
+    assert_production_signer(signer)
     assert_replay_store_configured()
 
 
-def assert_escrow_app_ready(*, write_key: object, signer: object, algorithm: str) -> None:
+def assert_escrow_app_ready(
+    *,
+    write_key: object,
+    signer: object,
+    algorithm: str,
+    receipt_key: object = None,
+    proof_name: str = "SIGNED_RESULT",
+) -> None:
     assert_operator_secret(write_key if isinstance(write_key, str) else "", "write API key")
     if algorithm != "Ed25519":
         raise ProtocolError("HMAC is not a production receipt authenticator")
+    assert_production_proof(proof_name)
     assert_production_signer(signer)
-    assert_production_proof("SIGNED_RESULT")
+    if isinstance(receipt_key, (bytes, bytearray)) and len(receipt_key) > 0:
+        raise ProtocolError("raw receipt_key is not a production authenticator")
     assert_replay_store_configured()

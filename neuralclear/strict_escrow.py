@@ -96,9 +96,8 @@ class StrictEscrowLedger(EscrowLedger):
         for signature in signatures:
             if not isinstance(signature, dict):
                 raise ProtocolError("invalid decision signature")
-            if {
-                k: v for k, v in signature.items() if k not in {"algorithm", "key_id", "signature"}
-            } != decision:
+            ignored = {"algorithm", "key_id", "signature", "nonce", "signed_at"}
+            if {k: v for k, v in signature.items() if k not in ignored} != decision:
                 raise ProtocolError("signature decision mismatch")
             verify_signature(signature, self._arbitrators, domain="decision")
             approved.add(signature["key_id"])

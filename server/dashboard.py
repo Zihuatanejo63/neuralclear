@@ -8,7 +8,8 @@ except ModuleNotFoundError:  # pragma: no cover - routes register only when Fast
     HTMLResponse = None
 
 
-def register_dashboard_routes(app, service, registry_store) -> None:
+def register_dashboard_routes(app, service, registry_store, authorize=None) -> None:
+    from fastapi import Header
     def page(title: str, rows: list[str]) -> str:
         body = "\n".join(rows) or "<p>Empty.</p>"
         return (
@@ -35,7 +36,9 @@ def register_dashboard_routes(app, service, registry_store) -> None:
         )
 
     @app.get("/dashboard/transactions", response_class=HTMLResponse)
-    def dashboard_transactions():
+    def dashboard_transactions(x_neuralclear_api_key: str | None = Header(default=None)):
+        if authorize is not None:
+            authorize(x_neuralclear_api_key)
         rows = [
             f"<tr><td><code>{escape(tx.transaction_id)}</code></td>"
             f"<td>{escape(tx.sender)}</td><td>{escape(tx.receiver)}</td>"
@@ -52,7 +55,9 @@ def register_dashboard_routes(app, service, registry_store) -> None:
         )
 
     @app.get("/dashboard/receipts", response_class=HTMLResponse)
-    def dashboard_receipts():
+    def dashboard_receipts(x_neuralclear_api_key: str | None = Header(default=None)):
+        if authorize is not None:
+            authorize(x_neuralclear_api_key)
         rows = [
             f"<tr><td><code>{escape(receipt.receipt_id)}</code></td>"
             f"<td><code>{escape(receipt.transaction_id)}</code></td>"
@@ -70,7 +75,9 @@ def register_dashboard_routes(app, service, registry_store) -> None:
         )
 
     @app.get("/dashboard/disputes", response_class=HTMLResponse)
-    def dashboard_disputes():
+    def dashboard_disputes(x_neuralclear_api_key: str | None = Header(default=None)):
+        if authorize is not None:
+            authorize(x_neuralclear_api_key)
         rows = [
             f"<tr><td><code>{escape(str(dispute['dispute_id']))}</code></td>"
             f"<td><code>{escape(str(dispute['transaction_id']))}</code></td>"
@@ -87,7 +94,9 @@ def register_dashboard_routes(app, service, registry_store) -> None:
         )
 
     @app.get("/dashboard/balances", response_class=HTMLResponse)
-    def dashboard_balances():
+    def dashboard_balances(x_neuralclear_api_key: str | None = Header(default=None)):
+        if authorize is not None:
+            authorize(x_neuralclear_api_key)
         snapshot = service.balances_snapshot()
         balances = snapshot["balances"]
         rows = [

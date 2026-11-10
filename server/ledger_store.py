@@ -265,6 +265,7 @@ class ReferenceClearingService:
                 signature=str(receipt.get("signature", "")),
                 key_id=str(receipt.get("key_id", "")),
                 nonce=str(receipt.get("nonce", "")),
+                signed_at=int(receipt.get("signed_at") or 0),
                 state=str(receipt["state"]),
                 created_at=str(receipt["created_at"]),
             )

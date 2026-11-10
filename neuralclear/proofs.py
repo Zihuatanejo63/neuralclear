@@ -22,6 +22,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Protocol
@@ -78,6 +79,8 @@ class SignedResultProof:
     digest: str = ""
     signed_at: str = ""
     signature: str = ""
+    nonce: str = ""
+    signed_at_unix: int = 0
     scheme: str = HMACKey.scheme
     proof_level: ProofLevel = field(default=ProofLevel.SIGNED_RESULT)
     _verifier: HMACKey | None = field(default=None, repr=False, compare=False)
@@ -87,20 +90,47 @@ class SignedResultProof:
     def sign(
         cls, signer: HMACKey, agent_id: str, capability: str, output: object
     ) -> "SignedResultProof":
+        import secrets
+        import time
+
+        from .replay import record_replay, replay_store_path
+
         digest = output_digest(output)
         signed_at = datetime.now(timezone.utc).isoformat()
-        message = cls._message(agent_id, capability, digest, signed_at)
-        return cls(
+        nonce = ""
+        signed_at_unix = 0
+        if replay_store_path() or os.environ.get("NEURALCLEAR_MODE") == "production":
+            nonce = secrets.token_hex(16)
+            signed_at_unix = int(time.time())
+        message = cls._message(agent_id, capability, digest, signed_at, nonce, signed_at_unix)
+        proof = cls(
             agent_id=agent_id,
             capability=capability,
             digest=digest,
             signed_at=signed_at,
             signature=signer.sign(message),
+            nonce=nonce,
+            signed_at_unix=signed_at_unix,
         )
+        if nonce:
+            record_replay(
+                {"nonce": nonce, "signed_at": signed_at_unix}, "issue", "hmac-result-proof"
+            )
+        return proof
 
     @staticmethod
-    def _message(agent_id: str, capability: str, digest: str, signed_at: str) -> str:
-        return "|".join([agent_id, capability, digest, signed_at])
+    def _message(
+        agent_id: str,
+        capability: str,
+        digest: str,
+        signed_at: str,
+        nonce: str = "",
+        signed_at_unix: int = 0,
+    ) -> str:
+        parts = [agent_id, capability, digest, signed_at]
+        if nonce:
+            parts.extend([nonce, str(signed_at_unix)])
+        return "|".join(parts)
 
     # -- verification ------------------------------------------------------
     def bind_verifier(self, verifier: HMACKey) -> "SignedResultProof":
@@ -110,8 +140,17 @@ class SignedResultProof:
         return self
 
     def verify_with(self, verifier: HMACKey) -> bool:
-        message = self._message(self.agent_id, self.capability, self.digest, self.signed_at)
-        return verifier.verify(message, self.signature)
+        nonce = getattr(self, "nonce", "")
+        unix = getattr(self, "signed_at_unix", 0)
+        message = self._message(
+            self.agent_id, self.capability, self.digest, self.signed_at, nonce, unix
+        )
+        valid = verifier.verify(message, self.signature)
+        if valid and nonce:
+            from .replay import record_replay
+
+            record_replay({"nonce": nonce, "signed_at": unix}, "verify", "hmac-result-proof")
+        return valid
 
     def verify(self) -> bool:
         if self._verifier is None:
@@ -142,14 +181,16 @@ class SignedResultProof:
 # ---------------------------------------------------------------------------
 
 
-def verify_result(result, proof, transaction_id, keys):
+def verify_result(result, proof, transaction_id, keys, *, signer=None):
+    required = {"transaction_id", "result_hash", "algorithm", "key_id", "signature"}
+    allowed = required | {"nonce", "signed_at"}
     if (
-        set(proof) != {"transaction_id", "result_hash", "algorithm", "key_id", "signature"}
+        not required <= set(proof) <= allowed
         or proof["transaction_id"] != transaction_id
         or proof["result_hash"] != hashlib.sha256(canonical(result)).hexdigest()
     ):
         raise ProtocolError("result proof mismatch")
-    return verify_signature(proof, keys, domain="result")
+    return verify_signature(proof, keys, domain="result", signer=signer)
 
 
 class TEEVerifier(Protocol):

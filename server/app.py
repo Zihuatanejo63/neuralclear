@@ -7,7 +7,7 @@ from uuid import uuid4
 from neuralclear import SettlementCredit, SpendingMandate
 from neuralclear.core import ProtocolError
 from neuralclear.kms import get_process_kms
-from neuralclear.production_guard import assert_reference_server_ready
+from neuralclear.production_guard import assert_reference_server_ready, require_known_mode
 from neuralclear.secretcmp import const_equal
 
 from .dashboard import register_dashboard_routes
@@ -16,6 +16,7 @@ from .registry import manifest_for
 from .registry_store import build_default_registry_store
 from .routes_registry import register_registry_routes
 
+require_known_mode()
 service = ReferenceClearingService(storage_path=os.environ.get("NEURALCLEAR_DB"))
 registry_store = build_default_registry_store()
 
@@ -184,7 +185,12 @@ if app is not None:
             _handle_error(exc)
 
     @app.post("/neuralclear/settlements")
-    def create_settlement(body: dict[str, object]) -> dict[str, object]:
+    def create_settlement(
+        body: dict[str, object],
+        x_neuralclear_api_key: str | None = Header(default=None),
+    ) -> dict[str, object]:
+        if _production():
+            _authorize_read(x_neuralclear_api_key)
         try:
             return service.get_receipt_for_transaction(str(body["transaction_id"]))
         except (KeyError, ProtocolError) as exc:
@@ -222,11 +228,19 @@ if app is not None:
         return service.list_receipts()
 
     @app.get("/neuralclear/balances")
-    def get_balances() -> dict[str, object]:
+    def get_balances(
+        x_neuralclear_api_key: str | None = Header(default=None),
+    ) -> dict[str, object]:
+        if _production():
+            _authorize_read(x_neuralclear_api_key)
         return service.balances_snapshot()
 
+    def _authorize_sensitive_read(provided: str | None) -> None:
+        if _production():
+            _authorize_read(provided)
+
     register_registry_routes(app, registry_store, _handle_error, write_protected)
-    register_dashboard_routes(app, service, registry_store)
+    register_dashboard_routes(app, service, registry_store, authorize=_authorize_sensitive_read)
 
     if _production():
         assert_reference_server_ready(
