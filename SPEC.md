@@ -265,16 +265,18 @@ The draft HTTP API is described in `OPENAPI.yaml` and includes quote, task, sett
 
 ## 13. Security Notes
 
-Prototype limitations:
+Limitations of the legacy prototype described in sections 0–14:
 
 - no real custody
-- no real payment execution
-- no real signature verification
-- no replay protection
+- no production payment execution (internal credits only on this profile)
+- commercial and legacy receipts use symmetric HMAC-SHA256; this profile does not verify Ed25519
+- replay protection on task submission is limited to idempotency keys
 - no production dispute resolution
 - no real TEE attestation
 - no real ZK proof verification
 - no compliance, KYC, AML, sanctions, or tax controls
+
+Appendix A is a separate opt-in profile. It adds Ed25519 verification, an append-only journal, and a Stripe channel adapter. It is still not custody, not legal escrow, and not TEE or ZK attestation. The tree-wide limits are in `SECURITY.md`.
 
 Production implementations must treat manifests, quotes, mandates, task payloads, proofs, receipts, and dispute evidence as security-sensitive records.
 

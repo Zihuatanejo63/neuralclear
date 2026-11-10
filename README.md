@@ -24,7 +24,7 @@ Agent ecosystems need more than message passing. A buyer agent needs to know:
 - how balances move after settlement
 - how disputes, refunds, slashing, and expiration are represented
 
-NeuralClear is a small Python protocol prototype for those clearing semantics. Actual payment can be handled by adapters such as internal credits, Stripe, stablecoins, x402-style HTTP payment, or other rails.
+NeuralClear is a small Python protocol prototype for those clearing semantics. Internal credits settle inside the prototype. An opt-in Stripe channel adapter exists for test-mode processor calls. Stablecoin and x402 adapters are not implemented.
 
 ## Core Flow
 
@@ -196,7 +196,7 @@ buyer.connect_remote("http://provider.example.com")  # fetches manifest, ready t
 - `FeePolicy` / `FeeSchedule` — the protocol revenue engine: basis-point fee + flat + minimum, with per-capability overrides. Every released transaction pays the fee into `ledger.fee_pool`.
 - `Dispute` + `ClearingService.open_dispute() / resolve_dispute()` — evidence-carrying disputes with four resolutions: `refund`, `slash`, `split`, `settle`.
 - `EventBus` — `transaction.held`, `receipt.created`, `dispute.opened`, `dispute.resolved`. A hosted deployment swaps handlers for webhook delivery.
-- `ReceiptSigner` — HMAC-SHA256 signed receipts (stdlib), verifiable by any party holding the secret; interface ready for ed25519.
+- `ReceiptSigner` — HMAC-SHA256 signed receipts (stdlib), verifiable by any party holding the secret. Ed25519 is a separate opt-in escrow-v1 path, not this signer.
 
 `neuralclear.reputation` closes the trust loop:
 
@@ -280,10 +280,19 @@ NeuralClear is intended to compose with these protocols, not replace them.
 
 ## Current Status
 
-Current stage: V0.4 developer preview. The clearing gateway (`neuralclear.gateway`), netting channels, multi-tenant workspaces (`neuralclear.tenancy`), API-key auth, and the commercial clearing layer are implemented and covered by the test suite (127 tests).
+Current stage: V0.4 developer preview. Prototype only. Not production ready.
 
-Next milestone: hosted gateway deployment.
+In this tree, and covered by the unit test suite (200 tests):
 
-Prototype only. Not production ready.
+- Commercial credit clearing (`neuralclear.clearing`), the clearing gateway, netting channels, multi-tenant workspaces, and API-key auth. These move internal credits and sign with HMAC-SHA256.
+- Opt-in `neuralclear-escrow-v1`: strict escrow, Ed25519 mandates and receipts, an append-only journal, an independent verifier, and a Stripe channel adapter (`neuralclear.escrow_channel`). Historical Stripe test-mode records live under `docs/p0-live-stripe-*`. They are not a license to charge real money and they do not show a completed Connect payout.
 
-This repository does not implement real custody, real payment execution, real TEE attestation, real ZK verification, identity recovery, compliance, finality guarantees, or adversarial dispute resolution. Treat it as a protocol sketch with executable tests.
+Not in this tree:
+
+- x402 adapter
+- Stablecoin transfers (`StablecoinChannel` is a design-only port)
+- Production custody, compliance, and safeguarded client funds
+- TEE attestation and ZK proof verification (interfaces only)
+- Identity recovery, finality guarantees, and adversarial dispute resolution
+
+Next milestone: hosted gateway deployment, still without taking custody.
