@@ -45,10 +45,20 @@ def _default_mandate() -> SpendingMandate:
     )
 
 
+def _redact_error(exc: BaseException) -> str:
+    from neuralclear.kms import redact_process_secrets
+    import logging
+
+    redacted = redact_process_secrets(str(exc))
+    logging.getLogger("neuralclear").warning("protocol error: %s", redacted)
+    return redacted
+
+
 def _handle_error(exc: ProtocolError) -> None:
+    detail = _redact_error(exc)
     if HTTPException is None:
-        raise exc
-    raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise ProtocolError(detail) from None
+    raise HTTPException(status_code=400, detail=detail) from None
 
 
 def _production() -> bool:
@@ -69,13 +79,25 @@ def _unauthorized() -> None:
     raise HTTPException(status_code=401, detail="invalid or missing API key")
 
 
+def _dev_material(value: object) -> bool:
+    from neuralclear.production_guard import DEV_MATERIAL
+
+    return not isinstance(value, str) or not value or value in DEV_MATERIAL or value.startswith("dev_neuralclear")
+
+
 def _authorize_read(provided: str | None) -> None:
+    if _production() and (_dev_material(provided) or _dev_material(_read_api_key()) or _dev_material(_write_api_key())):
+        _unauthorized()
+        return
     if const_equal(provided, _read_api_key()) or const_equal(provided, _write_api_key()):
         return
     _unauthorized()
 
 
 def _authorize_write(provided: str | None) -> None:
+    if _production() and (_dev_material(provided) or _dev_material(_write_api_key())):
+        _unauthorized()
+        return
     if const_equal(provided, _write_api_key()):
         return
     if const_equal(provided, _read_api_key()) and _read_api_key() != _write_api_key():
@@ -243,8 +265,11 @@ if app is not None:
     register_dashboard_routes(app, service, registry_store, authorize=_authorize_sensitive_read)
 
     if _production():
+        from neuralclear.kms import install_persistent_kms
+
+        install_persistent_kms()
         assert_reference_server_ready(
             api_keys=[_read_api_key(), _write_api_key()],
             signer=get_process_kms(),
-            proof_name="MockProof",
+            proof_name="SIGNED_RESULT",
         )

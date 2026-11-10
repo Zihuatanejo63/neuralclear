@@ -13,7 +13,7 @@ def issue_mandate(body, key, key_id, algorithm="HMAC-SHA256", *, signer=None):
     return sign(dict(body, profile=PROFILE), key, key_id, algorithm, domain="mandate", signer=signer)
 
 
-def validate_mandate(mandate, trusted_keys, *, signer=None):
+def validate_mandate(mandate, trusted_keys, *, signer=None, replay=True):
     """trusted_keys[key_id] = (owner, algorithm, public-or-shared-key)."""
     try:
         present = set(mandate)
@@ -23,7 +23,11 @@ def validate_mandate(mandate, trusted_keys, *, signer=None):
         if owner != mandate["owner"]:
             raise ProtocolError("mandate owner/key mismatch")
         verify_signature(
-            mandate, {mandate["key_id"]: (algorithm, key)}, domain="mandate", signer=signer
+            mandate,
+            {mandate["key_id"]: (algorithm, key)},
+            domain="mandate",
+            signer=signer,
+            replay=replay,
         )
         for name in ("mandate_id", "owner", "agent", "currency"):
             if not isinstance(mandate[name], str) or not mandate[name]:

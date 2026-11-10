@@ -296,7 +296,6 @@ class ReferenceClearingService:
         if kms is None:
             raise ProtocolError("production KMS is not configured")
         verify_spending_mandate(mandate, kms, now=int(datetime.now(timezone.utc).timestamp()))
-        raise ProtocolError("MockProof is not allowed in production")
 
     def _save_idempotency_record(
         self,

@@ -39,7 +39,7 @@ class StrictEscrowLedger(EscrowLedger):
             raise ProtocolError("strict profile requires signed result; mock/TEE/ZK unsupported")
         provider = self.get(transaction_id)["provider"]
         keys = self._providers.get(provider, {})
-        verify_result(result, proof, transaction_id, keys)
+        verify_result(result, proof, transaction_id, keys, signer=self._signer)
         entry = super().meter(transaction_id, units, proof["result_hash"])
         self._deliveries[entry["hash"]] = deepcopy(proof)
         return entry
@@ -99,7 +99,7 @@ class StrictEscrowLedger(EscrowLedger):
             ignored = {"algorithm", "key_id", "signature", "nonce", "signed_at"}
             if {k: v for k, v in signature.items() if k not in ignored} != decision:
                 raise ProtocolError("signature decision mismatch")
-            verify_signature(signature, self._arbitrators, domain="decision")
+            verify_signature(signature, self._arbitrators, domain="decision", signer=self._signer)
             approved.add(signature["key_id"])
         if len(approved) < self._quorum:
             raise ProtocolError("decision quorum not met")

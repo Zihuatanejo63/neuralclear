@@ -61,6 +61,7 @@ class EscrowLedger:
         mandate_keys=None,
         clock=time.time,
         wait_for_writer=False,
+        signer=None,
     ) -> None:
         self.currency = identifier(currency)
         self._balances = {}
@@ -71,6 +72,7 @@ class EscrowLedger:
         self._lock = RLock()
         self._mandates, self._revoked, self._authorizations = {}, {}, {}
         self._mandate_keys = deepcopy(mandate_keys)
+        self._signer = signer
         self._clock, self._replay_time = clock, None
         self._journal = None
         self._broken = False
@@ -119,10 +121,11 @@ class EscrowLedger:
         return self.transition(transaction_id, "TASK_RUNNING")
 
     @mutation
-    def register_mandate(self, mandate):
+    def register_mandate(self, mandate, *, signer=None):
         from .mandates import validate_mandate
 
-        validate_mandate(mandate, self._mandate_keys or {})
+        chosen = self._signer if signer is None else signer
+        validate_mandate(mandate, self._mandate_keys or {}, signer=chosen)
         mid = mandate["mandate_id"]
         if mid in self._mandates and self._mandates[mid] != mandate:
             raise ProtocolError("mandate id conflict")
@@ -161,7 +164,7 @@ class EscrowLedger:
         mandate = self._mandates.get(auth["mandate_id"])
         if mandate is None:
             raise ProtocolError("unknown mandate")
-        validate_mandate(mandate, self._mandate_keys or {})
+        validate_mandate(mandate, self._mandate_keys or {}, signer=self._signer, replay=False)
         record = self._escrows[transaction_id]
         if auth["mandate_id"] in self._revoked:
             raise ProtocolError("mandate revoked")
@@ -412,6 +415,8 @@ class EscrowLedger:
     def receipt(
         self, transaction_id: str, *, key: bytes, key_id: str, algorithm="HMAC-SHA256", signer=None
     ) -> dict:
+        if signer is None:
+            signer = self._signer
         identifier(key_id)
         with self._lock:
             if self._broken:

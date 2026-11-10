@@ -19,6 +19,20 @@ VERSION = "1"
 HEADERS = {"X-NeuralClear-Profile": PROFILE, "X-NeuralClear-Version": VERSION}
 
 
+def _production_key_ok(provided, expected, mode) -> bool:
+    from neuralclear.kms import redact_sensitive
+    from neuralclear.production_guard import DEV_MATERIAL
+    import logging
+
+    if mode == "production" and (not isinstance(expected, str) or expected in DEV_MATERIAL or expected.startswith("dev_neuralclear")):
+        logging.getLogger("neuralclear").warning("%s", redact_sensitive("development API key refused", [expected or ""]))
+        return False
+    if mode == "production" and (not isinstance(provided, str) or provided in DEV_MATERIAL or provided.startswith("dev_neuralclear")):
+        logging.getLogger("neuralclear").warning("%s", redact_sensitive("development API key refused", [str(provided or "")]))
+        return False
+    return const_equal(provided, expected)
+
+
 def error_code(message):
     mappings = [
         ("quote expired", "QUOTE_EXPIRED"),
@@ -76,6 +90,14 @@ def create_escrow_app(
             algorithm=algorithm,
             receipt_key=receipt_key,
         )
+        from neuralclear.kms import set_process_kms
+        from neuralclear.production_guard import assert_operator_secret
+
+        assert_operator_secret(write_key, "write API key")
+        set_process_kms(signer)
+        ledger._signer = signer
+    elif signer is not None:
+        ledger._signer = signer
     app = FastAPI(title="NeuralClear escrow-v1", version=VERSION)
     workflow = EscrowWorkflow(ledger, signer=signer)
 
@@ -96,7 +118,7 @@ def create_escrow_app(
                 return failure("UNSUPPORTED_VERSION", 406)
         provided_key = request.headers.get("X-NeuralClear-API-Key")
         needs_key = resolved_mode == "production" or request.method != "GET"
-        if needs_key and not const_equal(provided_key, write_key):
+        if needs_key and not _production_key_ok(provided_key, write_key, resolved_mode):
             return failure("UNAUTHORIZED", 401)
         if request.method == "POST":
             try:
@@ -117,7 +139,11 @@ def create_escrow_app(
 
     @app.exception_handler(ProtocolError)
     async def protocol_error(request, exc):
-        code = error_code(str(exc))
+        from neuralclear.kms import redact_process_secrets
+        import logging
+
+        logging.getLogger("neuralclear").warning("protocol error: %s", redact_process_secrets(str(exc)))
+        code = error_code(redact_process_secrets(str(exc)))
         return failure(code, 409 if code in {"CONFLICT", "INVALID_STATE_TRANSITION"} else 400)
 
     from fastapi.exceptions import RequestValidationError

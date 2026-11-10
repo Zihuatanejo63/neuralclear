@@ -17,13 +17,13 @@ _OPEN: dict[str, "ReplayStore"] = {}
 
 
 class ReplayStore:
-    def __init__(self, path: str | Path, *, skew_seconds: int = 30, ttl_seconds: int = 30) -> None:
+    def __init__(self, path: str | Path, *, skew_seconds: int = 30, ttl_seconds: int = 86_400) -> None:
         if skew_seconds < 0 or ttl_seconds <= 0:
             raise ProtocolError("invalid replay window")
         self.skew_seconds = skew_seconds
         self.ttl_seconds = ttl_seconds
         self.path = str(path)
-        self._db = sqlite3.connect(self.path, isolation_level=None)
+        self._db = sqlite3.connect(self.path, isolation_level=None, check_same_thread=False)
         self._db.execute(
             "CREATE TABLE IF NOT EXISTS seen_nonces ("
             "nonce TEXT NOT NULL, phase TEXT NOT NULL, message_id TEXT NOT NULL, "

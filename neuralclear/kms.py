@@ -186,14 +186,16 @@ class PersistentKms:
     reference_implementation = False
 
     def __init__(self, path: str, *, environment: str) -> None:
-        if environment not in {"test", "live"}:
-            raise ProtocolError("kms environment must be test or live")
+        if environment == "live":
+            raise ProtocolError("in-tree PersistentKms cannot hold live signing keys")
+        if environment != "test":
+            raise ProtocolError("in-tree PersistentKms environment must be test")
         configured = os.environ.get("NEURALCLEAR_KMS_ENV")
         if configured and configured != environment:
             raise ProtocolError("NEURALCLEAR_KMS_ENV does not match KMS environment")
         self.environment = environment
         self.path = path
-        self._db = sqlite3.connect(path)
+        self._db = sqlite3.connect(path, check_same_thread=False)
         self._db.execute(
             "CREATE TABLE IF NOT EXISTS kms_keys ("
             "kid TEXT PRIMARY KEY, purpose TEXT NOT NULL, environment TEXT NOT NULL, "
@@ -293,6 +295,36 @@ class PersistentKms:
             revoked=bool(row[7]),
             roles=frozenset(row[8].split(",")) if row[8] else frozenset(),
         )
+
+
+def redact_process_secrets(text: str) -> str:
+    """Redact configured secret env values before an error is logged or returned."""
+    names = (
+        "NEURALCLEAR_API_KEY",
+        "NEURALCLEAR_READ_API_KEY",
+        "NEURALCLEAR_WRITE_API_KEY",
+        "NEURALCLEAR_SIGNING_SECRET",
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET",
+    )
+    materials = [value for name in names if (value := os.environ.get(name))]
+    return redact_sensitive(text, materials)
+
+
+def install_persistent_kms(path: str | None = None) -> PersistentKms:
+    """Operator entry point: open the on-disk KMS and install it for this process.
+
+    ``NEURALCLEAR_KMS_PATH`` and ``NEURALCLEAR_KMS_ENV`` are required. The
+    in-tree adapter rejects environment ``live``. Do not place live signing
+    keys in this file.
+    """
+    path = path or os.environ.get("NEURALCLEAR_KMS_PATH")
+    environment = os.environ.get("NEURALCLEAR_KMS_ENV")
+    if not path or not environment:
+        raise ProtocolError("NEURALCLEAR_KMS_PATH and NEURALCLEAR_KMS_ENV are required")
+    kms = PersistentKms(path, environment=environment)
+    set_process_kms(kms)
+    return kms
 
 
 def set_process_kms(kms: LocalKms | PersistentKms | None) -> None:

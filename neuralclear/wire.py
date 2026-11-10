@@ -72,13 +72,13 @@ def sign(body: dict, key: bytes, key_id: str, algorithm="HMAC-SHA256", *, domain
     if "signature" in body or not isinstance(key_id, str) or not key_id:
         raise ProtocolError("invalid signature envelope")
     signer = _kms_signer(signer)
+    if _mode() == "production" and (signer is None or not getattr(signer, "persistent", False)):
+        raise ProtocolError("production signing requires a persistent KMS signer")
     stamped = dict(body)
     if signer is not None:
         algorithm = "Ed25519"
         stamped.setdefault("nonce", secrets.token_hex(16))
         stamped.setdefault("signed_at", int(time.time()))
-    elif algorithm == "Ed25519" and _mode() == "production":
-        raise ProtocolError("production Ed25519 requires a persistent KMS signer")
     result = dict(stamped, algorithm=algorithm, key_id=key_id)
     message = ("NeuralClear/" + domain + "/v1\n").encode("ascii") + canonical(result)
     if signer is not None:
@@ -103,14 +103,19 @@ def sign(body: dict, key: bytes, key_id: str, algorithm="HMAC-SHA256", *, domain
     return result
 
 
-def verify_signature(envelope, keys, *, domain="receipt", signer=None):
+def verify_signature(envelope, keys, *, domain="receipt", signer=None, replay=True):
     """keys[id] is (algorithm, key bytes); legacy raw bytes mean HMAC only."""
     try:
         signer = _kms_signer(signer)
-        if signer is None and _mode() == "production" and envelope.get("algorithm") == "Ed25519":
-            from .kms import get_process_kms
+        if _mode() == "production":
+            if envelope.get("algorithm") == "HMAC-SHA256":
+                raise ProtocolError("HMAC is not a production receipt authenticator")
+            if not isinstance(envelope.get("nonce"), str) or type(envelope.get("signed_at")) is not int:
+                raise ProtocolError("nonce and integer timestamp required")
+            if signer is None:
+                from .kms import get_process_kms
 
-            signer = _kms_signer(get_process_kms())
+                signer = _kms_signer(get_process_kms())
             if signer is None or not getattr(signer, "persistent", False):
                 raise ProtocolError("production Ed25519 requires a persistent KMS signer")
         if signer is not None and envelope.get("algorithm") == "Ed25519":
@@ -143,10 +148,12 @@ def verify_signature(envelope, keys, *, domain="receipt", signer=None):
             raise ProtocolError("unsupported algorithm")
         if not valid:
             raise ProtocolError("signature mismatch")
-        if isinstance(envelope.get("nonce"), str) and type(envelope.get("signed_at")) is int:
+        if replay and isinstance(envelope.get("nonce"), str) and type(envelope.get("signed_at")) is int:
             from .replay import record_replay
 
             record_replay(envelope, "verify", domain)
+        elif _mode() == "production" and replay:
+            raise ProtocolError("nonce and integer timestamp required")
         return True
     except ProtocolError:
         raise

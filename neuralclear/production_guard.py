@@ -50,10 +50,11 @@ def assert_production_signer(signer: object) -> None:
     algorithm = getattr(signer, "algorithm", None)
     if algorithm != "Ed25519":
         raise ProtocolError("HMAC is not a production receipt authenticator")
-    if os.environ.get("NEURALCLEAR_KMS_ENV") != "live":
-        raise ProtocolError("NEURALCLEAR_KMS_ENV must be live")
-    if getattr(signer, "environment", None) != "live":
-        raise ProtocolError("production KMS must be the live environment")
+    configured = os.environ.get("NEURALCLEAR_KMS_ENV")
+    if configured != getattr(signer, "environment", None):
+        raise ProtocolError("NEURALCLEAR_KMS_ENV does not match KMS environment")
+    if configured == "live" or getattr(signer, "environment", None) == "live":
+        raise ProtocolError("in-tree PersistentKms cannot hold live signing keys")
 
 
 def assert_production_proof(proof_name: str) -> None:

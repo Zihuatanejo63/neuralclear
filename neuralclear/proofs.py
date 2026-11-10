@@ -168,6 +168,8 @@ class SignedResultProof:
             "capability": self.capability,
             "digest": self.digest,
             "signed_at": self.signed_at,
+            "signed_at_unix": self.signed_at_unix,
+            "nonce": self.nonce,
             "signature": self.signature,
         }
 

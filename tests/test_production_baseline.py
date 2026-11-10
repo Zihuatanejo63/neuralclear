@@ -221,7 +221,7 @@ class MandateAndRedactionTests(unittest.TestCase):
                     requires_human_approval_above=signed.requires_human_approval_above,
                     signature=sign_spending_mandate(signed, kms, "owner", now=10),
                 )
-                with self.assertRaisesRegex(ProtocolError, "MockProof"):
+                with self.assertRaisesRegex(ProtocolError, "persistent KMS"):
                     service.submit_task(
                         task_id="task_mock",
                         quote_id=str(quote["quote_id"]),
