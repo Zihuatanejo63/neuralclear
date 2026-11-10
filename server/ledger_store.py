@@ -26,6 +26,12 @@ from .storage import SQLiteStorage
 
 
 class ReferenceClearingService:
+    """Sandbox reference settler. Production settlement is not this MockProof path."""
+
+    @staticmethod
+    def production_proof_name() -> str:
+        """Name of the proof object production submit_task actually verifies."""
+        return "SIGNED_RESULT"
     def __init__(self, platform_fee_bps: int = 1000, storage_path: str | None = None) -> None:
         self.registry = build_default_registry()
         self.ledger = Ledger()
@@ -86,6 +92,8 @@ class ReferenceClearingService:
         mandate.assert_daily_budget(spent_today, quote.settlement_price)
 
         summary = self._summarize_pdf_text(str(payload.get("text", "")))
+        production = os.environ.get("NEURALCLEAR_MODE") == "production"
+        proof = self._settlement_proof(production, payload, task_id, summary)
         transaction = Transaction(
             sender=buyer,
             receiver=provider,
@@ -95,6 +103,7 @@ class ReferenceClearingService:
             quote_id=quote.quote_id,
             authorized_agent=mandate.agent,
             state=TransactionState.QUOTE_ACCEPTED,
+            transaction_id=task_id if production else f"tx_{uuid4().hex}",
         )
         transaction.transition(TransactionState.TASK_SUBMITTED)
         transaction.transition(TransactionState.TASK_RUNNING)
@@ -103,11 +112,15 @@ class ReferenceClearingService:
             output={"summary": summary},
             resource_usage=[ResourceUnit(1, "request")],
             settlement_amount=quote.settlement_price,
-            proof=MockProof(statement=f"mock proof for task {task_id}"),
+            proof=proof,
         )
         transaction.transition(TransactionState.RESULT_DELIVERED)
+        if type(result.proof).__name__ == "MockProof" and production:
+            raise ProtocolError("MockProof is not allowed in production")
         if not result.proof.verify():
             raise ProtocolError("proof verification failed")
+        if type(result.proof).__name__ == "MockProof" and production:
+            raise ProtocolError("MockProof is not allowed in production")
         transaction.transition(TransactionState.PROOF_VERIFIED)
         self.ledger.settle(transaction)
         if not self.ledger.verify_zero_sum():
@@ -285,6 +298,36 @@ class ReferenceClearingService:
         if not cleaned:
             return "No PDF text supplied."
         return cleaned[:220] + ("..." if len(cleaned) > 220 else "")
+
+    def _settlement_proof(self, production: bool, payload: dict[str, object], task_id: str, summary: str):
+        if not production:
+            return MockProof(statement=f"mock proof for task {task_id}")
+        envelope = payload.get("result_proof")
+        if not isinstance(envelope, dict) or envelope.get("algorithm") != "Ed25519":
+            raise ProtocolError("MockProof is not allowed in production")
+        from neuralclear.kms import get_process_kms
+        from neuralclear.wire import verify_signature
+
+        kms = get_process_kms()
+        if kms is None or not getattr(kms, "persistent", False):
+            raise ProtocolError("production KMS is not configured")
+        expected = result_hash({"summary": summary})
+        if envelope.get("transaction_id") != task_id or envelope.get("result_hash") != expected:
+            raise ProtocolError("result proof mismatch")
+
+        class _KmsResultProof:
+            def __init__(self, body, signer) -> None:
+                self.body = body
+                self.signer = signer
+
+            def verify(self) -> bool:
+                verify_signature(self.body, {}, domain="result", signer=self.signer)
+                return True
+
+            def to_json(self) -> dict[str, object]:
+                return {"proof_level": "SIGNED_RESULT", **self.body}
+
+        return _KmsResultProof(envelope, kms)
 
     def _require_production_mandate(self, mandate: SpendingMandate) -> None:
         if os.environ.get("NEURALCLEAR_MODE") != "production":

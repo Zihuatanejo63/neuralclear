@@ -191,7 +191,7 @@ if app is not None:
             )
         except (KeyError, ProtocolError) as exc:
             if "idempotency key conflict" in str(exc) and HTTPException is not None:
-                raise HTTPException(status_code=409, detail=str(exc)) from exc
+                raise HTTPException(status_code=409, detail=_redact_error(exc)) from None
             _handle_error(ProtocolError(str(exc)))
 
     @app.get("/neuralclear/tasks/{task_id}")
@@ -271,5 +271,5 @@ if app is not None:
         assert_reference_server_ready(
             api_keys=[_read_api_key(), _write_api_key()],
             signer=get_process_kms(),
-            proof_name="SIGNED_RESULT",
+            proof_name=service.production_proof_name(),
         )

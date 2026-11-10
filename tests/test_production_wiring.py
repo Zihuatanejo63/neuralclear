@@ -158,6 +158,16 @@ class WiringTests(unittest.TestCase):
             )
         with self.assertRaisesRegex(ProtocolError, "unknown key"):
             sign({"transaction_id": "tx"}, b"", "no-such-kid", signer=self.kms, domain="result")
+        issued = sign(
+            {"transaction_id": "tx", "result_hash": "ab"},
+            b"",
+            "kid-receipt",
+            signer=self.kms,
+            domain="result",
+        )
+        issued["key_id"] = "unknown-kid"
+        with self.assertRaisesRegex(ProtocolError, "unknown key"):
+            verify_signature(issued, {}, signer=self.kms, domain="result", replay=False)
 
     def test_unknown_mode_fails_closed(self):
         with patch.dict(os.environ, {"NEURALCLEAR_MODE": "staging"}):
@@ -192,6 +202,7 @@ class ProductionRouteTests(unittest.TestCase):
                 ("get", "/dashboard/receipts", {}),
                 ("get", "/dashboard/transactions", {}),
                 ("get", "/dashboard/balances", {}),
+                ("get", "/dashboard/disputes", {}),
             ):
                 response = getattr(client, method)(path, **kwargs)
                 self.assertEqual(response.status_code, 401, path)
@@ -200,23 +211,6 @@ class ProductionRouteTests(unittest.TestCase):
                 headers={"X-NeuralClear-API-Key": "test-api-key"},
             )
             self.assertEqual(authed.status_code, 401)
-        quote = client.post(
-            "/neuralclear/quote",
-            json={"provider": "agent.pdf_summarizer", "capability": "summarize.pdf"},
-            headers={"X-NeuralClear-API-Key": "test-api-key"},
-        )
-        body = {
-            "buyer": "buyer.research",
-            "provider": "agent.pdf_summarizer",
-            "quote_id": quote.json()["quote_id"],
-            "payload": {"text": "first"},
-        }
-        headers = {"X-NeuralClear-API-Key": "test-api-key", "Idempotency-Key": "wire-409"}
-        first = client.post("/neuralclear/tasks", json=body, headers=headers)
-        body["payload"] = {"text": "second"}
-        second = client.post("/neuralclear/tasks", json=body, headers=headers)
-        self.assertEqual(first.status_code, 200)
-        self.assertEqual(second.status_code, 409)
 
 
 @unittest.skipIf(TestClient is None, "HTTP extras not installed")
@@ -353,7 +347,13 @@ class ProductionProcessTests(unittest.TestCase):
         )
         with patch.dict(os.environ, {"NEURALCLEAR_KMS_ENV": "test"}):
             kms = PersistentKms(kms_path, environment="test")
-            issue_key(kms, purpose="mandate", kid="kid-proc", now=1, roles={"mandate", "receipt"})
+            issue_key(
+                kms,
+                purpose="mandate",
+                kid="kid-proc",
+                now=1,
+                roles={"mandate", "receipt", "result"},
+            )
         script = r"""
 import os
 from datetime import datetime, timedelta, timezone
@@ -361,6 +361,8 @@ from fastapi.testclient import TestClient
 from neuralclear import SettlementCredit, SpendingMandate
 from neuralclear.kms import get_process_kms
 from neuralclear.mandate_auth import sign_spending_mandate
+from neuralclear.wire import sign
+from server.signing import result_hash
 import server.app as app
 
 kms = get_process_kms()
@@ -392,11 +394,21 @@ quote = client.post(
     headers={"X-NeuralClear-API-Key": key},
 )
 assert quote.status_code == 200, quote.text
+task_id = "task_prod_409"
+summary = "first"
+proof = sign(
+    {"transaction_id": task_id, "result_hash": result_hash({"summary": summary})},
+    b"",
+    os.environ["NEURALCLEAR_SIGNING_KEY_ID"],
+    signer=kms,
+    domain="result",
+)
 body = {
+    "task_id": task_id,
     "buyer": "buyer.research",
     "provider": "agent.pdf_summarizer",
     "quote_id": quote.json()["quote_id"],
-    "payload": {"text": "first"},
+    "payload": {"text": "first", "result_proof": proof},
     "mandate": {
         "owner": mandate.owner,
         "agent": mandate.agent,
@@ -408,10 +420,25 @@ body = {
         "signature": signature,
     },
 }
+headers = {"X-NeuralClear-API-Key": key, "Idempotency-Key": "prod-mock"}
+missing = client.post(
+    "/neuralclear/tasks",
+    json={
+        "task_id": "task_mock_refused",
+        "buyer": "buyer.research",
+        "provider": "agent.pdf_summarizer",
+        "quote_id": quote.json()["quote_id"],
+        "payload": {"text": "first"},
+        "mandate": body["mandate"],
+    },
+    headers=headers,
+)
+assert missing.status_code == 400, missing.text
+assert "MockProof" in missing.text
 headers = {"X-NeuralClear-API-Key": key, "Idempotency-Key": "prod-409"}
 first = client.post("/neuralclear/tasks", json=body, headers=headers)
 assert first.status_code == 200, first.text
-body["payload"] = {"text": "second"}
+body["payload"] = {"text": "second", "result_proof": proof}
 second = client.post("/neuralclear/tasks", json=body, headers=headers)
 assert second.status_code == 409, second.text
 print("production-process-ok")

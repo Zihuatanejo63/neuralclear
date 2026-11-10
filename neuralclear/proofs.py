@@ -22,7 +22,6 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
-import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Protocol
@@ -93,15 +92,12 @@ class SignedResultProof:
         import secrets
         import time
 
-        from .replay import record_replay, replay_store_path
+        from .replay import record_replay
 
         digest = output_digest(output)
         signed_at = datetime.now(timezone.utc).isoformat()
-        nonce = ""
-        signed_at_unix = 0
-        if replay_store_path() or os.environ.get("NEURALCLEAR_MODE") == "production":
-            nonce = secrets.token_hex(16)
-            signed_at_unix = int(time.time())
+        nonce = secrets.token_hex(16)
+        signed_at_unix = int(time.time())
         message = cls._message(agent_id, capability, digest, signed_at, nonce, signed_at_unix)
         proof = cls(
             agent_id=agent_id,
@@ -112,10 +108,9 @@ class SignedResultProof:
             nonce=nonce,
             signed_at_unix=signed_at_unix,
         )
-        if nonce:
-            record_replay(
-                {"nonce": nonce, "signed_at": signed_at_unix}, "issue", "hmac-result-proof"
-            )
+        record_replay(
+            {"nonce": nonce, "signed_at": signed_at_unix}, "issue", "hmac-result-proof"
+        )
         return proof
 
     @staticmethod
@@ -142,15 +137,17 @@ class SignedResultProof:
     def verify_with(self, verifier: HMACKey) -> bool:
         nonce = getattr(self, "nonce", "")
         unix = getattr(self, "signed_at_unix", 0)
+        if not isinstance(nonce, str) or not nonce or type(unix) is not int or unix <= 0:
+            return False
         message = self._message(
             self.agent_id, self.capability, self.digest, self.signed_at, nonce, unix
         )
-        valid = verifier.verify(message, self.signature)
-        if valid and nonce:
-            from .replay import record_replay
+        if not verifier.verify(message, self.signature):
+            return False
+        from .replay import record_replay
 
-            record_replay({"nonce": nonce, "signed_at": unix}, "verify", "hmac-result-proof")
-        return valid
+        record_replay({"nonce": nonce, "signed_at": unix}, "verify", "hmac-result-proof")
+        return True
 
     def verify(self) -> bool:
         if self._verifier is None:
