@@ -221,7 +221,9 @@ python3 examples/commercial_demo.py
 
 ## Self-Hosted Clearing Gateway
 
-`neuralclear.gateway` serves the credit engine over HTTP — stdlib only, no framework. It refuses a fiat escrow ledger and a `StripeChannel`. Do not point these routes at card payments:
+`neuralclear.gateway` serves protocol-credit clearing over HTTP — stdlib only, no framework. A `TenantHub` gives each tenant its own ledger and API key. The single-key constructor below is a local demo, not the production deployment. Production is a single-host Compose stack behind Caddy and Let's Encrypt: [docs/production-runbook.md](docs/production-runbook.md).
+
+The gateway refuses a fiat escrow ledger and a `StripeChannel`. Fiat settlement is not live. It is not wired to Stripe, `escrow`, or `escrow_channel`, and it does not custody customer funds. Clearing balances are protocol credits (`CC`). Do not point these routes at card payments.
 
 ```python
 from neuralclear.gateway import ClearingGateway
@@ -240,9 +242,12 @@ POST /v1/disputes                 freeze a transaction
 POST /v1/disputes/{id}/resolve    refund | slash | split | settle
 GET  /v1/ledger                   live balances, escrow, fee pool
 GET  /v1/receipts/{id}            signed receipt lookup
+GET  /health/live                 process liveness
+GET  /health/ready                readiness, including storage
+GET  /metrics                     Prometheus text
 ```
 
-Write endpoints require `X-NeuralClear-Api-Key`. A single `POST /v1/clear` runs the credit loop: quote → mandate → credit hold → remote HTTP execution → proof → release → signed receipt. `neuralclear.tenancy` adds isolated multi-tenant workspaces with per-tenant API keys and usage metering on top. None of these routes create a Stripe charge.
+With `TenantHub`, ledger and receipt reads require the tenant's `X-NeuralClear-Api-Key`, and so do writes. A single `POST /v1/clear` runs the credit loop: quote → mandate → credit hold → remote HTTP execution → proof → release → signed receipt. `neuralclear.tenancy` isolates those credits per tenant. The demo constructor above still leaves reads open when it is used without a hub. None of these routes create a Stripe charge.
 
 ## Fiat profile HTTP
 

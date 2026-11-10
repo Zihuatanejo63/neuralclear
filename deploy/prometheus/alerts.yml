@@ -1,0 +1,88 @@
+# Alert rules for the single-host Compose deployment.
+# Prometheus evaluates these and shows them at http://127.0.0.1:9090/alerts.
+# No Alertmanager receiver is configured, so no webhook secret is stored here.
+
+groups:
+  - name: neuralclear-gateway
+    rules:
+      - alert: NeuralclearGatewayDown
+        expr: up{job="neuralclear-gateway"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Neuralclear gateway process is down
+          description: Prometheus cannot scrape gateway:8080. On this host, check `docker compose -f docker-compose.production.yml ps` and `logs gateway`.
+
+      - alert: NeuralclearEdgeDown
+        expr: up{job="neuralclear-edge"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Caddy edge process is down
+          description: Prometheus cannot scrape Caddy metrics on the Compose network. TLS termination is not running. Check `logs caddy`.
+
+      - alert: NeuralclearGatewayNotReady
+        expr: (sum(neuralclear_gateway_ready) == 0) and (sum(up{job="neuralclear-gateway"}) == 1)
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Neuralclear gateway is up but not ready
+          description: Readiness is failing while the process still serves metrics. Storage is the usual cause. Check /health/ready and the gateway volume.
+
+      - alert: NeuralclearHigh5xx
+        expr: |
+          (
+            sum(increase(neuralclear_http_requests_total{status=~"5.."}[10m])) >= 5
+          )
+          and
+          (
+            sum(increase(neuralclear_http_requests_total{status=~"5.."}[10m]))
+            /
+            clamp_min(sum(increase(neuralclear_http_requests_total[10m])), 1)
+            > 0.05
+          )
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Neuralclear gateway 5xx rate is high
+          description: At least five HTTP 5xx responses in 10 minutes, and more than 5% of requests. Inspect gateway logs for error_type. This alert does not page on a single idle-host error.
+
+      - alert: NeuralclearAuthFailureSpike
+        expr: sum(increase(neuralclear_auth_failures_total[10m])) >= 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Neuralclear authentication failures are elevated
+          description: At least 20 missing or invalid API keys in 10 minutes. Tenant ids may appear on request metrics; API keys do not.
+
+      - alert: NeuralclearTlsProbeFailing
+        expr: probe_success{job="neuralclear-tls"} == 0
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: TLS probe of the Caddy edge is failing
+          description: Blackbox could not complete HTTPS to /health/live with the public name as SNI. Certificate issuance or renewal may be stuck. Check `logs caddy`, DNS, and that ports 80 and 443 reach this host.
+
+      - alert: NeuralclearTlsCertExpiring
+        expr: (probe_ssl_earliest_cert_expiry{job="neuralclear-tls"} - time()) < 21 * 24 * 3600
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          summary: TLS certificate expires within 21 days
+          description: Let's Encrypt certificates renew automatically about 30 days before expiry. Remaining life under 21 days means renewal is not succeeding. Keep the caddy-data volume. Check `logs caddy`.
+
+      - alert: NeuralclearTlsExpiryUnknown
+        expr: absent(probe_ssl_earliest_cert_expiry{job="neuralclear-tls"})
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: TLS certificate expiry is not being measured
+          description: The blackbox probe has not reported a certificate expiry for 30 minutes. The edge may be down or the probe cannot see the certificate.

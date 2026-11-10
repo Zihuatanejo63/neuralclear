@@ -1,3 +1,10 @@
+"""Developer sandbox reference server.
+
+This module is not the production clearing gateway. Production runs
+`python -m neuralclear.gateway`. Fiat settlement is not live here.
+The API key fallbacks below are sandbox defaults for local use.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone

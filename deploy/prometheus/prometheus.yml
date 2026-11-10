@@ -1,0 +1,34 @@
+# Single-host scrape config. Notification routing is intentionally absent:
+# do not commit an Alertmanager URL or webhook credential.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: neuralclear-gateway
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["gateway:8080"]
+
+  - job_name: neuralclear-edge
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["caddy:9080"]
+
+  - job_name: neuralclear-tls
+    metrics_path: /probe
+    params:
+      module: [http_cert]
+    static_configs:
+      - targets: ["https://caddy/health/live"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115
